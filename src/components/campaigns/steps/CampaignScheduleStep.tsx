@@ -416,6 +416,18 @@ export const CampaignScheduleStep: FC<CampaignScheduleStepProps> = ({ onPrev }) 
       }
     }
 
+    // Validation SMS : le contenu doit contenir "STOP" (obligation légale)
+    if (latestDraft.channel === 'SMS') {
+      const smsText = latestDraft.smsContent?.message || content || '';
+      if (smsText.trim().length > 0 && !/\bSTOP\b/i.test(smsText)) {
+        toast.error(
+          'Le message SMS doit contenir le mot "STOP" pour permettre le désabonnement (obligation légale).',
+        );
+        setIsSaving(false);
+        return;
+      }
+    }
+
     try {
       // If no campaignId, first create the campaign
       let campaignId = selectedCampaignId;
@@ -512,7 +524,13 @@ export const CampaignScheduleStep: FC<CampaignScheduleStepProps> = ({ onPrev }) 
       }
     } catch (err) {
       console.error('❌ Error in handleSendCampaign:', err);
-      toast.error("Erreur lors de l'envoi");
+      const apiMsg = (() => {
+        if (!err || typeof err !== 'object') return null;
+        const e = err as { response?: { data?: { message?: unknown; error?: unknown } } };
+        const m = e.response?.data?.message ?? e.response?.data?.error;
+        return typeof m === 'string' && m.trim() ? m : null;
+      })();
+      toast.error(apiMsg || "Erreur lors de l'envoi de la campagne.");
       setIsSaving(false);
     }
   };
