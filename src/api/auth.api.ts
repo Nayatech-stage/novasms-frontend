@@ -17,6 +17,20 @@ export type ProfilePayload = {
   primaryChannels: string[];
 };
 
+export type MeAccount = {
+  totpEnabled?: boolean;
+  smsEnabled?: boolean;
+  twoFactorPhone?: string | null;
+  backupCodes?: string[];
+  [key: string]: unknown;
+};
+
+export type MeResponse = {
+  success: boolean;
+  account?: MeAccount;
+  [key: string]: unknown;
+};
+
 export function extractAuthError(
   err: unknown,
   fallback = 'Erreur de connexion au serveur',
@@ -93,8 +107,8 @@ export const authApi = {
     return data;
   },
 
-  getMe: async () => {
-    const { data } = await api.get<Record<string, unknown>>('/auth/me');
+  getMe: async (): Promise<MeResponse> => {
+    const { data } = await api.get<MeResponse>('/auth/me');
     return data;
   },
 

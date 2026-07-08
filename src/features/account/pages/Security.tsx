@@ -61,12 +61,13 @@ export default function Security() {
       try {
         const res = await authApi.getMe();
         if (res?.success && res.account) {
+          const account = res.account;
           setTwoFactorState((prev) => ({
             ...prev,
-            totpEnabled: !!res.account.totpEnabled,
-            smsEnabled: !!res.account.smsEnabled,
-            smsPhone: res.account.twoFactorPhone ?? null,
-            backupCodes: res.account.backupCodes?.length ? res.account.backupCodes : undefined,
+            totpEnabled: !!account.totpEnabled,
+            smsEnabled: !!account.smsEnabled,
+            smsPhone: account.twoFactorPhone ?? null,
+            backupCodes: account.backupCodes?.length ? account.backupCodes : undefined,
           }));
         }
       } catch {

@@ -272,8 +272,17 @@ const mapApiCampaignToModel = (raw: unknown): Campaign => {
           }
         : undefined,
     estimatedRecipients:
-      typeof response.estimatedRecipients === 'number' ? response.estimatedRecipients : 0,
-    estimatedCost: typeof response.estimatedCost === 'number' ? response.estimatedCost : 0,
+      typeof response.estimatedRecipients === 'number'
+        ? response.estimatedRecipients
+        : typeof response.estimatedRecipients === 'string'
+          ? parseInt(response.estimatedRecipients, 10) || 0
+          : 0,
+    estimatedCost:
+      typeof response.estimatedCost === 'number'
+        ? response.estimatedCost
+        : typeof response.estimatedCost === 'string'
+          ? parseFloat(response.estimatedCost) || 0
+          : 0,
     createdAt: typeof response.createdAt === 'string' ? new Date(response.createdAt) : new Date(),
     updatedAt: typeof response.updatedAt === 'string' ? new Date(response.updatedAt) : new Date(),
     sentAt: typeof response.sentAt === 'string' ? new Date(response.sentAt) : undefined,
