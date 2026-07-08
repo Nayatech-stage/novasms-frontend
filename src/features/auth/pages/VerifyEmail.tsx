@@ -2,29 +2,25 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Bolt, Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-// auth store not needed here to avoid clearing session on link click
+import { authApi, extractAuthError } from '@/api/auth.api';
 
-const verificationRequests = new Map<
-  string,
-  Promise<{ success: boolean; message: string }>
->();
+const verificationRequests = new Map<string, Promise<{ success: boolean; message: string }>>();
 
 function getVerificationRequest(token: string) {
-  const existingRequest = verificationRequests.get(token);
-  if (existingRequest) {
-    return existingRequest;
-  }
+  const existing = verificationRequests.get(token);
+  if (existing) return existing;
 
-  const request = fetch(`http://localhost:3000/api/auth/verify-email/${token}`, {
-    method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
-  })
-    .then(async (response) => {
-      const json = (await response.json()) as { success?: boolean; message?: string };
-      if (!response.ok || !json.success) {
-        throw new Error(json.message || 'Lien invalide ou expiré.');
-      }
-      return { success: true, message: json.message || 'Votre email est confirmé. Redirection...' };
+  const request = authApi
+    .verifyEmail(token)
+    .then((data) => {
+      if (!data.success) throw new Error(data.message || 'Lien invalide ou expiré.');
+      return {
+        success: true,
+        message: data.message || 'Votre email est confirmé. Redirection...',
+      };
+    })
+    .catch((err) => {
+      throw new Error(extractAuthError(err, 'Lien invalide ou expiré.'));
     })
     .finally(() => {
       verificationRequests.delete(token);

@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { AutomationItem, WorkflowEdge, WorkflowNode } from '@/api/automations';
+import { automationsApi } from '@/api/automations';
 import type { CampaignAPIResponse } from '@/types/campaign.types';
 
 type NodeType = 'trigger' | 'wait' | 'action' | 'end' | 'condition' | 'tag';
@@ -839,8 +840,7 @@ export default function CanvasEditor({
                 return;
               }
               try {
-                const res = await fetch(`/api/automations/${automation.id}/report`);
-                const j = await res.json();
+                const j = await automationsApi.getReport(automation.id);
                 alert(JSON.stringify(j, null, 2));
               } catch (err) {
                 alert('Erreur rapport: ' + String(err));

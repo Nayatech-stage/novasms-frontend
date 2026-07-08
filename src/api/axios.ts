@@ -28,9 +28,17 @@ api.interceptors.response.use(
     const status = error.response?.status;
     const url: string = originalRequest?.url ?? '';
 
-    // Ne jamais intercepter les appels auth (éviter les boucles)
+    // Endpoints auth publics : pas de refresh-loop ni de toast global
     const isAuthCall =
-      url.includes('/auth/refresh') || url.includes('/auth/logout') || url.includes('/auth/login');
+      url.includes('/auth/refresh') ||
+      url.includes('/auth/logout') ||
+      url.includes('/auth/login') ||
+      url.includes('/auth/verify-2fa') ||
+      url.includes('/auth/register') ||
+      url.includes('/auth/forgot-password') ||
+      url.includes('/auth/reset-password') ||
+      url.includes('/auth/verify-email') ||
+      url.includes('/auth/resend-confirmation');
 
     // ── Refresh token sur 401 ──────────────────────────────────────────────
     if (status === 401 && !isAuthCall && !originalRequest._retry) {

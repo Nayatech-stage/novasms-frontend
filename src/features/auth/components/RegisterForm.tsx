@@ -6,6 +6,7 @@ import { CountrySelect } from './CountrySelect';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { authApi, extractAuthError } from '@/api/auth.api';
 
 const RegisterSchema = z.object({
   nom: z.string().min(2, 'Le nom complet doit contenir au moins 2 caractères'),
@@ -49,41 +50,27 @@ export default function RegisterForm() {
 
   const password = useWatch({ control, name: 'motDePasse' });
   const selectedCountry = useWatch({ control, name: 'pays' });
-  const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
 
   const onSubmit = async (data: RegisterDto) => {
     setIsLoading(true);
     setServerError(null);
 
     try {
-      const res = await fetch(`${apiUrl}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
+      const json = await authApi.register(data);
 
-      const json = await res.json();
-
-      if (res.ok && json.success) {
+      if (json.success) {
         localStorage.setItem('novasms-pending-confirmation-email', data.email);
         navigate('/confirm-email', { state: { email: data.email } });
       } else {
-        // Gestion des erreurs spécifiques
-        if (res.status === 409) {
-          setServerError('EMAIL DÉJÀ EXISTANT');
-        } else if (res.status === 404) {
-          setServerError('Service indisponible. Veuillez réessayer.');
-        } else if (json.errors?.[0]?.message) {
-          setServerError(json.errors[0].message);
-        } else if (json.message) {
-          setServerError(json.message);
-        } else {
-          setServerError('Une erreur est survenue. Veuillez réessayer.');
-        }
+        setServerError(json.errors?.[0]?.message ?? json.message ?? 'Une erreur est survenue.');
       }
-    } catch (error) {
-      console.error('Erreur réseau:', error);
-      setServerError('Impossible de contacter le serveur. Vérifiez que le backend tourne.');
+    } catch (err) {
+      const msg = extractAuthError(err, '');
+      if (msg.toLowerCase().includes('exist') || msg.toLowerCase().includes('409')) {
+        setServerError('EMAIL DÉJÀ EXISTANT');
+      } else {
+        setServerError(msg || 'Impossible de contacter le serveur.');
+      }
     } finally {
       setIsLoading(false);
     }

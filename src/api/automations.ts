@@ -112,6 +112,11 @@ export const automationsApi = {
     return response.data;
   },
 
+  getReport: async (id: string): Promise<Record<string, unknown>> => {
+    const response = await api.get<Record<string, unknown>>(`/automations/${id}/report`);
+    return response.data;
+  },
+
   trigger: async (
     id: string,
     payload: { contactId: string; delaySeconds?: number },

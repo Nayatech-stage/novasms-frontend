@@ -2,6 +2,7 @@ import { Bolt } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useState } from 'react';
 import { PasswordStrengthIndicator } from '../components/PasswordStrengthIndicator';
+import { authApi, extractAuthError } from '@/api/auth.api';
 
 export default function ResetPassword() {
   const navigate = useNavigate();
@@ -15,8 +16,6 @@ export default function ResetPassword() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
-
   const submitRequestReset = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -29,22 +28,14 @@ export default function ResetPassword() {
 
     setLoading(true);
     try {
-      const res = await fetch(`${apiUrl}/auth/forgot-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim() }),
-      });
-
-      const json = await res.json();
-
-      if (!res.ok || !json?.success) {
-        setError(json?.message || "Impossible d'envoyer le lien de réinitialisation.");
+      const json = await authApi.forgotPassword(email.trim());
+      if (!json.success) {
+        setError(json.message || "Impossible d'envoyer le lien de réinitialisation.");
         return;
       }
-
-      setSuccess(json?.message || 'Si le compte existe, un email sera envoyé.');
-    } catch {
-      setError('Erreur de connexion au serveur.');
+      setSuccess(json.message || 'Si le compte existe, un email sera envoyé.');
+    } catch (err) {
+      setError(extractAuthError(err, 'Erreur de connexion au serveur.'));
     } finally {
       setLoading(false);
     }
@@ -60,7 +51,6 @@ export default function ResetPassword() {
       return;
     }
 
-    // Client-side password strength checks: match backend rules
     const checks = [
       newPassword.length >= 8,
       /[A-Z]/.test(newPassword),
@@ -81,23 +71,15 @@ export default function ResetPassword() {
 
     setLoading(true);
     try {
-      const res = await fetch(`${apiUrl}/auth/reset-password/${token}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ newPassword }),
-      });
-
-      const json = await res.json();
-
-      if (!res.ok || !json?.success) {
-        setError(json?.message || 'Impossible de réinitialiser le mot de passe.');
+      const json = await authApi.resetPassword(token, newPassword);
+      if (!json.success) {
+        setError(json.message || 'Impossible de réinitialiser le mot de passe.');
         return;
       }
-
       setSuccess('Mot de passe réinitialisé avec succès. Redirection...');
       setTimeout(() => navigate('/login'), 1200);
-    } catch {
-      setError('Erreur de connexion au serveur.');
+    } catch (err) {
+      setError(extractAuthError(err, 'Erreur de connexion au serveur.'));
     } finally {
       setLoading(false);
     }

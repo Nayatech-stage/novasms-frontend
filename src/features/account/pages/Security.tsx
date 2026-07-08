@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import QRCode from 'qrcode';
 import { useAuthStore } from '@/stores/authStore';
+import { authApi } from '@/api/auth.api';
 
 interface TwoFactorState {
   totpEnabled: boolean;
@@ -54,22 +55,11 @@ export default function Security() {
     renderQrCode();
   }, [twoFactorState.method, twoFactorState.otpauthUrl]);
 
-  const authApi = async (path: string, method = 'GET', body?: Record<string, unknown>) => {
-    const { accessToken } = useAuthStore.getState();
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
-    const response = await fetch(
-      `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/auth/${path}`,
-      { method, headers, body: body ? JSON.stringify(body) : undefined },
-    );
-    return response.json();
-  };
-
   useEffect(() => {
     const loadAccount = async () => {
       if (!user?.id) return;
       try {
-        const res = await authApi('me', 'GET');
+        const res = await authApi.getMe();
         if (res?.success && res.account) {
           setTwoFactorState((prev) => ({
             ...prev,
@@ -105,7 +95,7 @@ export default function Security() {
     setLoading(true);
     setMessage(null);
     try {
-      const res = await authApi('generate-2fa-secret', 'POST');
+      const res = await authApi.generateTwoFactorSecret();
       if (res.success && res.otpauth_url) {
         setTwoFactorState((prev) => ({
           ...prev,
@@ -135,7 +125,7 @@ export default function Security() {
     setLoading(true);
     setMessage(null);
     try {
-      const res = await authApi('enable-2fa', 'POST', { code });
+      const res = await authApi.enableTwoFactor(code);
       if (res.success) {
         setTwoFactorState((prev) => ({
           ...prev,
@@ -178,7 +168,7 @@ export default function Security() {
     setSmsLoading(true);
     setMessage(null);
     try {
-      const res = await authApi('send-2fa-sms', 'POST', { phone: smsPhone.trim() });
+      const res = await authApi.sendTwoFactorSms(smsPhone.trim());
       if (res.success) {
         setSmsCodeSent(true);
         setMessage({ type: 'success', text: 'Code OTP envoyé par SMS. Valable 10 minutes.' });
@@ -200,10 +190,7 @@ export default function Security() {
     setSmsLoading(true);
     setMessage(null);
     try {
-      const res = await authApi('enable-2fa-sms', 'POST', {
-        phone: smsPhone.trim(),
-        code: smsCode.trim(),
-      });
+      const res = await authApi.enableTwoFactorSms(smsPhone.trim(), smsCode.trim());
       if (res.success) {
         setTwoFactorState((prev) => ({
           ...prev,
@@ -232,7 +219,7 @@ export default function Security() {
     setLoading(true);
     setMessage(null);
     try {
-      const res = await authApi('disable-2fa', 'POST');
+      const res = await authApi.disableTwoFactor();
       if (res.success) {
         setTwoFactorState({ totpEnabled: false, smsEnabled: false, smsPhone: null, method: null });
         setTotpInputs(['', '', '', '', '', '']);
