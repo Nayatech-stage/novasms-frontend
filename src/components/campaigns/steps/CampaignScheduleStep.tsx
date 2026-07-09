@@ -416,18 +416,6 @@ export const CampaignScheduleStep: FC<CampaignScheduleStepProps> = ({ onPrev }) 
       }
     }
 
-    // Validation SMS : le contenu doit contenir "STOP" (obligation légale)
-    if (latestDraft.channel === 'SMS') {
-      const smsText = latestDraft.smsContent?.message || content || '';
-      if (smsText.trim().length > 0 && !/\bSTOP\b/i.test(smsText)) {
-        toast.error(
-          'Le message SMS doit contenir le mot "STOP" pour permettre le désabonnement (obligation légale).',
-        );
-        setIsSaving(false);
-        return;
-      }
-    }
-
     try {
       // If no campaignId, first create the campaign
       let campaignId = selectedCampaignId;
