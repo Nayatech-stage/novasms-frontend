@@ -42,6 +42,109 @@ import type {
   SegmentWithContacts,
 } from '../types/contact';
 
+// Composant inline pour la vue détail d'un segment avec barre de recherche
+function SegmentDetail({
+  segment,
+  onEdit,
+  onRemove,
+  formatFormula,
+}: {
+  segment: SegmentWithContacts;
+  onEdit: (s: SegmentWithContacts) => void;
+  onRemove: (s: SegmentWithContacts) => void;
+  formatFormula: (c: SegmentWithContacts['criteria']) => string;
+}) {
+  const [query, setQuery] = useState('');
+  const q = query.trim().toLowerCase();
+  const visible = q
+    ? segment.contacts.filter(
+        (c) =>
+          `${c.firstName || ''} ${c.lastName || ''}`.toLowerCase().includes(q) ||
+          (c.email || '').toLowerCase().includes(q) ||
+          (c.phone || '').includes(q),
+      )
+    : segment.contacts;
+
+  return (
+    <details className="group rounded-lg border border-outline-variant/40 bg-background/50">
+      <summary className="flex cursor-pointer items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-on-surface">
+        <div className="flex flex-col">
+          <span>{segment.name || 'Sans nom'}</span>
+          <span className="text-xs font-normal text-on-surface-variant">
+            {formatFormula(segment.criteria)}
+          </span>
+        </div>
+        <span className="text-xs text-on-surface-variant">
+          {segment.contactCount} contact{segment.contactCount > 1 ? 's' : ''}
+        </span>
+      </summary>
+      <div className="border-t border-outline-variant/40 px-4 py-3 space-y-3">
+        {/* Actions */}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => onEdit(segment)}
+            className="rounded-md border border-outline-variant/40 px-2.5 py-1 text-xs font-semibold text-on-surface hover:bg-surface"
+          >
+            Modifier
+          </button>
+          <button
+            type="button"
+            onClick={() => onRemove(segment)}
+            className="rounded-md border border-error/30 px-2.5 py-1 text-xs font-semibold text-error hover:bg-error/10"
+          >
+            Supprimer
+          </button>
+        </div>
+        {/* Barre de recherche locale */}
+        {segment.contacts.length > 0 && (
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-on-surface-variant pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Rechercher dans ce segment…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-outline-variant/30 bg-surface focus:outline-none focus:ring-1 focus:ring-primary/30"
+            />
+          </div>
+        )}
+        {/* Liste des contacts */}
+        {visible.length > 0 ? (
+          <div className="space-y-1 max-h-48 overflow-y-auto">
+            <div className="grid grid-cols-3 gap-1 pb-1 border-b border-outline-variant/20 text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider">
+              <span>Nom</span>
+              <span>Email</span>
+              <span>Téléphone</span>
+            </div>
+            {visible.map((contact) => (
+              <div
+                key={contact.id}
+                className="grid grid-cols-1 gap-1 text-xs text-on-surface-variant md:grid-cols-3 py-0.5"
+              >
+                <span className="text-on-surface font-medium">
+                  {(contact.firstName || '-') + ' ' + (contact.lastName || '-')}
+                </span>
+                <span>{contact.email || '-'}</span>
+                <span>{contact.phone || '-'}</span>
+              </div>
+            ))}
+            {q && visible.length < segment.contacts.length && (
+              <p className="text-[10px] text-on-surface-variant pt-1">
+                {visible.length} / {segment.contacts.length} contacts
+              </p>
+            )}
+          </div>
+        ) : (
+          <p className="text-xs text-on-surface-variant">
+            {q ? `Aucun contact ne correspond à "${query}"` : 'Aucun contact dans ce segment.'}
+          </p>
+        )}
+      </div>
+    </details>
+  );
+}
+
 type ContactTableProps = {
   onContactClick?: (contact: Contact) => void;
   onImportClick?: () => void;
@@ -501,8 +604,9 @@ export default function ContactTable({
     );
   }
 
-  // Empty state
-  if (contacts.length === 0 && !isLoading) {
+  // Empty state — uniquement quand il n'y a vraiment aucun contact (pas de recherche active)
+  const hasActiveSearch = debouncedSearch.length > 0 || Object.keys(filters).length > 0;
+  if (contacts.length === 0 && !isLoading && !hasActiveSearch) {
     return (
       <div className="text-center py-12">
         <User className="w-12 h-12 text-on-surface-variant mx-auto mb-4 opacity-50" />
@@ -806,60 +910,13 @@ export default function ContactTable({
                   <p className="text-xs text-on-surface-variant">Contacts par segment</p>
                   <div className="space-y-3">
                     {segments.map((segment) => (
-                      <details
+                      <SegmentDetail
                         key={segment.id}
-                        className="group rounded-lg border border-outline-variant/40 bg-background/50"
-                      >
-                        <summary className="flex cursor-pointer items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-on-surface">
-                          <div className="flex flex-col">
-                            <span>{segment.name || 'Sans nom'}</span>
-                            <span className="text-xs font-normal text-on-surface-variant">
-                              {formatSegmentFormula(segment.criteria)}
-                            </span>
-                          </div>
-                          <span className="text-xs text-on-surface-variant">
-                            {segment.contactCount} contact{segment.contactCount > 1 ? 's' : ''}
-                          </span>
-                        </summary>
-                        <div className="border-t border-outline-variant/40 px-4 py-3">
-                          <div className="mb-3 flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => editSegment(segment)}
-                              className="rounded-md border border-outline-variant/40 px-2.5 py-1 text-xs font-semibold text-on-surface hover:bg-surface"
-                            >
-                              Modifier
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => void removeSegment(segment)}
-                              className="rounded-md border border-error/30 px-2.5 py-1 text-xs font-semibold text-error hover:bg-error/10"
-                            >
-                              Supprimer
-                            </button>
-                          </div>
-                          {segment.contacts.length > 0 ? (
-                            <div className="space-y-2">
-                              {segment.contacts.map((contact) => (
-                                <div
-                                  key={contact.id}
-                                  className="grid grid-cols-1 gap-1 text-xs text-on-surface-variant md:grid-cols-3"
-                                >
-                                  <span className="text-on-surface">
-                                    {(contact.firstName || '-') + ' ' + (contact.lastName || '-')}
-                                  </span>
-                                  <span>{contact.email || '-'}</span>
-                                  <span>{contact.phone || '-'}</span>
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <p className="text-xs text-on-surface-variant">
-                              Aucun contact dans ce segment.
-                            </p>
-                          )}
-                        </div>
-                      </details>
+                        segment={segment}
+                        onEdit={editSegment}
+                        onRemove={(s) => void removeSegment(s)}
+                        formatFormula={formatSegmentFormula}
+                      />
                     ))}
                   </div>
                 </div>
@@ -896,6 +953,26 @@ export default function ContactTable({
             </tr>
           </thead>
           <tbody className="divide-y divide-outline-variant/50">
+            {/* Inline empty state quand une recherche/filtre est actif mais sans résultat */}
+            {contacts.length === 0 && !isLoading && hasActiveSearch && (
+              <tr>
+                <td colSpan={8} className="py-12 text-center">
+                  <Search className="w-8 h-8 text-on-surface-variant mx-auto mb-3 opacity-50" />
+                  <p className="text-on-surface font-medium">Aucun résultat</p>
+                  <p className="text-sm text-on-surface-variant mt-1">
+                    {debouncedSearch
+                      ? `Aucun contact ne correspond à "${debouncedSearch}"`
+                      : 'Aucun contact ne correspond aux filtres actifs'}
+                  </p>
+                  <button
+                    onClick={clearAllFilters}
+                    className="mt-3 text-sm text-primary hover:underline"
+                  >
+                    Effacer la recherche
+                  </button>
+                </td>
+              </tr>
+            )}
             {/* Spacer haut pour la virtualisation */}
             {rowVirtualizer.getVirtualItems().length > 0 &&
               rowVirtualizer.getVirtualItems()[0].start > 0 && (

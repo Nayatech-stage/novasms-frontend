@@ -4,6 +4,22 @@ import { useCampaignStore } from '@/store/campaign.store';
 import { contactsApi } from '@/api/contacts';
 import { getSegmentContactCount } from '@/services/campaignService';
 import type { DynamicSegment } from '@/features/contacts/types/contact';
+import { SMS_COST_CONFIG, calculateSMSSegments } from '@/types/campaign.types';
+
+// Tarifs — alignés avec backend/src/common/billing.util.ts DEFAULT_COSTS
+const PRICE_PER_EMAIL = 2; // FCFA
+const PRICE_PER_WHATSAPP = 35; // FCFA
+
+function computeCampaignCost(channel: string, count: number, smsText: string): number {
+  const ch = (channel || '').toUpperCase();
+  if (ch === 'SMS') {
+    const parts = calculateSMSSegments(smsText);
+    return count * parts * SMS_COST_CONFIG.pricePerSms;
+  }
+  if (ch === 'EMAIL') return count * PRICE_PER_EMAIL;
+  if (ch === 'WHATSAPP') return count * PRICE_PER_WHATSAPP;
+  return count * PRICE_PER_EMAIL; // fallback
+}
 
 interface CampaignAudienceStepProps {
   onNext: () => void;
@@ -78,7 +94,11 @@ export const CampaignAudienceStep: FC<CampaignAudienceStepProps> = ({ onNext, on
   useEffect(() => {
     if (selectedSegment) {
       const count = contactCounts[selectedSegment.id] ?? selectedSegment.contactCount ?? 0;
-      const cost = count * 0.08; // SMS cost per recipient
+      const cost = computeCampaignCost(
+        draft.channel || 'EMAIL',
+        count,
+        draft.smsContent?.message || '',
+      );
       updateEstimates(count, cost);
     }
   }, [selectedSegment, contactCounts, updateEstimates]);

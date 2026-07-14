@@ -63,6 +63,19 @@ export const EmailEditor: FC = () => {
   const [focusedField, setFocusedField] = useState<'subject' | 'preheader' | 'block' | null>(null);
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+
+  // Galerie d'images de la campagne
+  interface CampaignImageRecord {
+    id: string;
+    fileName: string;
+    fileSize: number;
+    mimeType: string;
+    storageUrl: string;
+    uploadedAt: Date;
+  }
+  const [campaignImages, setCampaignImages] = useState<CampaignImageRecord[]>([]);
+  const [selectedImageIds, setSelectedImageIds] = useState<Set<string>>(new Set());
+  const [isDeletingImages, setIsDeletingImages] = useState(false);
   const [showHtmlImport, setShowHtmlImport] = useState(false);
   const [htmlImportValue, setHtmlImportValue] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -145,6 +158,50 @@ export const EmailEditor: FC = () => {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subjectB, preheaderB, blocksB]);
+
+  // Charge les images depuis le serveur quand la campagne est connue
+  const loadCampaignImages = async () => {
+    if (!campaignId) return;
+    try {
+      const response = await api.get<CampaignImageRecord[]>(`/campaigns/${campaignId}/images`);
+      setCampaignImages(response.data);
+    } catch {
+      // non-bloquant
+    }
+  };
+
+  useEffect(() => {
+    void loadCampaignImages();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [campaignId]);
+
+  const toggleImageSelection = (id: string) => {
+    setSelectedImageIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const deleteSelectedImages = async () => {
+    if (selectedImageIds.size === 0 || !campaignId) return;
+    setIsDeletingImages(true);
+    try {
+      await Promise.all(
+        Array.from(selectedImageIds).map((id) =>
+          api.delete(`/campaigns/${campaignId}/images/${id}`),
+        ),
+      );
+      setCampaignImages((prev) => prev.filter((img) => !selectedImageIds.has(img.id)));
+      setUploadedImages((prev) => prev.filter((img) => !selectedImageIds.has(img.id)));
+      setSelectedImageIds(new Set());
+    } catch {
+      alert('Erreur lors de la suppression des images');
+    } finally {
+      setIsDeletingImages(false);
+    }
+  };
 
   const handleSave = async () => {
     const content = {
@@ -329,6 +386,7 @@ export const EmailEditor: FC = () => {
       const uploadedImage = await imageUploadService.uploadImage(file, realCampaignId);
       setUploadedImages([...uploadedImages, uploadedImage]);
       onUploaded?.(uploadedImage);
+      void loadCampaignImages();
     } catch (error) {
       alert(
         "Erreur lors de l'upload: " + (error instanceof Error ? error.message : 'Erreur inconnue'),
@@ -1921,6 +1979,82 @@ export const EmailEditor: FC = () => {
             blocks: currentBlocks,
           }}
         />
+
+        {/* Bibliothèque d'images de la campagne */}
+        {campaignId && (
+          <div className="bg-surface-container-lowest rounded-2xl p-4 border border-outline-variant/10 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-label-sm font-bold uppercase tracking-widest text-on-surface-variant">
+                Images ({campaignImages.length})
+              </h3>
+              <div className="flex items-center gap-2">
+                {selectedImageIds.size > 0 && (
+                  <button
+                    onClick={() => void deleteSelectedImages()}
+                    disabled={isDeletingImages}
+                    className="flex items-center gap-1 px-3 py-1 bg-error text-white text-xs font-bold rounded-lg hover:bg-error/90 transition-colors disabled:opacity-50"
+                  >
+                    <span className="material-symbols-outlined text-sm">delete</span>
+                    {isDeletingImages ? 'Suppression...' : `Supprimer (${selectedImageIds.size})`}
+                  </button>
+                )}
+                <button
+                  onClick={() => void loadCampaignImages()}
+                  className="p-1.5 rounded-lg hover:bg-surface-container transition-colors text-on-surface-variant"
+                  title="Actualiser"
+                >
+                  <span className="material-symbols-outlined text-sm">refresh</span>
+                </button>
+              </div>
+            </div>
+
+            {campaignImages.length === 0 ? (
+              <p className="text-xs text-on-surface-variant text-center py-4">
+                Aucune image uploadée pour cette campagne
+              </p>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                {campaignImages.map((img) => {
+                  const isSelected = selectedImageIds.has(img.id);
+                  return (
+                    <div
+                      key={img.id}
+                      className={`relative rounded-lg overflow-hidden border-2 transition-all cursor-pointer ${
+                        isSelected
+                          ? 'border-primary shadow-md'
+                          : 'border-transparent hover:border-outline-variant'
+                      }`}
+                      onClick={() => toggleImageSelection(img.id)}
+                    >
+                      <img
+                        src={imageUploadService.resolveImageUrl(img.storageUrl)}
+                        alt={img.fileName}
+                        className="w-full h-16 object-cover"
+                      />
+                      {isSelected && (
+                        <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                          <span className="material-symbols-outlined text-white text-xs">
+                            check
+                          </span>
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors" />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {selectedImageIds.size > 0 && (
+              <button
+                onClick={() => setSelectedImageIds(new Set())}
+                className="w-full text-xs text-on-surface-variant hover:text-on-surface text-center py-1"
+              >
+                Tout désélectionner
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
