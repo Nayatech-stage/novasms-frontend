@@ -37,6 +37,15 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
   const [currentChunk, setCurrentChunk] = useState(0);
   const [totalChunks, setTotalChunks] = useState(0);
   const [processingJob, setProcessingJob] = useState(false);
+  const [liveStats, setLiveStats] = useState<{
+    current: number;
+    total: number;
+    percentage: number;
+    success: number;
+    duplicates: number;
+    errors: number;
+    invalidPhones: number;
+  } | null>(null);
 
   // Champs NovaSMS attendus
   const targetFields = [
@@ -59,6 +68,7 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
     setCurrentChunk(0);
     setTotalChunks(0);
     setProcessingJob(false);
+    setLiveStats(null);
     onClose();
   }, [onClose]);
 
@@ -196,6 +206,15 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
                 const statusRes = await api.get<{
                   success: boolean;
                   status: string;
+                  progress?: {
+                    current: number;
+                    total: number;
+                    percentage: number;
+                    success: number;
+                    duplicates: number;
+                    errors: number;
+                    invalidPhones: number;
+                  };
                   report?: {
                     totalRecords: number;
                     successCount: number;
@@ -205,6 +224,13 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
                 }>(`/contacts/import/${jobId}`, {
                   headers: { Authorization: `Bearer ${accessToken}` },
                 });
+
+                // Mettre à jour les stats temps réel si disponibles
+                if (statusRes.data.progress) {
+                  setLiveStats(statusRes.data.progress);
+                  const pct = statusRes.data.progress.percentage;
+                  if (pct > 0) setUploadProgress(Math.min(pct, 99));
+                }
 
                 if (statusRes.data.status === 'completed') {
                   clearInterval(interval);
@@ -428,7 +454,7 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
             )}
 
             {step === 'progress' && (
-              <div className="space-y-6">
+              <div className="space-y-5">
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-sm font-medium text-on-surface">
@@ -442,11 +468,46 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
                       style={{ width: `${uploadProgress}%` }}
                     />
                   </div>
+                  {liveStats && liveStats.total > 0 && (
+                    <p className="text-xs text-on-surface-variant mt-1 text-right">
+                      {liveStats.current.toLocaleString()} / {liveStats.total.toLocaleString()}{' '}
+                      contacts
+                    </p>
+                  )}
                 </div>
 
                 {!processingJob && totalChunks > 1 && (
                   <div className="text-sm text-on-surface-variant text-center">
                     Envoi chunk {currentChunk} / {totalChunks}
+                  </div>
+                )}
+
+                {liveStats && processingJob && (
+                  <div className="grid grid-cols-4 gap-3">
+                    <div className="p-3 rounded-xl bg-surface border border-outline-variant text-center">
+                      <p className="text-lg font-bold text-primary">
+                        {liveStats.success.toLocaleString()}
+                      </p>
+                      <p className="text-xs text-on-surface-variant">Importés</p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-surface border border-outline-variant text-center">
+                      <p className="text-lg font-bold text-warning">
+                        {liveStats.duplicates.toLocaleString()}
+                      </p>
+                      <p className="text-xs text-on-surface-variant">Doublons</p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-surface border border-outline-variant text-center">
+                      <p className="text-lg font-bold text-error">
+                        {liveStats.errors.toLocaleString()}
+                      </p>
+                      <p className="text-xs text-on-surface-variant">Erreurs</p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-surface border border-outline-variant text-center">
+                      <p className="text-lg font-bold text-on-surface-variant">
+                        {liveStats.invalidPhones.toLocaleString()}
+                      </p>
+                      <p className="text-xs text-on-surface-variant">N° invalides</p>
+                    </div>
                   </div>
                 )}
 
@@ -461,10 +522,10 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
                   </p>
                 </div>
 
-                {processingJob && (
+                {processingJob && !liveStats && (
                   <p className="text-xs text-on-surface-variant text-center">
-                    Les contacts sont en cours d&apos;insertion. Cette étape peut prendre quelques
-                    secondes pour 50 000 lignes.
+                    Les contacts sont en cours d&apos;insertion. Les statistiques s&apos;afficheront
+                    dès le premier batch traité.
                   </p>
                 )}
               </div>
