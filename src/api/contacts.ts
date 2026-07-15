@@ -91,6 +91,33 @@ export const contactsApi = {
   },
 
   /**
+   * Supprimer plusieurs contacts en une seule requête
+   * DELETE /api/contacts/bulk/delete
+   */
+  bulkDelete: async (ids: string[]) => {
+    const response = await api.delete<{ success: boolean; deleted: number }>(
+      '/contacts/bulk/delete',
+      { data: { ids } },
+    );
+    return response.data;
+  },
+
+  /**
+   * Valider un numéro de téléphone (libphonenumber-js, 245 pays)
+   * GET /api/contacts/validate-phone?phone=xxx
+   */
+  validatePhone: async (phone: string) => {
+    const response = await api.get<{
+      isValid: boolean;
+      status: 'VALID' | 'INVALID' | 'UNVERIFIED';
+      formatted: string | null;
+      country: string | null;
+      message: string | null;
+    }>(`/contacts/validate-phone?phone=${encodeURIComponent(phone)}`);
+    return response.data;
+  },
+
+  /**
    * Lancer un import CSV/XLS (EN-1645)
    * POST /api/contacts/import
    */

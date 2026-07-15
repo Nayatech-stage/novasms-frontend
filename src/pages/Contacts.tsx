@@ -1,6 +1,6 @@
-import { useState, type FormEvent } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, X } from 'lucide-react';
+import { Loader2, X, CheckCircle2, XCircle, HelpCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { contactsApi } from '@/api/contacts';
 import ContactTable from '@/features/contacts/components/ContactTable';
@@ -32,6 +32,11 @@ export default function ContactsPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
   const [contactDraft, setContactDraft] = useState<ContactDraft>(initialContactDraft);
+  const [phoneValidation, setPhoneValidation] = useState<{
+    status: 'VALID' | 'INVALID' | 'UNVERIFIED';
+    message: string | null;
+    formatted: string | null;
+  } | null>(null);
 
   const handleImportClick = () => setImportOpen(true);
   const handleImportClose = () => setImportOpen(false);
@@ -45,7 +50,26 @@ export default function ContactsPage() {
     setAddOpen(false);
     setAddError(null);
     setContactDraft(initialContactDraft);
+    setPhoneValidation(null);
   };
+
+  // Validation live du téléphone (debounce 600ms)
+  useEffect(() => {
+    const phone = contactDraft.phone.trim();
+    if (!phone) {
+      setPhoneValidation(null);
+      return;
+    }
+    const timer = setTimeout(() => {
+      contactsApi
+        .validatePhone(phone)
+        .then((r) =>
+          setPhoneValidation({ status: r.status, message: r.message, formatted: r.formatted }),
+        )
+        .catch(() => setPhoneValidation(null));
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [contactDraft.phone]);
 
   const handleImportComplete = () => {
     setRefreshKey((prev) => prev + 1);
@@ -74,20 +98,20 @@ export default function ContactsPage() {
     setAddError(null);
 
     try {
-        const created = await contactsApi.create({
-          firstName: firstName || undefined,
-          lastName: lastName || undefined,
-          email: email || undefined,
-          phone: phone || undefined,
-          location: location || undefined,
-          tags,
-        });
+      const created = await contactsApi.create({
+        firstName: firstName || undefined,
+        lastName: lastName || undefined,
+        email: email || undefined,
+        phone: phone || undefined,
+        location: location || undefined,
+        tags,
+      });
 
-        if ((created as any).alreadyExists) {
-          toast.success('Le contact existe déjà');
-        } else {
-          toast.success('Contact créé');
-        }
+      if ((created as any).alreadyExists) {
+        toast.success('Le contact existe déjà');
+      } else {
+        toast.success('Contact créé');
+      }
       setRefreshKey((prev) => prev + 1);
       closeAddModal();
     } catch (error) {
@@ -135,14 +159,19 @@ export default function ContactsPage() {
               </button>
             </div>
 
-            <form onSubmit={(event) => void handleCreateContact(event)} className="space-y-5 px-6 py-6">
+            <form
+              onSubmit={(event) => void handleCreateContact(event)}
+              className="space-y-5 px-6 py-6"
+            >
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="space-y-2 text-sm font-semibold text-secondary">
                   Prénom
                   <input
                     className="w-full rounded-2xl border border-outline-variant/40 bg-white px-4 py-3 text-sm text-secondary outline-none transition focus:border-primary"
                     value={contactDraft.firstName}
-                    onChange={(event) => setContactDraft((current) => ({ ...current, firstName: event.target.value }))}
+                    onChange={(event) =>
+                      setContactDraft((current) => ({ ...current, firstName: event.target.value }))
+                    }
                     placeholder="Moussa"
                   />
                 </label>
@@ -152,7 +181,9 @@ export default function ContactsPage() {
                   <input
                     className="w-full rounded-2xl border border-outline-variant/40 bg-white px-4 py-3 text-sm text-secondary outline-none transition focus:border-primary"
                     value={contactDraft.lastName}
-                    onChange={(event) => setContactDraft((current) => ({ ...current, lastName: event.target.value }))}
+                    onChange={(event) =>
+                      setContactDraft((current) => ({ ...current, lastName: event.target.value }))
+                    }
                     placeholder="Koné"
                   />
                 </label>
@@ -165,19 +196,50 @@ export default function ContactsPage() {
                     type="email"
                     className="w-full rounded-2xl border border-outline-variant/40 bg-white px-4 py-3 text-sm text-secondary outline-none transition focus:border-primary"
                     value={contactDraft.email}
-                    onChange={(event) => setContactDraft((current) => ({ ...current, email: event.target.value }))}
+                    onChange={(event) =>
+                      setContactDraft((current) => ({ ...current, email: event.target.value }))
+                    }
                     placeholder="moussa@example.com"
                   />
                 </label>
 
                 <label className="space-y-2 text-sm font-semibold text-secondary">
                   Téléphone
-                  <input
-                    className="w-full rounded-2xl border border-outline-variant/40 bg-white px-4 py-3 text-sm text-secondary outline-none transition focus:border-primary"
-                    value={contactDraft.phone}
-                    onChange={(event) => setContactDraft((current) => ({ ...current, phone: event.target.value }))}
-                    placeholder="+225 07 00 00 00 00"
-                  />
+                  <div className="relative">
+                    <input
+                      className={`w-full rounded-2xl border bg-white px-4 py-3 pr-10 text-sm text-secondary outline-none transition focus:border-primary ${
+                        phoneValidation?.status === 'VALID'
+                          ? 'border-success/60'
+                          : phoneValidation?.status === 'INVALID'
+                            ? 'border-error/60'
+                            : 'border-outline-variant/40'
+                      }`}
+                      value={contactDraft.phone}
+                      onChange={(event) =>
+                        setContactDraft((current) => ({ ...current, phone: event.target.value }))
+                      }
+                      placeholder="+225 07 00 00 00 00"
+                    />
+                    {phoneValidation && (
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2">
+                        {phoneValidation.status === 'VALID' ? (
+                          <CheckCircle2 className="h-4 w-4 text-success" />
+                        ) : phoneValidation.status === 'INVALID' ? (
+                          <XCircle className="h-4 w-4 text-error" />
+                        ) : (
+                          <HelpCircle className="h-4 w-4 text-on-surface-variant" />
+                        )}
+                      </span>
+                    )}
+                  </div>
+                  {phoneValidation?.status === 'VALID' && phoneValidation.formatted && (
+                    <p className="text-xs text-success mt-1">
+                      Numéro valide — {phoneValidation.formatted}
+                    </p>
+                  )}
+                  {phoneValidation?.status === 'INVALID' && phoneValidation.message && (
+                    <p className="text-xs text-error mt-1">{phoneValidation.message}</p>
+                  )}
                 </label>
               </div>
 
@@ -187,7 +249,9 @@ export default function ContactsPage() {
                   <input
                     className="w-full rounded-2xl border border-outline-variant/40 bg-white px-4 py-3 text-sm text-secondary outline-none transition focus:border-primary"
                     value={contactDraft.location}
-                    onChange={(event) => setContactDraft((current) => ({ ...current, location: event.target.value }))}
+                    onChange={(event) =>
+                      setContactDraft((current) => ({ ...current, location: event.target.value }))
+                    }
                     placeholder="Abidjan"
                   />
                 </label>
@@ -197,7 +261,9 @@ export default function ContactsPage() {
                   <input
                     className="w-full rounded-2xl border border-outline-variant/40 bg-white px-4 py-3 text-sm text-secondary outline-none transition focus:border-primary"
                     value={contactDraft.tags}
-                    onChange={(event) => setContactDraft((current) => ({ ...current, tags: event.target.value }))}
+                    onChange={(event) =>
+                      setContactDraft((current) => ({ ...current, tags: event.target.value }))
+                    }
                     placeholder="VIP, newsletter"
                   />
                 </label>

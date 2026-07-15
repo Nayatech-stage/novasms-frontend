@@ -435,15 +435,18 @@ export default function ContactTable({
 
   const deleteSelectedContacts = async () => {
     if (selectedContactIds.size === 0) return;
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer ${selectedContactIds.size} contact(s) ?`))
+    if (
+      !confirm(
+        `Supprimer ${selectedContactIds.size} contact${selectedContactIds.size > 1 ? 's' : ''} définitivement ?`,
+      )
+    )
       return;
 
     try {
       setIsDeleting(true);
-      for (const id of selectedContactIds) {
-        await contactsApi.delete(id);
-      }
+      await contactsApi.bulkDelete([...selectedContactIds]);
       setContacts((prev) => prev.filter((c) => !selectedContactIds.has(c.id)));
+      setTotal((prev) => prev - selectedContactIds.size);
       setSelectedContactIds(new Set());
     } catch (error) {
       console.error('Failed to delete contacts:', error);
@@ -668,6 +671,21 @@ export default function ContactTable({
               ? `${selectedContactIds.size} sélectionné${selectedContactIds.size > 1 ? 's' : ''}`
               : 'Sélectionner'}
           </button>
+
+          {selectedContactIds.size > 0 && (
+            <button
+              onClick={() => void deleteSelectedContacts()}
+              disabled={isDeleting}
+              className="px-4 py-2 bg-error text-white text-sm font-medium rounded-lg hover:bg-error/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {isDeleting ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Trash2 className="w-4 h-4" />
+              )}
+              Supprimer ({selectedContactIds.size})
+            </button>
+          )}
         </div>
 
         {/* Search */}
