@@ -1298,6 +1298,7 @@ export default function Automations() {
                       void campaignApi
                         .list({
                           channel: campaignChannel,
+                          status: 'AUTOMATION',
                           page: 1,
                           limit: 100,
                         })
