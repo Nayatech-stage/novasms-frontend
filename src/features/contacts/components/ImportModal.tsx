@@ -374,7 +374,7 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
                   </label>
                 </div>
                 {error && (
-                  <div className="flex items-center gap-2 text-sm text-error">
+                  <div className="flex items-center gap-2 text-sm text-red-600">
                     <AlertCircle className="w-4 h-4" />
                     {error}
                   </div>
@@ -392,7 +392,7 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
                   {targetFields.map((field) => (
                     <div key={field.key} className="flex items-center gap-4">
                       <label className="w-32 text-sm font-medium text-on-surface">
-                        {field.label} {field.required && <span className="text-error">*</span>}
+                        {field.label} {field.required && <span className="text-red-600">*</span>}
                       </label>
                       <select
                         value={mapping[field.key] || ''}
@@ -445,7 +445,7 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
                 </div>
 
                 {error && (
-                  <div className="flex items-center gap-2 text-sm text-error">
+                  <div className="flex items-center gap-2 text-sm text-red-600">
                     <AlertCircle className="w-4 h-4" />
                     {error}
                   </div>
@@ -497,7 +497,7 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
                       <p className="text-xs text-on-surface-variant">Doublons</p>
                     </div>
                     <div className="p-3 rounded-xl bg-surface border border-outline-variant text-center">
-                      <p className="text-lg font-bold text-error">
+                      <p className="text-lg font-bold text-red-600">
                         {liveStats.errors.toLocaleString()}
                       </p>
                       <p className="text-xs text-on-surface-variant">Erreurs</p>
@@ -555,7 +555,7 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
                     <p className="text-sm text-on-surface-variant">Total importés</p>
                   </div>
                   <div className="p-4 rounded-xl bg-surface border border-outline-variant">
-                    <p className="text-2xl font-bold text-success">{report.successCount}</p>
+                    <p className="text-2xl font-bold text-green-600">{report.successCount}</p>
                     <p className="text-sm text-on-surface-variant">Créés</p>
                   </div>
                   <div className="p-4 rounded-xl bg-surface border border-outline-variant">
@@ -563,7 +563,7 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
                     <p className="text-sm text-on-surface-variant">Doublons</p>
                   </div>
                   <div className="p-4 rounded-xl bg-surface border border-outline-variant">
-                    <p className="text-2xl font-bold text-error">{report.errorCount}</p>
+                    <p className="text-2xl font-bold text-red-600">{report.errorCount}</p>
                     <p className="text-sm text-on-surface-variant">Erreurs</p>
                   </div>
                 </div>

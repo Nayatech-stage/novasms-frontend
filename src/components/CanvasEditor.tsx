@@ -920,7 +920,7 @@ export default function CanvasEditor({
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-on-surface-variant">Convertis</span>
-                  <strong className="text-success">{workflowMetrics.sent}</strong>
+                  <strong className="text-green-600">{workflowMetrics.sent}</strong>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-on-surface-variant">Taux conversion</span>

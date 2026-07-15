@@ -11,6 +11,8 @@ export type Contact = {
   location?: string;
   lastPurchaseDate?: string;
   engagementScore?: number;
+  birthday?: string | null;
+  phoneStatus?: 'VALID' | 'INVALID' | 'UNVERIFIED';
 };
 
 export type ImportMapping = Record<string, string>;

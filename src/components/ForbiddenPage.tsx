@@ -10,8 +10,8 @@ export default function ForbiddenPage() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 text-center px-4">
-      <div className="w-16 h-16 rounded-full bg-error/10 flex items-center justify-center">
-        <span className="material-symbols-outlined text-error" style={{ fontSize: 36 }}>
+      <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center">
+        <span className="material-symbols-outlined text-red-600" style={{ fontSize: 36 }}>
           lock
         </span>
       </div>

@@ -43,6 +43,7 @@ export default function ContactDetail() {
     phone: '',
     location: '',
     tags: '',
+    birthday: '',
   });
   const [noteValue, setNoteValue] = useState('');
   const [savingNote, setSavingNote] = useState(false);
@@ -116,6 +117,7 @@ export default function ContactDetail() {
       phone: contact.phone || '',
       location: contact.location || '',
       tags: Array.isArray(contact.tags) ? (contact.tags as string[]).join(', ') : '',
+      birthday: contact.birthday ? contact.birthday.slice(0, 10) : '',
     });
     setIsEditing(true);
   };
@@ -136,6 +138,7 @@ export default function ContactDetail() {
         email: formValues.email.trim() || undefined,
         phone: formValues.phone.trim() || undefined,
         location: formValues.location.trim() || undefined,
+        birthday: formValues.birthday || null,
         tags: tags.length > 0 ? tags : undefined,
       });
       await refresh();
@@ -369,6 +372,26 @@ export default function ContactDetail() {
                     onChange={(e) => setFormValues((prev) => ({ ...prev, [key]: e.target.value }))}
                   />
                 ))}
+                <div>
+                  <label
+                    style={{
+                      fontSize: 11,
+                      color: 'var(--text-2)',
+                      marginBottom: 4,
+                      display: 'block',
+                    }}
+                  >
+                    Date de naissance
+                  </label>
+                  <input
+                    type="date"
+                    className="form-input"
+                    value={formValues.birthday}
+                    onChange={(e) =>
+                      setFormValues((prev) => ({ ...prev, birthday: e.target.value }))
+                    }
+                  />
+                </div>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -376,6 +399,15 @@ export default function ContactDetail() {
                   { label: 'Email', value: contact.email },
                   { label: 'Telephone', value: contact.phone },
                   { label: 'Localisation', value: contact.location },
+                  {
+                    label: 'Anniversaire',
+                    value: contact.birthday
+                      ? new Date(contact.birthday).toLocaleDateString('fr-FR', {
+                          day: '2-digit',
+                          month: 'long',
+                        })
+                      : null,
+                  },
                 ].map(({ label, value }) => (
                   <div key={label} style={{ display: 'flex', gap: 8, fontSize: 13 }}>
                     <span style={{ color: 'var(--text-2)', minWidth: 90 }}>{label}</span>

@@ -36,7 +36,7 @@ export default function WelcomeChecklist() {
           >
             <div className="flex-shrink-0">
               {item.completed ? (
-                <CheckCircle2 className="w-6 h-6 text-success" />
+                <CheckCircle2 className="w-6 h-6 text-green-600" />
               ) : (
                 <Circle className="w-6 h-6 text-on-surface-variant" />
               )}
@@ -45,16 +45,12 @@ export default function WelcomeChecklist() {
             <div className="flex-1">
               <p
                 className={`font-semibold ${
-                  item.completed
-                    ? 'text-on-surface line-through opacity-75'
-                    : 'text-on-surface'
+                  item.completed ? 'text-on-surface line-through opacity-75' : 'text-on-surface'
                 }`}
               >
                 {item.label}
               </p>
-              <p className="text-sm text-on-surface-variant">
-                {item.description}
-              </p>
+              <p className="text-sm text-on-surface-variant">{item.description}</p>
             </div>
 
             <span className="text-2xl">{item.icon}</span>
@@ -63,8 +59,8 @@ export default function WelcomeChecklist() {
       </div>
 
       {completionPercentage === 100 && (
-        <div className="mt-6 p-4 bg-success/10 border border-success/30 rounded-lg text-center">
-          <p className="text-success font-semibold">
+        <div className="mt-6 p-4 bg-green-50 border border-green-300 rounded-lg text-center">
+          <p className="text-green-600 font-semibold">
             🎉 Félicitations! Votre onboarding est complet
           </p>
           <p className="text-sm text-on-surface-variant mt-1">

@@ -13,6 +13,7 @@ type ContactDraft = {
   phone: string;
   location: string;
   tags: string;
+  birthday: string;
 };
 
 const initialContactDraft: ContactDraft = {
@@ -22,6 +23,7 @@ const initialContactDraft: ContactDraft = {
   phone: '',
   location: '',
   tags: '',
+  birthday: '',
 };
 
 export default function ContactsPage() {
@@ -84,6 +86,7 @@ export default function ContactsPage() {
     const email = contactDraft.email.trim();
     const phone = contactDraft.phone.trim();
     const location = contactDraft.location.trim();
+    const birthday = contactDraft.birthday.trim();
     const tags = contactDraft.tags
       .split(/[,;|]/)
       .map((tag) => tag.trim())
@@ -104,6 +107,7 @@ export default function ContactsPage() {
         email: email || undefined,
         phone: phone || undefined,
         location: location || undefined,
+        birthday: birthday || undefined,
         tags,
       });
 
@@ -209,9 +213,9 @@ export default function ContactsPage() {
                     <input
                       className={`w-full rounded-2xl border bg-white px-4 py-3 pr-10 text-sm text-secondary outline-none transition focus:border-primary ${
                         phoneValidation?.status === 'VALID'
-                          ? 'border-success/60'
+                          ? 'border-green-400'
                           : phoneValidation?.status === 'INVALID'
-                            ? 'border-error/60'
+                            ? 'border-red-400'
                             : 'border-outline-variant/40'
                       }`}
                       value={contactDraft.phone}
@@ -223,9 +227,9 @@ export default function ContactsPage() {
                     {phoneValidation && (
                       <span className="absolute right-3 top-1/2 -translate-y-1/2">
                         {phoneValidation.status === 'VALID' ? (
-                          <CheckCircle2 className="h-4 w-4 text-success" />
+                          <CheckCircle2 className="h-4 w-4 text-green-600" />
                         ) : phoneValidation.status === 'INVALID' ? (
-                          <XCircle className="h-4 w-4 text-error" />
+                          <XCircle className="h-4 w-4 text-red-600" />
                         ) : (
                           <HelpCircle className="h-4 w-4 text-on-surface-variant" />
                         )}
@@ -233,12 +237,12 @@ export default function ContactsPage() {
                     )}
                   </div>
                   {phoneValidation?.status === 'VALID' && phoneValidation.formatted && (
-                    <p className="text-xs text-success mt-1">
+                    <p className="text-xs text-green-600 mt-1">
                       Numéro valide — {phoneValidation.formatted}
                     </p>
                   )}
                   {phoneValidation?.status === 'INVALID' && phoneValidation.message && (
-                    <p className="text-xs text-error mt-1">{phoneValidation.message}</p>
+                    <p className="text-xs text-red-600 mt-1">{phoneValidation.message}</p>
                   )}
                 </label>
               </div>
@@ -269,8 +273,23 @@ export default function ContactsPage() {
                 </label>
               </div>
 
+              <label className="space-y-2 text-sm font-semibold text-secondary">
+                Date de naissance
+                <input
+                  type="date"
+                  className="w-full rounded-2xl border border-outline-variant/40 bg-white px-4 py-3 text-sm text-secondary outline-none transition focus:border-primary"
+                  value={contactDraft.birthday}
+                  onChange={(event) =>
+                    setContactDraft((current) => ({ ...current, birthday: event.target.value }))
+                  }
+                />
+                <span className="text-xs font-normal text-on-surface-variant">
+                  Utilisée pour l'automatisation d'anniversaire
+                </span>
+              </label>
+
               {addError ? (
-                <p className="rounded-2xl border border-error/20 bg-error/5 px-4 py-3 text-sm text-error">
+                <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
                   {addError}
                 </p>
               ) : null}

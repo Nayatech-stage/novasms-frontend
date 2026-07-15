@@ -23,7 +23,8 @@ type DraftAutomation = {
     | 'tag_added'
     | 'campaign_opened'
     | 'link_clicked'
-    | 'date_based';
+    | 'date_based'
+    | 'birthday';
   delaySeconds: string;
   delayPreset: '0' | '300' | '1800' | '3600' | '86400' | 'custom';
   channel: 'Email' | 'SMS' | 'WhatsApp';
@@ -33,6 +34,7 @@ type DraftAutomation = {
     runAt: string;
     segmentId: string;
     contactId: string;
+    daysOffset: string;
   };
   status: 'Active' | 'Inactive' | 'Draft';
 };
@@ -57,6 +59,7 @@ const initialDraft: DraftAutomation = {
     runAt: '',
     segmentId: '',
     contactId: '',
+    daysOffset: '0',
   },
   status: 'Active',
 };
@@ -65,7 +68,7 @@ const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
   {
     key: 'welcome',
     label: 'Bienvenue',
-    description: 'Accueille automatiquement un nouveau contact avec un message d’introduction.',
+    description: "Accueille automatiquement un nouveau contact avec un message d'introduction.",
     draft: {
       name: 'Bienvenue après inscription',
       trigger: 'contact_added',
@@ -78,6 +81,7 @@ const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
         runAt: '',
         segmentId: '',
         contactId: '',
+        daysOffset: '0',
       },
       status: 'Active',
     },
@@ -132,6 +136,7 @@ const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
         runAt: '',
         segmentId: '',
         contactId: '',
+        daysOffset: '0',
       },
       status: 'Active',
     },
@@ -180,7 +185,7 @@ const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
   {
     key: 'qualification',
     label: 'Qualification',
-    description: 'Vérifie un tag puis branche la séquence selon l’ouverture de la campagne.',
+    description: "Vérifie un tag puis branche la séquence selon l'ouverture de la campagne.",
     draft: {
       name: 'Qualification pipeline',
       trigger: 'contact_added',
@@ -193,6 +198,7 @@ const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
         runAt: '',
         segmentId: '',
         contactId: '',
+        daysOffset: '0',
       },
       status: 'Draft',
     },
@@ -268,7 +274,8 @@ function triggerLabel(trigger: DraftAutomation['trigger']) {
     tag_added: 'Tag ajouté au contact',
     campaign_opened: 'Ouverture de campagne',
     link_clicked: 'Clic sur un lien',
-    date_based: 'Date ou anniversaire planifié',
+    date_based: 'Date planifiée',
+    birthday: 'Anniversaire du contact',
   };
 
   return labels[trigger] ?? trigger;
@@ -334,19 +341,17 @@ function toDateTimeLocalValue(value: string) {
 
 function buildTriggerConfigPayload(draft: DraftAutomation) {
   const triggerConfig: Record<string, unknown> = {};
-  if (draft.trigger === 'date_based') {
+
+  if (draft.trigger === 'birthday') {
+    triggerConfig.daysOffset = Number(draft.triggerConfig.daysOffset) || 0;
+    if (draft.triggerConfig.segmentId) triggerConfig.segmentId = draft.triggerConfig.segmentId;
+  } else if (draft.trigger === 'date_based') {
     if (draft.triggerConfig.runAt) {
       const runAt = new Date(draft.triggerConfig.runAt);
-      if (!Number.isNaN(runAt.getTime())) {
-        triggerConfig.runAt = runAt.toISOString();
-      }
+      if (!Number.isNaN(runAt.getTime())) triggerConfig.runAt = runAt.toISOString();
     }
-    if (draft.triggerConfig.segmentId) {
-      triggerConfig.segmentId = draft.triggerConfig.segmentId;
-    }
-    if (draft.triggerConfig.contactId) {
-      triggerConfig.contactId = draft.triggerConfig.contactId;
-    }
+    if (draft.triggerConfig.segmentId) triggerConfig.segmentId = draft.triggerConfig.segmentId;
+    if (draft.triggerConfig.contactId) triggerConfig.contactId = draft.triggerConfig.contactId;
   }
 
   return Object.keys(triggerConfig).length > 0 ? triggerConfig : undefined;
@@ -604,6 +609,10 @@ export default function Automations() {
       return;
     }
 
+    const cfg = selectedAutomation.triggerConfig as Record<string, unknown> | null | undefined;
+    const savedDaysOffset =
+      cfg && typeof cfg.daysOffset === 'number' ? String(cfg.daysOffset) : '0';
+
     setDraft({
       name: selectedAutomation.name,
       trigger: selectedAutomation.trigger,
@@ -618,6 +627,7 @@ export default function Automations() {
         ),
         segmentId: getTriggerConfigValue(selectedAutomation.triggerConfig, 'segmentId'),
         contactId: getTriggerConfigValue(selectedAutomation.triggerConfig, 'contactId'),
+        daysOffset: savedDaysOffset,
       },
       status: selectedAutomation.status,
     });
@@ -996,14 +1006,14 @@ export default function Automations() {
                 type="button"
                 onClick={() => {
                   if (!selectedAutomation) {
-                    toast.error('Créez ou sélectionnez d’abord un workflow pour ouvrir l’éditeur');
+                    toast.error("Créez ou sélectionnez d'abord un workflow pour ouvrir l'éditeur");
                     return;
                   }
                   setEditorOpen(true);
                 }}
                 className="rounded-lg border border-outline-variant/40 bg-white px-4 py-2 text-sm font-semibold text-secondary transition hover:border-primary/40 hover:text-primary"
               >
-                Ouvrir l’éditeur visuel
+                Ouvrir l'éditeur visuel
               </button>
               <button
                 type="button"
@@ -1045,7 +1055,7 @@ export default function Automations() {
                   }}
                   className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800 transition hover:bg-amber-100"
                 >
-                  Annuler l’édition
+                  Annuler l'édition
                 </button>
               )}
             </div>
@@ -1091,14 +1101,91 @@ export default function Automations() {
                   <option value="tag_added">Tag ajouté au contact</option>
                   <option value="campaign_opened">Ouverture de campagne</option>
                   <option value="link_clicked">Clic sur un lien</option>
-                  <option value="date_based">Date ou anniversaire planifié</option>
+                  <option value="birthday">Anniversaire du contact</option>
+                  <option value="date_based">Date planifiée (ponctuelle)</option>
                 </select>
               </div>
+
+              {draft.trigger === 'birthday' && (
+                <div className="space-y-3 rounded-xl border border-amber-200 bg-amber-50 p-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-900">
+                    Anniversaire automatique
+                  </p>
+                  <p className="text-[11px] text-amber-800">
+                    Le système envoie automatiquement un message à chaque contact dont la date de
+                    naissance est enregistrée. Aucune date de déclenchement à configurer.
+                  </p>
+
+                  <div className="space-y-1">
+                    <label
+                      className="text-xs font-semibold text-secondary"
+                      htmlFor="automation-days-offset"
+                    >
+                      Envoi
+                    </label>
+                    <select
+                      id="automation-days-offset"
+                      className="w-full rounded-lg border border-outline-variant/40 px-3 py-2 text-sm text-secondary outline-none transition focus:border-primary"
+                      value={draft.triggerConfig.daysOffset}
+                      onChange={(event) =>
+                        setDraft((current) => ({
+                          ...current,
+                          triggerConfig: {
+                            ...current.triggerConfig,
+                            daysOffset: event.target.value,
+                          },
+                        }))
+                      }
+                    >
+                      <option value="-7">7 jours avant l'anniversaire</option>
+                      <option value="-3">3 jours avant l'anniversaire</option>
+                      <option value="-1">La veille de l'anniversaire</option>
+                      <option value="0">Le jour de l'anniversaire</option>
+                      <option value="1">Le lendemain de l'anniversaire</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label
+                      className="text-xs font-semibold text-secondary"
+                      htmlFor="automation-birthday-segment"
+                    >
+                      Segment cible (optionnel)
+                    </label>
+                    <select
+                      id="automation-birthday-segment"
+                      disabled={segmentsLoading}
+                      className="w-full rounded-lg border border-outline-variant/40 px-3 py-2 text-sm text-secondary outline-none transition focus:border-primary disabled:opacity-60"
+                      value={draft.triggerConfig.segmentId}
+                      onChange={(event) =>
+                        setDraft((current) => ({
+                          ...current,
+                          triggerConfig: {
+                            ...current.triggerConfig,
+                            segmentId: event.target.value,
+                          },
+                        }))
+                      }
+                    >
+                      <option value="">
+                        {segmentsLoading
+                          ? 'Chargement...'
+                          : 'Tous les contacts avec une date de naissance'}
+                      </option>
+                      {segments.map((segment) => (
+                        <option key={segment.id} value={segment.id}>
+                          {segment.name || segment.id}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
 
               {draft.trigger === 'date_based' && (
                 <div className="space-y-3 rounded-xl border border-primary/10 bg-primary/5 p-3">
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">
-                    Programmation date_based
+                    Date planifiée (ponctuelle)
                   </p>
 
                   <div className="space-y-1">
@@ -1116,10 +1203,7 @@ export default function Automations() {
                       onChange={(event) =>
                         setDraft((current) => ({
                           ...current,
-                          triggerConfig: {
-                            ...current.triggerConfig,
-                            runAt: event.target.value,
-                          },
+                          triggerConfig: { ...current.triggerConfig, runAt: event.target.value },
                         }))
                       }
                     />
@@ -1153,11 +1237,6 @@ export default function Automations() {
                         </option>
                       ))}
                     </select>
-                    <p className="text-[11px] text-on-surface-variant">
-                      {segmentsLoading
-                        ? 'Chargement des segments...'
-                        : 'Associe l’automatisation à un segment précis.'}
-                    </p>
                   </div>
 
                   <div className="space-y-1">
@@ -1197,7 +1276,7 @@ export default function Automations() {
                     <p className="text-[11px] text-on-surface-variant">
                       {contactsLoading
                         ? 'Chargement des contacts...'
-                        : 'Laissez vide si le déclenchement doit viser le segment ou la campagne liée.'}
+                        : 'Laissez vide pour cibler le segment lié.'}
                     </p>
                   </div>
                 </div>
@@ -1420,14 +1499,14 @@ export default function Automations() {
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 text-lime-600" />
-                  Compteur d’envois et activation sans perte de configuration
+                  Compteur d'envois et activation sans perte de configuration
                 </li>
               </ul>
             </div>
 
             <div className="mt-4 rounded-lg border border-outline-variant/30 bg-white p-3">
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">
-                Modèles prêts à l’emploi
+                Modèles prêts à l'emploi
               </p>
               <div className="mt-3 space-y-2">
                 {WORKFLOW_TEMPLATES.map((template) => (
@@ -1472,7 +1551,7 @@ export default function Automations() {
               setEditorOpen(false);
             } catch (err) {
               console.error(err);
-              toast.error('Impossible d’enregistrer le workflow');
+              toast.error("Impossible d'enregistrer le workflow");
             } finally {
               setSaving(false);
             }

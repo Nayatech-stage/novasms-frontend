@@ -335,9 +335,9 @@ export const CampaignWizard: FC = () => {
         </div>
 
         <div className="flex items-center gap-4">
-          {error && <div className="text-error text-sm font-medium">{error}</div>}
+          {error && <div className="text-red-600 text-sm font-medium">{error}</div>}
           {draftSaved && (
-            <div className="flex items-center gap-2 text-success text-sm font-medium">
+            <div className="flex items-center gap-2 text-green-600 text-sm font-medium">
               <span className="material-symbols-outlined text-lg">check_circle</span>
               Brouillon sauvegardé
             </div>
@@ -353,7 +353,7 @@ export const CampaignWizard: FC = () => {
           <button
             onClick={() => setConfirmDiscard(true)}
             disabled={isLoading}
-            className="px-4 py-2 text-on-surface-variant hover:text-error transition-colors disabled:opacity-50"
+            className="px-4 py-2 text-on-surface-variant hover:text-red-600 transition-colors disabled:opacity-50"
           >
             Abandonner
           </button>
@@ -367,7 +367,7 @@ export const CampaignWizard: FC = () => {
       {confirmDiscard && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-surface-container-lowest rounded-xl p-8 max-w-sm w-full mx-4 space-y-6">
-            <div className="flex items-center gap-4 text-error">
+            <div className="flex items-center gap-4 text-red-600">
               <span className="material-symbols-outlined text-4xl">warning</span>
               <h3 className="font-headline font-bold text-lg">Abandonner la campagne ?</h3>
             </div>
@@ -390,7 +390,7 @@ export const CampaignWizard: FC = () => {
               </button>
               <button
                 onClick={handleDiscard}
-                className="w-full py-3 text-error font-semibold hover:bg-error-container/20 rounded-lg transition-colors"
+                className="w-full py-3 text-red-600 font-semibold hover:bg-error-container/20 rounded-lg transition-colors"
               >
                 Quitter sans sauvegarder
               </button>

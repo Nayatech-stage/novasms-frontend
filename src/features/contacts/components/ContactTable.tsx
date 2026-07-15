@@ -91,7 +91,7 @@ function SegmentDetail({
           <button
             type="button"
             onClick={() => onRemove(segment)}
-            className="rounded-md border border-error/30 px-2.5 py-1 text-xs font-semibold text-error hover:bg-error/10"
+            className="rounded-md border border-red-300 px-2.5 py-1 text-xs font-semibold text-red-600 hover:bg-red-50"
           >
             Supprimer
           </button>
@@ -675,7 +675,7 @@ export default function ContactTable({
           <button
             onClick={() => void deleteSelectedContacts()}
             disabled={selectedContactIds.size === 0 || isDeleting}
-            className="px-4 py-2 bg-error text-white text-sm font-medium rounded-lg hover:bg-error/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {isDeleting ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -920,7 +920,7 @@ export default function ContactTable({
                   correspondent
                 </p>
               </div>
-              {segmentError ? <p className="text-sm text-error mt-2">{segmentError}</p> : null}
+              {segmentError ? <p className="text-sm text-red-600 mt-2">{segmentError}</p> : null}
               {segments.length > 0 ? (
                 <div className="mt-4 space-y-3">
                   <p className="text-xs text-on-surface-variant">Contacts par segment</p>
@@ -1097,7 +1097,7 @@ export default function ContactTable({
                   >
                     <span
                       className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${
-                        contact.optOut ? 'text-error bg-error/10' : 'text-success bg-success/10'
+                        contact.optOut ? 'text-red-600 bg-red-50' : 'text-green-600 bg-green-50'
                       }`}
                     >
                       {contact.optOut ? (
@@ -1136,7 +1136,7 @@ export default function ContactTable({
                             role="menuitem"
                             onClick={() => deleteContact(contact.id)}
                             disabled={isDeleting}
-                            className="w-full text-left px-4 py-2 text-sm text-error hover:bg-error/10 rounded-t-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-t-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             Supprimer ce contact
                           </button>
@@ -1221,7 +1221,7 @@ export default function ContactTable({
             <button
               onClick={deleteSelectedContacts}
               disabled={isDeleting}
-              className="flex items-center gap-2 px-4 py-2 bg-error text-white text-sm font-medium rounded-xl hover:bg-error/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isDeleting ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
