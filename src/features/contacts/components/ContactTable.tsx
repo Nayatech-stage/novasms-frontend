@@ -672,20 +672,18 @@ export default function ContactTable({
               : 'Sélectionner'}
           </button>
 
-          {selectedContactIds.size > 0 && (
-            <button
-              onClick={() => void deleteSelectedContacts()}
-              disabled={isDeleting}
-              className="px-4 py-2 bg-error text-white text-sm font-medium rounded-lg hover:bg-error/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              {isDeleting ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Trash2 className="w-4 h-4" />
-              )}
-              Supprimer ({selectedContactIds.size})
-            </button>
-          )}
+          <button
+            onClick={() => void deleteSelectedContacts()}
+            disabled={selectedContactIds.size === 0 || isDeleting}
+            className="px-4 py-2 bg-error text-white text-sm font-medium rounded-lg hover:bg-error/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {isDeleting ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Trash2 className="w-4 h-4" />
+            )}
+            {selectedContactIds.size > 0 ? `Supprimer (${selectedContactIds.size})` : 'Supprimer'}
+          </button>
         </div>
 
         {/* Search */}
