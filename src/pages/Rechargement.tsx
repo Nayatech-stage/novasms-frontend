@@ -7,17 +7,16 @@ import {
   OrangeMoneyIcon,
   MomoIcon,
   MoovIcon,
-  NovaSendIcon,
   VisaIcon,
   StripeIcon,
 } from '@/components/provider-icons';
 
-type Operator = 'WAVE' | 'ORANGE' | 'MOMO' | 'MOOV' | 'NOVASEND';
+type Operator = 'WAVE' | 'ORANGE' | 'MOMO' | 'MOOV';
 type PayTab = 'mobile' | 'visa';
 type ReceiptKind = 'mobile' | 'visa';
 
 const OPERATOR_RULES: Record<
-  Exclude<Operator, 'NOVASEND'>,
+  Operator,
   { min: number; max: number; prefixes: string[]; hint: string }
 > = {
   WAVE: {
@@ -56,7 +55,6 @@ const OPERATORS: {
   { id: 'ORANGE', label: 'Orange Money', sub: 'CI · Mali · Sénégal', Icon: OrangeMoneyIcon },
   { id: 'MOMO', label: 'MTN MoMo', sub: 'CI · Ghana · Cameroun', Icon: MomoIcon },
   { id: 'MOOV', label: 'Moov Money', sub: 'CI · Bénin · Togo', Icon: MoovIcon },
-  { id: 'NOVASEND', label: 'NovaSend', sub: "Afrique de l'Ouest", Icon: NovaSendIcon },
 ];
 
 const AMOUNTS = [5_000, 10_000, 25_000, 50_000];
@@ -97,7 +95,7 @@ export default function Rechargement() {
 
   // ── Inline validation ───────────────────────────────────────────────────────
   const phoneDigits = phone.replace(/\D/g, '');
-  const rules = OPERATOR_RULES[operator as Exclude<Operator, 'NOVASEND'>] ?? null;
+  const rules = OPERATOR_RULES[operator];
 
   const phoneError: string | null = (() => {
     if (!phoneDigits) return null;
@@ -192,33 +190,53 @@ export default function Rechargement() {
     setLoading(true);
     try {
       if (tab === 'mobile') {
-        const initiateRes = await api.post('/mobile-money/initiate', {
-          operator,
-          phoneNumber: `+225${phone.replace(/\D/g, '')}`,
-          amount: paid,
-          currency: 'XOF',
-          country: 'CI',
-          description: 'Recharge crédit NovaSMS',
-          ...(operator === 'ORANGE' ? { otp: otp.join('') } : {}),
-        });
+        let txId: string | null = null;
+        let pUrl: string | null = null;
 
-        const initiateData = initiateRes.data as {
-          transactionId?: string;
-          transaction?: { id?: string };
-          paymentUrl?: string;
-        };
-        const txId = initiateData?.transactionId ?? initiateData?.transaction?.id ?? null;
+        if (operator === 'ORANGE') {
+          // Direct payin avec OTP — uniquement Orange Money
+          const initiateRes = await api.post('/mobile-money/initiate', {
+            operator,
+            phoneNumber: `+225${phone.replace(/\D/g, '')}`,
+            amount: paid,
+            currency: 'XOF',
+            country: 'CI',
+            otp: otp.join(''),
+          });
+          const d = initiateRes.data as {
+            transactionId?: string;
+            transaction?: { id?: string };
+            paymentUrl?: string;
+          };
+          txId = d?.transactionId ?? d?.transaction?.id ?? null;
+          pUrl = d.paymentUrl ?? null;
+        } else {
+          // Session universelle pour WAVE, MOMO, MOOV
+          // NovaSend détecte l'opérateur depuis le numéro et retourne un paymentUrl
+          const sessionRes = await api.post('/mobile-money/session', {
+            phoneNumber: `+225${phone.replace(/\D/g, '')}`,
+            amount: paid,
+            currency: 'XOF',
+            country: 'CI',
+          });
+          const d = sessionRes.data as {
+            transactionId?: string;
+            paymentUrl?: string;
+          };
+          txId = d?.transactionId ?? null;
+          pUrl = d.paymentUrl ?? null;
+        }
+
         if (!txId) throw new Error('Transaction introuvable — réessayez');
 
-        const pUrl = initiateData.paymentUrl ?? null;
-        if (operator === 'WAVE' && pUrl) {
+        if (pUrl) {
           window.open(pUrl, '_blank', 'noopener,noreferrer');
         }
 
         setPendingTxId(txId);
         setPendingAmount(paid);
         setPendingOperator(operator);
-        setWavePaymentUrl(operator === 'WAVE' ? pUrl : null);
+        setWavePaymentUrl(pUrl);
         setWaitingPayment(true);
         startPolling(txId, paid);
       } else {
@@ -284,7 +302,7 @@ export default function Rechargement() {
   useEffect(() => () => stopPolling(), []); // cleanup on unmount
 
   const OPERATOR_WAIT: Record<
-    Exclude<Operator, 'NOVASEND'>,
+    Operator,
     { label: string; instruction: string | null; ussd: string | null }
   > = {
     WAVE: {
@@ -308,7 +326,7 @@ export default function Rechargement() {
       ussd: '*155#',
     },
   };
-  const waitInfo = OPERATOR_WAIT[pendingOperator as Exclude<Operator, 'NOVASEND'>] ?? null;
+  const waitInfo = OPERATOR_WAIT[pendingOperator] ?? null;
 
   // ── Écran d'attente paiement ───────────────────────────────────────────────
   if (waitingPayment) {
