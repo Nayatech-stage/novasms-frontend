@@ -61,6 +61,8 @@ export const EmailEditor: FC = () => {
 
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
   const [focusedField, setFocusedField] = useState<'subject' | 'preheader' | 'block' | null>(null);
+  const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
+  const [dragOverBlockId, setDragOverBlockId] = useState<string | null>(null);
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
 
@@ -289,6 +291,36 @@ export const EmailEditor: FC = () => {
   const handleRemoveBlock = (id: string) => {
     setCurrentBlocks(currentBlocks.filter((b) => b.id !== id));
     setSelectedBlockId(null);
+  };
+
+  const handleDragStart = (e: React.DragEvent, blockId: string) => {
+    setDraggedBlockId(blockId);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent, blockId: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (blockId !== draggedBlockId) setDragOverBlockId(blockId);
+  };
+
+  const handleDrop = (e: React.DragEvent, targetBlockId: string) => {
+    e.preventDefault();
+    if (!draggedBlockId || draggedBlockId === targetBlockId) return;
+    const from = currentBlocks.findIndex((b) => b.id === draggedBlockId);
+    const to = currentBlocks.findIndex((b) => b.id === targetBlockId);
+    if (from === -1 || to === -1) return;
+    const reordered = [...currentBlocks];
+    const [moved] = reordered.splice(from, 1);
+    reordered.splice(to, 0, moved);
+    setCurrentBlocks(reordered);
+    setDraggedBlockId(null);
+    setDragOverBlockId(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedBlockId(null);
+    setDragOverBlockId(null);
   };
 
   const handleUpdateBlock = (id: string, content: Record<string, unknown>) => {
@@ -760,18 +792,35 @@ export const EmailEditor: FC = () => {
             currentBlocks.map((block) => (
               <div
                 key={block.id}
+                draggable
+                onDragStart={(e) => handleDragStart(e, block.id)}
+                onDragOver={(e) => handleDragOver(e, block.id)}
+                onDrop={(e) => handleDrop(e, block.id)}
+                onDragEnd={handleDragEnd}
                 onClick={() => {
                   setSelectedBlockId(block.id);
                   setFocusedField('block');
                 }}
                 className={`p-4 rounded-lg border-2 transition-all cursor-pointer group ${
-                  selectedBlockId === block.id
-                    ? 'border-primary bg-primary/5'
-                    : 'border-outline-variant/20 hover:border-primary/50'
+                  dragOverBlockId === block.id && draggedBlockId !== block.id
+                    ? 'border-primary border-dashed bg-primary/10 scale-[1.01]'
+                    : draggedBlockId === block.id
+                      ? 'opacity-40 border-outline-variant/20'
+                      : selectedBlockId === block.id
+                        ? 'border-primary bg-primary/5'
+                        : 'border-outline-variant/20 hover:border-primary/50'
                 }`}
               >
                 <div className="flex justify-between items-start mb-2">
-                  <span className="text-xs font-bold text-primary uppercase">{block.type}</span>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="material-symbols-outlined text-base text-on-surface-variant opacity-0 group-hover:opacity-60 cursor-grab active:cursor-grabbing select-none"
+                      title="Glisser pour réordonner"
+                    >
+                      drag_indicator
+                    </span>
+                    <span className="text-xs font-bold text-primary uppercase">{block.type}</span>
+                  </div>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -850,17 +899,23 @@ export const EmailEditor: FC = () => {
 
                     const card = (
                       <div className="rounded-xl border border-outline-variant/20 overflow-hidden bg-surface-container-low">
-                        <div className="h-28 bg-surface-container flex items-center justify-center overflow-hidden">
+                        <div
+                          className="w-full bg-surface-container flex items-center justify-center overflow-hidden"
+                          style={{ minHeight: 80, maxHeight: 200 }}
+                        >
                           {productImage ? (
                             <img
                               src={imageUploadService.getThumbnail(productImage)}
                               alt={productTitle}
-                              className="w-full h-full object-cover"
+                              className="w-full object-contain"
+                              style={{ maxHeight: 200 }}
                             />
                           ) : (
-                            <span className="material-symbols-outlined text-4xl text-on-surface-variant">
-                              shopping_bag
-                            </span>
+                            <div className="h-20 flex items-center justify-center w-full">
+                              <span className="material-symbols-outlined text-4xl text-on-surface-variant">
+                                shopping_bag
+                              </span>
+                            </div>
                           )}
                         </div>
                         <div className="p-3 space-y-1 text-left">
@@ -1941,7 +1996,8 @@ export const EmailEditor: FC = () => {
                           <img
                             src={imageUploadService.getThumbnail(currentImage)}
                             alt={currentTitle || 'product'}
-                            className="w-full h-24 object-cover rounded"
+                            className="w-full object-contain rounded"
+                            style={{ maxHeight: 200 }}
                           />
                         </div>
                       )}
