@@ -75,6 +75,7 @@ export default function Rechargement() {
   const [amount, setAmount] = useState<number>(10_000);
   const [customAmount, setCustomAmount] = useState('');
   const [loading, setLoading] = useState(false);
+  const [otp, setOtp] = useState('');
 
   const [cardNum, setCardNum] = useState('');
   const [cardExp, setCardExp] = useState('');
@@ -125,7 +126,12 @@ export default function Rechargement() {
     return null;
   })();
 
-  const mobileFormInvalid = !phoneDigits || !!phoneError || !!amountError || !finalAmount;
+  const mobileFormInvalid =
+    !phoneDigits ||
+    !!phoneError ||
+    !!amountError ||
+    !finalAmount ||
+    (operator === 'ORANGE' && !otp.trim());
 
   function stopPolling() {
     if (pollingRef.current) {
@@ -195,36 +201,11 @@ export default function Rechargement() {
 
         const silentConfig = { _silent: true } as Parameters<typeof api.post>[2];
 
-        if (operator === 'MOMO' || operator === 'MOOV') {
-          // Direct payin MOMO / MOOV — envoie un push sur le téléphone (pas de lien)
-          // Si le push n'arrive pas : *133# pour MTN, *155# pour Moov
-          const res = await api.post(
-            '/mobile-money/initiate',
-            {
-              operator,
-              phoneNumber: `+225${phone.replace(/\D/g, '')}`,
-              amount: paid,
-              currency: 'XOF',
-              country: 'CI',
-            },
-            silentConfig,
-          );
-          const d = res.data as {
-            transactionId?: string;
-            transaction?: { id?: string };
-            paymentUrl?: string;
-          };
-          txId = d?.transactionId ?? d?.transaction?.id ?? null;
-          pUrl = d.paymentUrl ?? null;
-        } else {
-          // Sessions NovaSend pour NOVASEND, WAVE et ORANGE
-          // WAVE : NovaSend pré-sélectionne Wave depuis le numéro, l'utilisateur clique "Payer"
-          // ORANGE : NovaSend gère le flow OTP Orange Money sur sa propre page
-          // NOVASEND : lien universel, l'utilisateur choisit son opérateur
+        if (operator === 'NOVASEND') {
+          // Session universelle — NovaSend détecte l'opérateur depuis le numéro
           const res = await api.post(
             '/mobile-money/session',
             {
-              operator: operator === 'ORANGE' ? 'WAVE' : 'WAVE',
               phoneNumber: `+225${phone.replace(/\D/g, '')}`,
               amount: paid,
               currency: 'XOF',
@@ -234,6 +215,30 @@ export default function Rechargement() {
           );
           const d = res.data as { transactionId?: string; paymentUrl?: string };
           txId = d?.transactionId ?? null;
+          pUrl = d.paymentUrl ?? null;
+        } else {
+          // Direct payin pour WAVE, ORANGE, MOMO, MOOV
+          // WAVE    → NovaSend retourne un paymentUrl vers Wave (checkout Wave natif)
+          // ORANGE  → traitement direct avec OTP (#144*82#), pas de redirect
+          // MOMO    → push téléphone MTN, pas de lien
+          // MOOV    → push téléphone Moov, pas de lien
+          const body: Record<string, unknown> = {
+            operator,
+            phoneNumber: `+225${phone.replace(/\D/g, '')}`,
+            amount: paid,
+            currency: 'XOF',
+            country: 'CI',
+          };
+          if (operator === 'ORANGE' && otp.trim()) {
+            body['otp'] = otp.trim();
+          }
+          const res = await api.post('/mobile-money/initiate', body, silentConfig);
+          const d = res.data as {
+            transactionId?: string;
+            transaction?: { id?: string };
+            paymentUrl?: string;
+          };
+          txId = d?.transactionId ?? d?.transaction?.id ?? null;
           pUrl = d.paymentUrl ?? null;
         }
 
@@ -325,7 +330,8 @@ export default function Rechargement() {
     },
     ORANGE: {
       label: 'Orange Money',
-      instruction: 'Ouvrez le lien et suivez les instructions Orange Money pour valider.',
+      instruction:
+        'Votre paiement Orange Money est en cours de traitement. Validez la demande sur votre téléphone si vous recevez une notification.',
       ussd: null,
     },
     MOMO: {
@@ -687,7 +693,10 @@ export default function Rechargement() {
                   {OPERATORS.map((op) => (
                     <button
                       key={op.id}
-                      onClick={() => setOperator(op.id)}
+                      onClick={() => {
+                        setOperator(op.id);
+                        setOtp('');
+                      }}
                       style={{
                         border: `2px solid ${operator === op.id ? '#2ec80a' : 'var(--border)'}`,
                         borderRadius: 10,
@@ -777,6 +786,47 @@ export default function Rechargement() {
                   </div>
                 ) : null}
               </div>
+
+              {/* OTP Orange Money — uniquement pour ORANGE */}
+              {operator === 'ORANGE' && (
+                <div>
+                  <div
+                    style={{
+                      padding: '10px 14px',
+                      background: '#fff7ed',
+                      border: '1px solid #fed7aa',
+                      borderRadius: 8,
+                      marginBottom: 10,
+                      fontSize: 12,
+                      color: '#92400e',
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    Composez <strong style={{ fontFamily: 'monospace' }}>#144*82#</strong> sur votre
+                    téléphone Orange pour obtenir votre code OTP, puis saisissez-le ci-dessous.
+                  </div>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: 'var(--text-1)',
+                      marginBottom: 8,
+                    }}
+                  >
+                    Code OTP Orange Money
+                  </label>
+                  <input
+                    className="form-input"
+                    placeholder="Ex : 123456"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 8))}
+                    inputMode="numeric"
+                    maxLength={8}
+                    style={{ letterSpacing: '0.15em', fontWeight: 600 }}
+                  />
+                </div>
+              )}
 
               {/* Montant */}
               <div>
