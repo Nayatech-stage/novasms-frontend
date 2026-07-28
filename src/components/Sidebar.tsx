@@ -157,6 +157,27 @@ function SecurityIcon() {
   );
 }
 
+function ApiKeyIcon() {
+  return (
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 14 14"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="5" cy="8" r="2.5" />
+      <path d="M7.5 6.5l5-5" />
+      <path d="M10.5 1.5l1 1" />
+      <path d="M12 3.5l1 1" />
+    </svg>
+  );
+}
+
 function LogoutIcon() {
   return (
     <svg
@@ -424,6 +445,15 @@ export default function Sidebar() {
             to="/account/team"
             icon={<TeamIcon />}
             label="Équipe"
+            collapsed={collapsed}
+            onNavigate={closeMobile}
+          />
+        )}
+        {isAdmin && (
+          <Item
+            to="/account/developers"
+            icon={<ApiKeyIcon />}
+            label="Clés API"
             collapsed={collapsed}
             onNavigate={closeMobile}
           />
