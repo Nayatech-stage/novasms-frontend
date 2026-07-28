@@ -31,7 +31,9 @@ import {
   X,
   Download,
   Trash2,
+  FileDown,
 } from 'lucide-react';
+import ExportModal from './ExportModal';
 import { useAuthStore } from '@/stores/authStore';
 import { contactsApi } from '@/api/contacts';
 import type {
@@ -189,6 +191,7 @@ export default function ContactTable({
   const [selectedContactIds, setSelectedContactIds] = useState<Set<string>>(new Set());
   const [isDeleting, setIsDeleting] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [showExportModal, setShowExportModal] = useState(false);
 
   // Ref pour le conteneur scrollable (virtualisation)
   const tableContainerRef = useRef<HTMLDivElement>(null);
@@ -659,6 +662,14 @@ export default function ContactTable({
             Ajouter un contact
           </button>
           <button
+            onClick={() => setShowExportModal(true)}
+            className="px-4 py-2 border border-outline-variant rounded-lg hover:bg-surface-container transition-colors flex items-center gap-2 text-sm font-medium"
+            style={{ color: '#0c5460' }}
+          >
+            <FileDown className="w-4 h-4" />
+            Exporter
+          </button>
+          <button
             onClick={toggleSelectAll}
             className={`px-4 py-2 border rounded-lg transition-colors flex items-center gap-2 text-sm font-medium ${
               selectedContactIds.size > 0
@@ -960,10 +971,16 @@ export default function ContactTable({
                 />
               </th>
               <th className="px-4 py-3 text-left font-semibold text-on-surface">Nom</th>
-              <th className="px-4 py-3 text-left font-semibold text-on-surface">Email</th>
+              <th className="hidden md:table-cell px-4 py-3 text-left font-semibold text-on-surface">
+                Email
+              </th>
               <th className="px-4 py-3 text-left font-semibold text-on-surface">Téléphone</th>
-              <th className="px-4 py-3 text-left font-semibold text-on-surface">Tags</th>
-              <th className="px-4 py-3 text-left font-semibold text-on-surface">Ajouté le</th>
+              <th className="hidden sm:table-cell px-4 py-3 text-left font-semibold text-on-surface">
+                Tags
+              </th>
+              <th className="hidden lg:table-cell px-4 py-3 text-left font-semibold text-on-surface">
+                Ajouté le
+              </th>
               <th className="px-4 py-3 text-left font-semibold text-on-surface">Statut</th>
               <th className="px-4 py-3 text-right font-semibold text-on-surface"></th>
             </tr>
@@ -1035,7 +1052,7 @@ export default function ContactTable({
 
                   {/* Email */}
                   <td
-                    className="px-4 py-3 cursor-pointer"
+                    className="hidden md:table-cell px-4 py-3 cursor-pointer"
                     onClick={() => onContactClick?.(contact)}
                   >
                     <div className="flex items-center gap-2 text-on-surface-variant">
@@ -1057,7 +1074,7 @@ export default function ContactTable({
 
                   {/* Tags */}
                   <td
-                    className="px-4 py-3 cursor-pointer"
+                    className="hidden sm:table-cell px-4 py-3 cursor-pointer"
                     onClick={() => onContactClick?.(contact)}
                   >
                     <div className="flex flex-wrap gap-1">
@@ -1081,7 +1098,7 @@ export default function ContactTable({
 
                   {/* Date d'ajout */}
                   <td
-                    className="px-4 py-3 text-on-surface-variant cursor-pointer"
+                    className="hidden lg:table-cell px-4 py-3 text-on-surface-variant cursor-pointer"
                     onClick={() => onContactClick?.(contact)}
                   >
                     <div className="flex items-center gap-2">
@@ -1240,6 +1257,18 @@ export default function ContactTable({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Export Modal */}
+      <ExportModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        totalContacts={total}
+        selectedContacts={
+          selectedContactIds.size > 0
+            ? contacts.filter((c) => selectedContactIds.has(c.id))
+            : undefined
+        }
+      />
     </div>
   );
 }

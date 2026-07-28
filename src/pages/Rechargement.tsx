@@ -672,7 +672,7 @@ export default function Rechargement() {
                 <div
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit,minmax(90px,1fr))',
+                    gridTemplateColumns: 'repeat(auto-fit,minmax(75px,1fr))',
                     gap: 8,
                   }}
                 >
@@ -788,7 +788,7 @@ export default function Rechargement() {
                 <div
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit,minmax(90px,1fr))',
+                    gridTemplateColumns: 'repeat(auto-fit,minmax(75px,1fr))',
                     gap: 8,
                     marginBottom: 12,
                   }}
@@ -962,7 +962,7 @@ export default function Rechargement() {
               <div
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit,minmax(120px,1fr))',
+                  gridTemplateColumns: 'repeat(auto-fit,minmax(100px,1fr))',
                   gap: 12,
                 }}
               >

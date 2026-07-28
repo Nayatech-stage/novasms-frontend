@@ -414,7 +414,7 @@ export default function Header() {
                 role="dialog"
                 aria-modal="true"
                 aria-label={t('header.notifications')}
-                className="absolute right-0 top-full z-20 mt-2 w-[22rem] overflow-hidden rounded-[24px] border border-outline-variant/20 bg-white shadow-[0_20px_60px_rgba(12,84,96,0.16)]"
+                className="absolute right-0 top-full z-20 mt-2 w-[22rem] max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-[24px] border border-outline-variant/20 bg-white shadow-[0_20px_60px_rgba(12,84,96,0.16)]"
               >
                 <div className="flex items-start justify-between gap-3 border-b border-outline-variant/15 px-5 py-4">
                   <div>
@@ -509,13 +509,14 @@ export default function Header() {
         {/* Nouvelle campagne */}
         <button
           type="button"
-          className="btn-primary"
+          className="btn-primary new-campaign-btn"
           onClick={async () => {
             await createNewCampaign();
             navigate('/campaigns/new?fresh=1');
           }}
         >
-          + Nouvelle campagne
+          <span className="long-label">+ Nouvelle campagne</span>
+          <span className="short-label">+</span>
         </button>
 
         {/* Avatar + menu */}
@@ -545,7 +546,7 @@ export default function Header() {
                 role="dialog"
                 aria-modal="true"
                 aria-label="Menu utilisateur"
-                className="absolute right-0 top-full z-20 mt-2 w-72 overflow-hidden rounded-[24px] border border-outline-variant/20 bg-white shadow-[0_20px_60px_rgba(12,84,96,0.16)]"
+                className="absolute right-0 top-full z-20 mt-2 w-72 max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-[24px] border border-outline-variant/20 bg-white shadow-[0_20px_60px_rgba(12,84,96,0.16)]"
               >
                 <div className="border-b border-outline-variant/15 px-5 py-4">
                   <div className="flex items-center gap-3">

@@ -146,6 +146,9 @@ body {
   white-space: nowrap;
   cursor: pointer;
 }
+/* Labels responsifs du bouton "Nouvelle campagne" */
+.btn-primary.new-campaign-btn .short-label { display: none; }
+.btn-primary.new-campaign-btn .long-label  { display: inline; }
 .notif-btn {
   position: relative;
   background: none;
@@ -657,6 +660,11 @@ body {
   .credits-pill {
     display: none;
   }
+  /* Data table scrollable dès le tablet */
+  .data-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 /* ─── Responsive: Mobile (≤ 767px) ───────────────────────────────────────── */
@@ -690,8 +698,8 @@ body {
   }
   /* Header compress */
   .header {
-    padding: 0 12px;
-    gap: 10px;
+    padding: 0 10px;
+    gap: 8px;
   }
   .hdr-title p {
     display: none;
@@ -700,8 +708,8 @@ body {
     display: none;
   }
   /* "Nouvelle campagne" text shortened */
-  .btn-primary.new-campaign-btn span.long-label { display: none; }
-  .btn-primary.new-campaign-btn span.short-label { display: inline; }
+  .btn-primary.new-campaign-btn .long-label { display: none; }
+  .btn-primary.new-campaign-btn .short-label { display: inline; }
   /* KPI grid: 2 cols */
   .kpi-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -724,5 +732,35 @@ body {
   .heatmap-wrapper {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    min-width: 0;
+  }
+  /* Cards: padding réduit */
+  .card {
+    padding: 14px;
+  }
+  /* Modals: marges safe */
+  .modal-overlay {
+    padding: 12px;
+  }
+}
+
+/* ─── Responsive: Small mobile (≤ 480px) ─────────────────────────────────── */
+@media (max-width: 480px) {
+  .kpi-value { font-size: 16px; }
+  .kpi-grid {
+    gap: 8px;
+  }
+  .content {
+    padding: 10px;
+  }
+  /* Header: gap minimal */
+  .header {
+    padding: 0 8px;
+    gap: 6px;
+  }
+  /* Bouton campagne: icône seulement */
+  .btn-primary.new-campaign-btn {
+    padding: 7px 10px;
+    min-width: 32px;
   }
 }

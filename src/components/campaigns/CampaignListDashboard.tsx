@@ -232,12 +232,12 @@ const CampaignListDashboard: FC = () => {
       </div>
 
       {/* Search + Filters */}
-      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+      <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as CampaignStatus | 'all')}
-            className="px-3 py-2 border border-outline-variant bg-surface rounded-lg text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary/20"
+            className="flex-1 min-w-[130px] px-3 py-2 border border-outline-variant bg-surface rounded-lg text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary/20"
           >
             <option value="all">Tous les statuts</option>
             <option value="draft">Brouillon</option>
@@ -252,7 +252,7 @@ const CampaignListDashboard: FC = () => {
           <select
             value={channelFilter}
             onChange={(e) => setChannelFilter(e.target.value as 'all' | 'SMS' | 'EMAIL')}
-            className="px-3 py-2 border border-outline-variant bg-surface rounded-lg text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary/20"
+            className="flex-1 min-w-[110px] px-3 py-2 border border-outline-variant bg-surface rounded-lg text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary/20"
           >
             <option value="all">Tous les canaux</option>
             <option value="SMS">SMS</option>
@@ -262,14 +262,14 @@ const CampaignListDashboard: FC = () => {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as 'date' | 'cost')}
-            className="px-3 py-2 border border-outline-variant bg-surface rounded-lg text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary/20"
+            className="flex-1 min-w-[120px] px-3 py-2 border border-outline-variant bg-surface rounded-lg text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary/20"
           >
             <option value="date">Date (récent)</option>
             <option value="cost">Coût (élevé)</option>
           </select>
         </div>
 
-        <div className="relative w-full sm:w-72">
+        <div className="relative w-full">
           <span
             className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none"
             style={{ fontSize: 18 }}
