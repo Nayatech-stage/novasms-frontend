@@ -75,8 +75,6 @@ export default function Rechargement() {
   const [amount, setAmount] = useState<number>(10_000);
   const [customAmount, setCustomAmount] = useState('');
   const [loading, setLoading] = useState(false);
-  const [otp, setOtp] = useState('');
-
   const [cardNum, setCardNum] = useState('');
   const [cardExp, setCardExp] = useState('');
   const [cardCvv, setCardCvv] = useState('');
@@ -126,12 +124,7 @@ export default function Rechargement() {
     return null;
   })();
 
-  const mobileFormInvalid =
-    !phoneDigits ||
-    !!phoneError ||
-    !!amountError ||
-    !finalAmount ||
-    (operator === 'ORANGE' && !otp.trim());
+  const mobileFormInvalid = !phoneDigits || !!phoneError || !!amountError || !finalAmount;
 
   function stopPolling() {
     if (pollingRef.current) {
@@ -201,8 +194,8 @@ export default function Rechargement() {
 
         const silentConfig = { _silent: true } as Parameters<typeof api.post>[2];
 
-        if (operator === 'NOVASEND') {
-          // Session universelle — NovaSend détecte l'opérateur depuis le numéro
+        if (operator === 'NOVASEND' || operator === 'WAVE' || operator === 'ORANGE') {
+          // Session universelle NovaSend — retourne toujours un paymentUrl
           const res = await api.post(
             '/mobile-money/session',
             {
@@ -217,11 +210,7 @@ export default function Rechargement() {
           txId = d?.transactionId ?? null;
           pUrl = d.paymentUrl ?? null;
         } else {
-          // Direct payin pour WAVE, ORANGE, MOMO, MOOV
-          // WAVE    → NovaSend retourne un paymentUrl vers Wave (checkout Wave natif)
-          // ORANGE  → traitement direct avec OTP (#144*82#), pas de redirect
-          // MOMO    → push téléphone MTN, pas de lien
-          // MOOV    → push téléphone Moov, pas de lien
+          // Direct payin pour MOMO et MOOV (push téléphone, pas de redirect)
           const body: Record<string, unknown> = {
             operator,
             phoneNumber: `+225${phone.replace(/\D/g, '')}`,
@@ -229,9 +218,6 @@ export default function Rechargement() {
             currency: 'XOF',
             country: 'CI',
           };
-          if (operator === 'ORANGE' && otp.trim()) {
-            body['otp'] = otp.trim();
-          }
           const res = await api.post('/mobile-money/initiate', body, silentConfig);
           const d = res.data as {
             transactionId?: string;
@@ -695,7 +681,6 @@ export default function Rechargement() {
                       key={op.id}
                       onClick={() => {
                         setOperator(op.id);
-                        setOtp('');
                       }}
                       style={{
                         border: `2px solid ${operator === op.id ? '#2ec80a' : 'var(--border)'}`,
@@ -786,47 +771,6 @@ export default function Rechargement() {
                   </div>
                 ) : null}
               </div>
-
-              {/* OTP Orange Money — uniquement pour ORANGE */}
-              {operator === 'ORANGE' && (
-                <div>
-                  <div
-                    style={{
-                      padding: '10px 14px',
-                      background: '#fff7ed',
-                      border: '1px solid #fed7aa',
-                      borderRadius: 8,
-                      marginBottom: 10,
-                      fontSize: 12,
-                      color: '#92400e',
-                      lineHeight: 1.6,
-                    }}
-                  >
-                    Composez <strong style={{ fontFamily: 'monospace' }}>#144*82#</strong> sur votre
-                    téléphone Orange pour obtenir votre code OTP, puis saisissez-le ci-dessous.
-                  </div>
-                  <label
-                    style={{
-                      display: 'block',
-                      fontSize: 12,
-                      fontWeight: 600,
-                      color: 'var(--text-1)',
-                      marginBottom: 8,
-                    }}
-                  >
-                    Code OTP Orange Money
-                  </label>
-                  <input
-                    className="form-input"
-                    placeholder="Ex : 123456"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 8))}
-                    inputMode="numeric"
-                    maxLength={8}
-                    style={{ letterSpacing: '0.15em', fontWeight: 600 }}
-                  />
-                </div>
-              )}
 
               {/* Montant */}
               <div>
