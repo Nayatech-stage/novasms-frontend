@@ -7,11 +7,12 @@ import {
   OrangeMoneyIcon,
   MomoIcon,
   MoovIcon,
+  NovaSendIcon,
   VisaIcon,
   StripeIcon,
 } from '@/components/provider-icons';
 
-type Operator = 'WAVE' | 'ORANGE' | 'MOMO' | 'MOOV';
+type Operator = 'WAVE' | 'ORANGE' | 'MOMO' | 'MOOV' | 'NOVASEND';
 type PayTab = 'mobile' | 'visa';
 type ReceiptKind = 'mobile' | 'visa';
 
@@ -43,6 +44,12 @@ const OPERATOR_RULES: Record<
     prefixes: ['01', '41', '61'],
     hint: 'Numéros Moov CI : 01, 41, 61…',
   },
+  NOVASEND: {
+    min: 500,
+    max: 1_000_000,
+    prefixes: [],
+    hint: 'Votre numéro enregistré sur NovaSend',
+  },
 };
 
 const OPERATORS: {
@@ -51,6 +58,7 @@ const OPERATORS: {
   sub: string;
   Icon: React.FC<{ size?: number }>;
 }[] = [
+  { id: 'NOVASEND', label: 'NovaSend', sub: 'Wallet universel', Icon: NovaSendIcon },
   { id: 'WAVE', label: 'Wave', sub: 'Sénégal · CI', Icon: WaveIcon },
   { id: 'ORANGE', label: 'Orange Money', sub: 'CI · Mali · Sénégal', Icon: OrangeMoneyIcon },
   { id: 'MOMO', label: 'MTN MoMo', sub: 'CI · Ghana · Cameroun', Icon: MomoIcon },
@@ -62,13 +70,11 @@ const AMOUNTS = [5_000, 10_000, 25_000, 50_000];
 export default function Rechargement() {
   const navigate = useNavigate();
   const [tab, setTab] = useState<PayTab>('mobile');
-  const [operator, setOperator] = useState<Operator>('WAVE');
+  const [operator, setOperator] = useState<Operator>('NOVASEND');
   const [phone, setPhone] = useState('');
   const [amount, setAmount] = useState<number>(10_000);
   const [customAmount, setCustomAmount] = useState('');
-  const [otp, setOtp] = useState(['', '', '', '']);
   const [loading, setLoading] = useState(false);
-  const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const [cardNum, setCardNum] = useState('');
   const [cardExp, setCardExp] = useState('');
@@ -85,7 +91,7 @@ export default function Rechargement() {
   const [waitingPayment, setWaitingPayment] = useState(false);
   const [, setPendingTxId] = useState<string | null>(null);
   const [pendingAmount, setPendingAmount] = useState(0);
-  const [pendingOperator, setPendingOperator] = useState<Operator>('WAVE');
+  const [pendingOperator, setPendingOperator] = useState<Operator>('NOVASEND');
   const [wavePaymentUrl, setWavePaymentUrl] = useState<string | null>(null);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -101,7 +107,11 @@ export default function Rechargement() {
     if (!phoneDigits) return null;
     if (phoneDigits.length !== 10)
       return `Numéro CI : 10 chiffres requis (${phoneDigits.length} saisi${phoneDigits.length > 1 ? 's' : ''})`;
-    if (rules && !rules.prefixes.includes(phoneDigits.slice(0, 2)))
+    if (
+      operator !== 'NOVASEND' &&
+      rules?.prefixes.length &&
+      !rules.prefixes.includes(phoneDigits.slice(0, 2))
+    )
       return `Préfixe invalide pour ${operator}. Attendus : ${rules.prefixes.join(', ')}`;
     return null;
   })();
@@ -115,17 +125,7 @@ export default function Rechargement() {
     return null;
   })();
 
-  const otpError: string | null =
-    operator === 'ORANGE' && tab === 'mobile' && otp.some((d) => d === '')
-      ? 'Code OTP requis (4 chiffres via #144*82#)'
-      : null;
-
-  const mobileFormInvalid =
-    !phoneDigits ||
-    !!phoneError ||
-    !!amountError ||
-    !finalAmount ||
-    (operator === 'ORANGE' && !!otpError);
+  const mobileFormInvalid = !phoneDigits || !!phoneError || !!amountError || !finalAmount;
 
   function stopPolling() {
     if (pollingRef.current) {
@@ -179,7 +179,7 @@ export default function Rechargement() {
 
     if (tab === 'mobile') {
       if (mobileFormInvalid) {
-        toast.error(phoneError ?? amountError ?? otpError ?? 'Formulaire incomplet');
+        toast.error(phoneError ?? amountError ?? 'Formulaire incomplet');
         return;
       }
     } else if (!cardName.trim() || !cardNum.trim() || !cardExp.trim() || !cardCvv.trim()) {
@@ -193,17 +193,23 @@ export default function Rechargement() {
         let txId: string | null = null;
         let pUrl: string | null = null;
 
-        if (operator === 'ORANGE') {
-          // Direct payin avec OTP — uniquement Orange Money
-          const initiateRes = await api.post('/mobile-money/initiate', {
-            operator,
-            phoneNumber: `+225${phone.replace(/\D/g, '')}`,
-            amount: paid,
-            currency: 'XOF',
-            country: 'CI',
-            otp: otp.join(''),
-          });
-          const d = initiateRes.data as {
+        const silentConfig = { _silent: true } as Parameters<typeof api.post>[2];
+
+        if (operator === 'MOMO' || operator === 'MOOV') {
+          // Direct payin MOMO / MOOV — envoie un push sur le téléphone (pas de lien)
+          // Si le push n'arrive pas : *133# pour MTN, *155# pour Moov
+          const res = await api.post(
+            '/mobile-money/initiate',
+            {
+              operator,
+              phoneNumber: `+225${phone.replace(/\D/g, '')}`,
+              amount: paid,
+              currency: 'XOF',
+              country: 'CI',
+            },
+            silentConfig,
+          );
+          const d = res.data as {
             transactionId?: string;
             transaction?: { id?: string };
             paymentUrl?: string;
@@ -211,18 +217,22 @@ export default function Rechargement() {
           txId = d?.transactionId ?? d?.transaction?.id ?? null;
           pUrl = d.paymentUrl ?? null;
         } else {
-          // Session universelle pour WAVE, MOMO, MOOV
-          // NovaSend détecte l'opérateur depuis le numéro et retourne un paymentUrl
-          const sessionRes = await api.post('/mobile-money/session', {
-            phoneNumber: `+225${phone.replace(/\D/g, '')}`,
-            amount: paid,
-            currency: 'XOF',
-            country: 'CI',
-          });
-          const d = sessionRes.data as {
-            transactionId?: string;
-            paymentUrl?: string;
-          };
+          // Sessions NovaSend pour NOVASEND, WAVE et ORANGE
+          // WAVE : NovaSend pré-sélectionne Wave depuis le numéro, l'utilisateur clique "Payer"
+          // ORANGE : NovaSend gère le flow OTP Orange Money sur sa propre page
+          // NOVASEND : lien universel, l'utilisateur choisit son opérateur
+          const res = await api.post(
+            '/mobile-money/session',
+            {
+              operator: operator === 'ORANGE' ? 'WAVE' : 'WAVE',
+              phoneNumber: `+225${phone.replace(/\D/g, '')}`,
+              amount: paid,
+              currency: 'XOF',
+              country: 'CI',
+            },
+            silentConfig,
+          );
+          const d = res.data as { transactionId?: string; paymentUrl?: string };
           txId = d?.transactionId ?? null;
           pUrl = d.paymentUrl ?? null;
         }
@@ -260,9 +270,15 @@ export default function Rechargement() {
         window.dispatchEvent(new CustomEvent('novasms:balance-refresh'));
       }
     } catch (error) {
+      // Extraire le message serveur depuis la réponse Axios si disponible
+      const serverMsg = (error as { response?: { data?: { message?: string } } })?.response?.data
+        ?.message;
       const message =
-        error instanceof Error ? error.message : 'Échec du paiement. Vérifiez vos informations.';
-      toast.error(message);
+        serverMsg ??
+        (error instanceof Error ? error.message : 'Échec du paiement. Vérifiez vos informations.');
+      toast.error(
+        typeof message === 'string' ? message : 'Échec du paiement. Vérifiez vos informations.',
+      );
     } finally {
       setLoading(false);
     }
@@ -291,38 +307,37 @@ export default function Rechargement() {
     }
   }
 
-  function handleOtpInput(i: number, val: string) {
-    const digit = val.replace(/\D/g, '').slice(-1);
-    const newOtp = [...otp];
-    newOtp[i] = digit;
-    setOtp(newOtp);
-    if (digit && i < 3) otpRefs.current[i + 1]?.focus();
-  }
-
   useEffect(() => () => stopPolling(), []); // cleanup on unmount
 
   const OPERATOR_WAIT: Record<
     Operator,
     { label: string; instruction: string | null; ussd: string | null }
   > = {
+    NOVASEND: {
+      label: 'NovaSend',
+      instruction: 'Ouvrez le lien de paiement et confirmez avec votre application NovaSend.',
+      ussd: null,
+    },
     WAVE: {
       label: 'Wave',
-      instruction: 'Confirmez le paiement dans votre application Wave Mobile.',
+      instruction: 'Ouvrez le lien de paiement pour confirmer dans votre application Wave.',
       ussd: null,
     },
     ORANGE: {
       label: 'Orange Money',
-      instruction: 'Votre code OTP a été transmis. En attente de confirmation Orange Money.',
+      instruction: 'Ouvrez le lien et suivez les instructions Orange Money pour valider.',
       ussd: null,
     },
     MOMO: {
       label: 'MTN MoMo',
-      instruction: 'Une notification push a été envoyée sur votre téléphone.',
+      instruction:
+        "Une demande de paiement a été envoyée sur votre téléphone MTN. Confirmez-la. Si elle n'apparaît pas, composez *133# et suivez le menu.",
       ussd: '*133#',
     },
     MOOV: {
       label: 'Moov Money',
-      instruction: 'Une notification push a été envoyée sur votre téléphone.',
+      instruction:
+        "Une demande de paiement a été envoyée sur votre téléphone Moov. Confirmez-la. Si elle n'apparaît pas, composez *155# et suivez le menu.",
       ussd: '*155#',
     },
   };
@@ -392,15 +407,15 @@ export default function Rechargement() {
               </div>
             )}
 
-            {/* Wave — bouton ré-ouvrir */}
-            {pendingOperator === 'WAVE' && wavePaymentUrl && (
+            {/* Bouton paiement si l'opérateur retourne un lien (Wave = pay.wave.com) */}
+            {wavePaymentUrl && (
               <div style={{ marginBottom: 20 }}>
                 <button
                   className="btn-primary"
                   onClick={() => window.open(wavePaymentUrl, '_blank', 'noopener,noreferrer')}
                   style={{ fontSize: 13 }}
                 >
-                  Ouvrir Wave →
+                  Ouvrir {waitInfo?.label ?? 'le lien de paiement'} →
                 </button>
               </div>
             )}
@@ -866,62 +881,6 @@ export default function Rechargement() {
                   </div>
                 ) : null}
               </div>
-
-              {/* OTP — uniquement pour Orange Money */}
-              {operator === 'ORANGE' && (
-                <div
-                  style={{
-                    background: 'var(--muted)',
-                    borderRadius: 12,
-                    padding: 16,
-                    border: '1px solid var(--border)',
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: 12.5,
-                      fontWeight: 600,
-                      color: 'var(--text-1)',
-                      marginBottom: 4,
-                    }}
-                  >
-                    Confirmation par code OTP
-                  </div>
-                  <div style={{ fontSize: 11.5, color: 'var(--text-2)', marginBottom: 6 }}>
-                    Composez{' '}
-                    <strong style={{ color: 'var(--text-1)', fontFamily: 'monospace' }}>
-                      #144*82#
-                    </strong>{' '}
-                    sur votre téléphone pour obtenir votre code à 4 chiffres.
-                  </div>
-                  <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 12 }}>
-                    Le code sera envoyé au +225 {phone || '07 XX XX XX XX'}.
-                  </div>
-                  <div style={{ display: 'flex', gap: 7, alignItems: 'center', flexWrap: 'wrap' }}>
-                    {otp.map((digit, i) => (
-                      <input
-                        key={i}
-                        ref={(el) => {
-                          otpRefs.current[i] = el;
-                        }}
-                        className="form-input"
-                        style={{
-                          width: 48,
-                          textAlign: 'center',
-                          fontSize: 20,
-                          fontWeight: 700,
-                          padding: '10px 0',
-                        }}
-                        maxLength={1}
-                        inputMode="numeric"
-                        value={digit}
-                        onChange={(e) => handleOtpInput(i, e.target.value)}
-                        placeholder="·"
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
 
               <button
                 className="btn-primary"
