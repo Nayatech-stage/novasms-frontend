@@ -194,8 +194,10 @@ export default function Rechargement() {
 
         const silentConfig = { _silent: true } as Parameters<typeof api.post>[2];
 
-        if (operator === 'NOVASEND' || operator === 'WAVE' || operator === 'ORANGE') {
-          // Session universelle NovaSend — retourne toujours un paymentUrl
+        // Session universelle NovaSend — fonctionne pour tous les opérateurs
+        // (WAVE, ORANGE, MOMO, MOOV, NOVASEND) — NovaSend détecte l'opérateur
+        // depuis le numéro et retourne un paymentUrl pour la confirmation
+        {
           const res = await api.post(
             '/mobile-money/session',
             {
@@ -208,23 +210,6 @@ export default function Rechargement() {
           );
           const d = res.data as { transactionId?: string; paymentUrl?: string };
           txId = d?.transactionId ?? null;
-          pUrl = d.paymentUrl ?? null;
-        } else {
-          // Direct payin pour MOMO et MOOV (push téléphone, pas de redirect)
-          const body: Record<string, unknown> = {
-            operator,
-            phoneNumber: `+225${phone.replace(/\D/g, '')}`,
-            amount: paid,
-            currency: 'XOF',
-            country: 'CI',
-          };
-          const res = await api.post('/mobile-money/initiate', body, silentConfig);
-          const d = res.data as {
-            transactionId?: string;
-            transaction?: { id?: string };
-            paymentUrl?: string;
-          };
-          txId = d?.transactionId ?? d?.transaction?.id ?? null;
           pUrl = d.paymentUrl ?? null;
         }
 
