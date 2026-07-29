@@ -213,8 +213,8 @@ export default function Rechargement() {
 
         const silentConfig = { _silent: true } as Parameters<typeof api.post>[2];
 
-        if (operator === 'NOVASEND' || operator === 'WAVE') {
-          // Session NovaSend — WAVE retourne 403 en staging sur direct payin
+        if (operator === 'NOVASEND') {
+          // Session NovaSend Wallet uniquement
           const res = await api.post(
             '/mobile-money/session',
             {
@@ -229,7 +229,7 @@ export default function Rechargement() {
           txId = d?.transactionId ?? null;
           pUrl = d.paymentUrl ?? null;
         } else {
-          // Direct payin : ORANGE (OTP #144*82#), MOMO, MOOV (push téléphone)
+          // Direct payin : WAVE (paymentUrl Wave), ORANGE (OTP), MOMO, MOOV (push)
           const body: Record<string, unknown> = {
             operator,
             phoneNumber: `+225${phone.replace(/\D/g, '')}`,
