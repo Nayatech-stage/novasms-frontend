@@ -75,6 +75,7 @@ export default function Rechargement() {
   const [amount, setAmount] = useState<number>(10_000);
   const [customAmount, setCustomAmount] = useState('');
   const [loading, setLoading] = useState(false);
+  const [otp, setOtp] = useState('');
   const [cardNum, setCardNum] = useState('');
   const [cardExp, setCardExp] = useState('');
   const [cardCvv, setCardCvv] = useState('');
@@ -124,7 +125,19 @@ export default function Rechargement() {
     return null;
   })();
 
-  const mobileFormInvalid = !phoneDigits || !!phoneError || !!amountError || !finalAmount;
+  const otpError: string | null = (() => {
+    if (operator !== 'ORANGE') return null;
+    if (!otp) return null;
+    if (!/^\d{4}$/.test(otp)) return 'Code OTP invalide : 4 chiffres requis';
+    return null;
+  })();
+
+  const mobileFormInvalid =
+    !phoneDigits ||
+    !!phoneError ||
+    !!amountError ||
+    !finalAmount ||
+    (operator === 'ORANGE' && (!otp || !!otpError));
 
   function stopPolling() {
     if (pollingRef.current) {
@@ -194,10 +207,8 @@ export default function Rechargement() {
 
         const silentConfig = { _silent: true } as Parameters<typeof api.post>[2];
 
-        // Session universelle NovaSend — fonctionne pour tous les opérateurs
-        // (WAVE, ORANGE, MOMO, MOOV, NOVASEND) — NovaSend détecte l'opérateur
-        // depuis le numéro et retourne un paymentUrl pour la confirmation
-        {
+        if (operator === 'NOVASEND') {
+          // Session NovaSend Wallet — uniquement pour l'opérateur NOVASEND
           const res = await api.post(
             '/mobile-money/session',
             {
@@ -210,6 +221,24 @@ export default function Rechargement() {
           );
           const d = res.data as { transactionId?: string; paymentUrl?: string };
           txId = d?.transactionId ?? null;
+          pUrl = d.paymentUrl ?? null;
+        } else {
+          // Direct payin pour WAVE, ORANGE, MOMO, MOOV
+          const body: Record<string, unknown> = {
+            operator,
+            phoneNumber: `+225${phone.replace(/\D/g, '')}`,
+            amount: paid,
+            currency: 'XOF',
+            country: 'CI',
+            ...(operator === 'ORANGE' && otp ? { otp } : {}),
+          };
+          const res = await api.post('/mobile-money/initiate', body, silentConfig);
+          const d = res.data as {
+            transactionId?: string;
+            transaction?: { id?: string };
+            paymentUrl?: string;
+          };
+          txId = d?.transactionId ?? d?.transaction?.id ?? null;
           pUrl = d.paymentUrl ?? null;
         }
 
@@ -666,6 +695,7 @@ export default function Rechargement() {
                       key={op.id}
                       onClick={() => {
                         setOperator(op.id);
+                        setOtp('');
                       }}
                       style={{
                         border: `2px solid ${operator === op.id ? '#2ec80a' : 'var(--border)'}`,
@@ -756,6 +786,42 @@ export default function Rechargement() {
                   </div>
                 ) : null}
               </div>
+
+              {/* OTP Orange Money */}
+              {operator === 'ORANGE' && (
+                <div>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: 'var(--text-1)',
+                      marginBottom: 8,
+                    }}
+                  >
+                    Code PIN Orange Money
+                  </label>
+                  <input
+                    className="form-input"
+                    style={{
+                      borderColor: otpError ? '#ef4444' : undefined,
+                      letterSpacing: '0.2em',
+                    }}
+                    placeholder="1234"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                    maxLength={4}
+                    inputMode="numeric"
+                  />
+                  {otpError ? (
+                    <div style={{ fontSize: 11, color: '#ef4444', marginTop: 4 }}>{otpError}</div>
+                  ) : (
+                    <div style={{ fontSize: 10.5, color: 'var(--text-3)', marginTop: 4 }}>
+                      Composez <strong>#144*82#</strong> sur votre téléphone pour obtenir ce code
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Montant */}
               <div>
