@@ -21,31 +21,31 @@ const OPERATOR_RULES: Record<
   { min: number; max: number; prefixes: string[]; hint: string }
 > = {
   WAVE: {
-    min: 500,
+    min: 300,
     max: 500_000,
     prefixes: ['01', '05', '07', '27'],
     hint: 'Numéros Wave CI : 01, 05, 07, 27…',
   },
   ORANGE: {
-    min: 500,
+    min: 300,
     max: 300_000,
     prefixes: ['05', '07', '25', '45', '47', '57', '65', '67', '77', '87', '97'],
     hint: 'Numéros Orange CI : 07, 05, 47, 57…',
   },
   MOMO: {
-    min: 500,
+    min: 300,
     max: 500_000,
     prefixes: ['05', '25', '45', '65'],
     hint: 'Numéros MTN CI : 05, 25, 45, 65…',
   },
   MOOV: {
-    min: 500,
+    min: 300,
     max: 300_000,
     prefixes: ['01', '41', '61'],
     hint: 'Numéros Moov CI : 01, 41, 61…',
   },
   NOVASEND: {
-    min: 500,
+    min: 300,
     max: 1_000_000,
     prefixes: [],
     hint: 'Votre numéro enregistré sur NovaSend',
