@@ -171,7 +171,13 @@ export default function Rechargement() {
           } else if (res.data.status === 'failed') {
             stopPolling();
             setWaitingPayment(false);
-            toast.error("Paiement refusé par l'opérateur. Veuillez réessayer.");
+            const failMsg =
+              pendingOperator === 'MOOV'
+                ? 'Paiement Moov Money refusé. Vérifiez que votre numéro est inscrit à Moov Money et que votre solde est suffisant.'
+                : pendingOperator === 'MOMO'
+                  ? 'Paiement MTN MoMo refusé. Vérifiez que votre numéro est inscrit à MTN MoMo et que votre solde est suffisant.'
+                  : "Paiement refusé par l'opérateur. Veuillez réessayer.";
+            toast.error(failMsg, { duration: 6000 });
           }
         } catch {
           /* réseau — on continue de poller */
@@ -207,8 +213,8 @@ export default function Rechargement() {
 
         const silentConfig = { _silent: true } as Parameters<typeof api.post>[2];
 
-        if (operator === 'NOVASEND') {
-          // Session NovaSend Wallet — uniquement pour l'opérateur NOVASEND
+        if (operator === 'NOVASEND' || operator === 'WAVE') {
+          // Session NovaSend — WAVE retourne 403 en staging sur direct payin
           const res = await api.post(
             '/mobile-money/session',
             {
@@ -223,7 +229,7 @@ export default function Rechargement() {
           txId = d?.transactionId ?? null;
           pUrl = d.paymentUrl ?? null;
         } else {
-          // Direct payin pour WAVE, ORANGE, MOMO, MOOV
+          // Direct payin : ORANGE (OTP #144*82#), MOMO, MOOV (push téléphone)
           const body: Record<string, unknown> = {
             operator,
             phoneNumber: `+225${phone.replace(/\D/g, '')}`,
@@ -780,48 +786,18 @@ export default function Rechargement() {
                 </div>
                 {phoneError ? (
                   <div style={{ fontSize: 11, color: '#ef4444', marginTop: 4 }}>{phoneError}</div>
+                ) : operator === 'MOOV' || operator === 'MOMO' ? (
+                  <div style={{ fontSize: 10.5, color: 'var(--text-3)', marginTop: 4 }}>
+                    {rules?.hint} · Ce numéro doit avoir{' '}
+                    <strong>{operator === 'MOOV' ? 'Moov Money' : 'MTN MoMo'} actif</strong> avec un
+                    solde suffisant.
+                  </div>
                 ) : rules ? (
                   <div style={{ fontSize: 10.5, color: 'var(--text-3)', marginTop: 4 }}>
                     {rules.hint}
                   </div>
                 ) : null}
               </div>
-
-              {/* OTP Orange Money */}
-              {operator === 'ORANGE' && (
-                <div>
-                  <label
-                    style={{
-                      display: 'block',
-                      fontSize: 12,
-                      fontWeight: 600,
-                      color: 'var(--text-1)',
-                      marginBottom: 8,
-                    }}
-                  >
-                    Code PIN Orange Money
-                  </label>
-                  <input
-                    className="form-input"
-                    style={{
-                      borderColor: otpError ? '#ef4444' : undefined,
-                      letterSpacing: '0.2em',
-                    }}
-                    placeholder="1234"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                    maxLength={4}
-                    inputMode="numeric"
-                  />
-                  {otpError ? (
-                    <div style={{ fontSize: 11, color: '#ef4444', marginTop: 4 }}>{otpError}</div>
-                  ) : (
-                    <div style={{ fontSize: 10.5, color: 'var(--text-3)', marginTop: 4 }}>
-                      Composez <strong>#144*82#</strong> sur votre téléphone pour obtenir ce code
-                    </div>
-                  )}
-                </div>
-              )}
 
               {/* Montant */}
               <div>
@@ -926,6 +902,45 @@ export default function Rechargement() {
                   </div>
                 ) : null}
               </div>
+
+              {/* Champ OTP Orange Money */}
+              {operator === 'ORANGE' && (
+                <div>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: 'var(--text-1)',
+                      marginBottom: 8,
+                    }}
+                  >
+                    Code OTP Orange Money
+                  </label>
+                  <input
+                    className="form-input"
+                    placeholder="4 chiffres"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                    maxLength={4}
+                    inputMode="numeric"
+                    style={{
+                      letterSpacing: 8,
+                      fontSize: 18,
+                      textAlign: 'center',
+                      borderColor: otpError ? '#ef4444' : undefined,
+                    }}
+                  />
+                  {otpError ? (
+                    <div style={{ fontSize: 11, color: '#ef4444', marginTop: 4 }}>{otpError}</div>
+                  ) : (
+                    <div style={{ fontSize: 10.5, color: 'var(--text-3)', marginTop: 4 }}>
+                      Composez <strong>#144*82#</strong> sur votre téléphone Orange pour obtenir ce
+                      code.
+                    </div>
+                  )}
+                </div>
+              )}
 
               <button
                 className="btn-primary"

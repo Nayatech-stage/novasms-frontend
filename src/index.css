@@ -764,3 +764,159 @@ body {
     min-width: 32px;
   }
 }
+
+/* ─── Dashboard inline grids responsive ──────────────────────────────────── */
+@media (max-width: 767px) {
+  /* Charts row: force 1 colonne quand inline style est 2 cols */
+  .charts-row[style] {
+    grid-template-columns: 1fr !important;
+  }
+  /* Onboarding steps: column sur mobile */
+  .flex.gap-16.items-center {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  /* Dashboard operational grid 2-cols: force 1-col */
+  [style*="minmax(0,1fr) minmax(0,1fr)"] {
+    grid-template-columns: 1fr !important;
+  }
+  /* Dashboard 5-col alt: handled by kpi-grid alt override above */
+}
+
+/* ─── Public Navbar (LandingPage, Produit, Tarifs, Solutions, Ressources) ──── */
+
+/* Hamburger bouton — caché par défaut, visible mobile */
+.pub-nav-hamburger {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: none;
+  border: 1px solid rgba(0,0,0,0.12);
+  color: var(--text-1, #1a1a1a);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* Menu mobile overlay */
+.pub-nav-mobile-menu {
+  display: none;
+  position: fixed;
+  top: 80px;  /* hauteur de la navbar h-20 */
+  left: 0;
+  right: 0;
+  z-index: 49;
+  background: rgba(253,253,253,0.97);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+  padding: 16px 20px 24px;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+}
+.pub-nav-mobile-menu.open {
+  display: flex;
+}
+.pub-nav-mobile-menu a {
+  padding: 12px 16px;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 10px;
+  text-decoration: none;
+  color: #1a1a1a;
+  transition: background 0.15s;
+}
+.pub-nav-mobile-menu a:hover {
+  background: rgba(46,200,10,0.08);
+  color: var(--brand-primary, #2ec80a);
+}
+.pub-nav-mobile-menu .pub-nav-mobile-cta {
+  margin-top: 12px;
+  padding: 13px 16px;
+  text-align: center;
+  background: var(--brand-primary, #2ec80a);
+  color: white;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+}
+.pub-nav-mobile-menu .pub-nav-mobile-login {
+  padding: 12px 16px;
+  text-align: center;
+  border: 1.5px solid rgba(0,0,0,0.12);
+  color: #1a1a1a;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  background: transparent;
+}
+
+@media (max-width: 767px) {
+  .pub-nav-hamburger {
+    display: flex;
+  }
+  /* Cacher les boutons CTA desktop dans la navbar */
+  .pub-nav-cta-desktop {
+    display: none !important;
+  }
+  /* Hero h1: réduire la taille sur mobile */
+  .pub-hero-h1 {
+    font-size: 2.5rem !important;   /* text-4xl = 36px approx */
+    line-height: 1.15 !important;
+  }
+  /* CTA section: padding réduit */
+  .pub-cta-section {
+    padding: 2.5rem 1.5rem !important;
+    border-radius: 20px !important;
+  }
+  /* Footer liens: wrap */
+  .pub-footer-links {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 16px !important;
+  }
+  /* Tarifs: neutraliser le scale-105 sur la card populaire */
+  .pub-plan-popular {
+    transform: scale(1) !important;
+  }
+  /* Solutions stats: 1 colonne sur mobile */
+  .pub-stats-grid {
+    grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+  /* Ressources newsletter: colonne */
+  .pub-newsletter-row {
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+  /* Sections générales: padding réduit */
+  .pub-section {
+    padding-top: 4rem !important;
+    padding-bottom: 4rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .pub-hero-h1 {
+    font-size: 2rem !important;   /* text-3xl */
+  }
+  .pub-cta-section {
+    padding: 2rem 1.25rem !important;
+    border-radius: 16px !important;
+  }
+  /* Boutons hero: padding réduit */
+  .pub-hero-btn {
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
+    padding-top: 0.875rem !important;
+    padding-bottom: 0.875rem !important;
+    font-size: 0.9rem !important;
+  }
+  /* Sections grid: 1 colonne forcée */
+  .pub-features-grid {
+    grid-template-columns: 1fr !important;
+  }
+  /* Stats grid Solutions: rester en 1 col sur très petit écran (hérité du 767px) */
+}
