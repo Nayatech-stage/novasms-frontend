@@ -1,11 +1,10 @@
 import { motion } from 'framer-motion';
 import { Bolt, Info, Loader2, PencilLine, Check, X } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
-import { useEffect, useState } from 'react';
-import { useAuthStore } from '@/stores/authStore';
-
+import { useState } from 'react';
+import { authApi, extractAuthError } from '@/api/auth.api';
 export default function ConfirmEmail() {
-  const logout = useAuthStore((state) => state.logout);
+  // do not forcibly logout when showing confirmation instructions
   const location = useLocation();
   const [isResending, setIsResending] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -18,18 +17,12 @@ export default function ConfirmEmail() {
 
   const emailFromState = (location.state as { email?: string } | null)?.email;
   const email = emailFromState || localStorage.getItem('novasms-pending-confirmation-email') || '';
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-
-  useEffect(() => {
-    logout();
-  }, [logout]);
-
   const handleResend = async () => {
     const targetEmail = (isEditingEmail ? draftEmail : email).trim();
 
     if (!targetEmail) {
       setFeedback(
-        'Aucune adresse email disponible. Retournez à l’inscription pour en saisir une nouvelle.',
+        "Aucune adresse email disponible. Retournez à l'inscription pour en saisir une nouvelle.",
       );
       return;
     }
@@ -38,15 +31,9 @@ export default function ConfirmEmail() {
     setFeedback(null);
 
     try {
-      const response = await fetch(`${apiUrl}/auth/resend-confirmation`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: targetEmail }),
-      });
+      const json = await authApi.resendConfirmation(targetEmail);
 
-      const json = await response.json();
-
-      if (!response.ok || !json.success) {
+      if (!json.success) {
         setFeedback(json.message || 'Impossible de renvoyer le lien pour le moment.');
         return;
       }
@@ -55,8 +42,8 @@ export default function ConfirmEmail() {
       setDraftEmail(targetEmail);
       setIsEditingEmail(false);
       setFeedback(json.message || 'Un nouveau lien de confirmation a été envoyé.');
-    } catch {
-      setFeedback('Erreur de connexion au serveur.');
+    } catch (err) {
+      setFeedback(extractAuthError(err, 'Erreur de connexion au serveur.'));
     } finally {
       setIsResending(false);
     }

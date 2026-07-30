@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
+import { authApi, extractAuthError } from '@/api/auth.api';
 
 export const RegisterSchema = z.object({
   nom: z.string().min(2, 'Nom trop court'),
@@ -22,20 +22,14 @@ export function useRegister() {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await axios.post('/api/auth/register', data, {
-        headers: { 'Content-Type': 'application/json' },
-      });
-      if (res.data.success) {
+      const res = await authApi.register({ ...data, acceptCGU: true });
+      if (res.success) {
         navigate('/confirm-email', { state: { email: data.email } });
       } else {
-        setError(res.data.message || 'Une erreur est survenue');
+        setError(res.message || 'Une erreur est survenue');
       }
-    } catch (err: unknown) {
-      if (axios.isAxiosError<{ message?: string }>(err)) {
-        setError(err.response?.data?.message || 'Impossible de contacter le serveur');
-      } else {
-        setError('Impossible de contacter le serveur');
-      }
+    } catch (err) {
+      setError(extractAuthError(err, 'Impossible de contacter le serveur'));
     } finally {
       setIsLoading(false);
     }

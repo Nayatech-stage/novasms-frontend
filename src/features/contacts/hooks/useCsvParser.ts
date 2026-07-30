@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import * as XLSX from 'xlsx';
+import Papa from 'papaparse';
 
 type CsvCell = string | number | boolean | null;
 type CsvRow = Record<string, CsvCell>;
@@ -17,38 +17,48 @@ export function useCsvParser() {
 
   const parseFile = useCallback(async (file: File): Promise<ParseResult> => {
     setIsParsing(true);
-    
-    try {
-      const data = await file.arrayBuffer();
-      const workbook = XLSX.read(data, { type: 'array' });
-      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json<CsvRow>(firstSheet, { defval: '' });
-      
-      if (jsonData.length === 0) {
-        throw new Error('Fichier vide ou format invalide');
-      }
 
-      const headers = Object.keys(jsonData[0]);
-      const preview = jsonData.slice(0, 5); // RG-10: prévisualisation 5 lignes
+    return new Promise((resolve) => {
+      Papa.parse<CsvRow>(file, {
+        header: true,
+        skipEmptyLines: true,
+        dynamicTyping: true,
+        complete(results) {
+          setIsParsing(false);
+          const jsonData = results.data;
 
-      return {
-        headers,
-        rows: jsonData,
-        preview,
-        totalRows: jsonData.length,
-        error: null,
-      };
-    } catch (err: unknown) {
-      return {
-        headers: [],
-        rows: [],
-        preview: [],
-        totalRows: 0,
-        error: err instanceof Error ? err.message : 'Erreur de parsing du fichier',
-      };
-    } finally {
-      setIsParsing(false);
-    }
+          if (jsonData.length === 0) {
+            resolve({
+              headers: [],
+              rows: [],
+              preview: [],
+              totalRows: 0,
+              error: 'Fichier vide ou format invalide',
+            });
+            return;
+          }
+
+          const headers = Object.keys(jsonData[0]);
+          resolve({
+            headers,
+            rows: jsonData,
+            preview: jsonData.slice(0, 5),
+            totalRows: jsonData.length,
+            error: null,
+          });
+        },
+        error(err) {
+          setIsParsing(false);
+          resolve({
+            headers: [],
+            rows: [],
+            preview: [],
+            totalRows: 0,
+            error: err.message,
+          });
+        },
+      });
+    });
   }, []);
 
   return { parseFile, isParsing };

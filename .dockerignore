@@ -1,0 +1,12 @@
+node_modules
+dist
+dist-ssr
+.env
+.env.*
+.git
+.gitignore
+*.log
+.vite
+test-results
+playwright-report
+coverage

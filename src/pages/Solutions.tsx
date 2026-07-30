@@ -9,6 +9,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import PublicNavbar from '@/components/PublicNavbar';
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 30 },
@@ -101,71 +102,11 @@ export default function Solutions() {
 
   return (
     <div className="min-h-screen bg-background text-on-surface font-body antialiased">
-      {/* Navbar */}
       {/* NAVBAR */}
-      <nav
-        className={`h-20 w-full fixed top-0 left-0 z-50 glass-header border-b border-outline-variant/30 px-6 lg:px-12 flex items-center justify-between transition-all duration-300 ${isScrolled ? 'backdrop-blur-md' : ''}`}
-      >
-        <div className="flex items-center gap-12">
-          {/* Logo */}
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary rounded flex items-center justify-center">
-              <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-              </svg>
-            </div>
-            <span className="font-headline font-extrabold text-2xl tracking-tight text-secondary">
-              NovaSMS
-            </span>
-          </div>
-
-          {/* Desktop Navigation */}
-          <div className="hidden lg:flex gap-8">
-            <a
-              href="/produit"
-              className="text-sm font-semibold text-secondary/70 hover:text-primary transition-colors"
-            >
-              Produit
-            </a>
-            <a
-              href="/solutions"
-              className="text-sm font-semibold text-secondary/70 hover:text-primary transition-colors"
-            >
-              Solutions
-            </a>
-            <a
-              href="/tarifs"
-              className="text-sm font-semibold text-secondary/70 hover:text-primary transition-colors"
-            >
-              Tarifs
-            </a>
-            <a
-              href="/ressources"
-              className="text-sm font-semibold text-secondary/70 hover:text-primary transition-colors"
-            >
-              Ressources
-            </a>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <a
-            href="/login"
-            className="text-sm font-bold text-secondary hover:bg-surface-variant/50 px-5 py-2.5 rounded-lg transition-all"
-          >
-            Connexion
-          </a>
-          <a
-            href="/register"
-            className="bg-primary text-white text-sm font-bold px-6 py-2.5 rounded-lg hover:brightness-110 transition-all shadow-lg shadow-primary/20"
-          >
-            Inscription
-          </a>
-        </div>
-      </nav>
+      <PublicNavbar isScrolled={isScrolled} activePath="/solutions" />
 
       {/* Hero */}
-      <main className="pt-32 pb-24 px-6 lg:px-12">
+      <main className="pub-section pt-32 pb-24 px-4 sm:px-6 lg:px-12">
         <div className="max-w-7xl mx-auto">
           <motion.div
             initial="hidden"
@@ -173,7 +114,7 @@ export default function Solutions() {
             variants={fadeInUp}
             className="text-center max-w-3xl mx-auto mb-20"
           >
-            <h1 className="font-headline text-5xl lg:text-6xl font-extrabold text-secondary tracking-tight mb-6">
+            <h1 className="pub-hero-h1 font-headline text-5xl lg:text-6xl font-extrabold text-secondary tracking-tight mb-6">
               Des solutions adaptées à votre secteur
             </h1>
             <p className="text-xl text-on-surface-variant leading-relaxed">
@@ -183,7 +124,7 @@ export default function Solutions() {
           </motion.div>
 
           {/* Sectors Grid */}
-          <div className="grid md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {sectors.map((sector, i) => (
               <motion.div
                 key={i}
@@ -204,7 +145,7 @@ export default function Solutions() {
                 </p>
 
                 {/* Stats */}
-                <div className="grid grid-cols-3 gap-4 mb-8">
+                <div className="pub-stats-grid grid grid-cols-3 gap-4 mb-8">
                   {sector.stats.map((stat, idx) => (
                     <div key={idx} className="text-center p-4 bg-surface-variant/30 rounded-xl">
                       <p className="text-2xl font-black text-primary mb-1">{stat.value}</p>
@@ -240,7 +181,7 @@ export default function Solutions() {
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="mt-24 bg-gradient-to-br from-primary/10 to-secondary/10 rounded-[32px] p-12 lg:p-20 text-center border border-outline-variant/30"
+            className="mt-16 lg:mt-24 bg-gradient-to-br from-primary/10 to-secondary/10 pub-cta-section rounded-[32px] p-12 lg:p-20 text-center border border-outline-variant/30"
           >
             <h2 className="font-headline text-4xl lg:text-5xl font-extrabold text-secondary tracking-tight mb-6">
               Votre secteur n'est pas listé ?
@@ -260,10 +201,10 @@ export default function Solutions() {
       </main>
 
       {/* Footer */}
-      <footer className="py-12 px-6 lg:px-12 border-t border-outline-variant/20 bg-white">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+      <footer className="py-12 px-4 sm:px-6 lg:px-12 border-t border-outline-variant/20 bg-white">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6 text-center md:text-left">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-primary rounded flex items-center justify-center">
+            <div className="w-6 h-6 bg-primary rounded flex items-center justify-center flex-shrink-0">
               <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
               </svg>
@@ -272,7 +213,7 @@ export default function Solutions() {
               NovaSMS
             </span>
           </div>
-          <div className="flex gap-8 text-sm font-semibold text-secondary/60">
+          <div className="pub-footer-links flex gap-6 text-sm font-semibold text-secondary/60">
             <a href="#" className="hover:text-primary transition-colors">
               Confidentialité
             </a>

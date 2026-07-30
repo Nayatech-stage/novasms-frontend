@@ -1,7 +1,8 @@
-import { useState, type ReactNode } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { useAppMetrics } from '@/hooks/useAppMetrics';
+import { useUiStore } from '@/stores/uiStore';
 
 function DashboardIcon() {
   return (
@@ -99,6 +100,26 @@ function TeamIcon() {
   );
 }
 
+function CreditsIcon() {
+  return (
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 14 14"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="1" y="3" width="12" height="9" rx="2" />
+      <line x1="1" y1="6.5" x2="13" y2="6.5" />
+      <line x1="4" y1="9.5" x2="6" y2="9.5" />
+    </svg>
+  );
+}
+
 function SettingsIcon() {
   return (
     <svg
@@ -136,6 +157,27 @@ function SecurityIcon() {
   );
 }
 
+function ApiKeyIcon() {
+  return (
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 14 14"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="5" cy="8" r="2.5" />
+      <path d="M7.5 6.5l5-5" />
+      <path d="M10.5 1.5l1 1" />
+      <path d="M12 3.5l1 1" />
+    </svg>
+  );
+}
+
 function LogoutIcon() {
   return (
     <svg
@@ -162,15 +204,24 @@ function Item({
   label,
   badge,
   collapsed,
+  id,
+  onNavigate,
 }: {
   to: string;
   icon: ReactNode;
   label: string;
   badge?: string;
   collapsed: boolean;
+  id?: string;
+  onNavigate?: () => void;
 }) {
   return (
-    <NavLink to={to} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+    <NavLink
+      to={to}
+      id={id}
+      className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+      onClick={onNavigate}
+    >
       <span className="nav-icon" aria-hidden="true">
         {icon}
       </span>
@@ -183,8 +234,54 @@ function Item({
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const logout = useAuthStore((state) => state.logout);
-  const { contactsTotal, credits, loading, refresh } = useAppMetrics();
+  const userRole = (useAuthStore((state) => state.user?.role) ?? 'Admin') as
+    | 'Admin'
+    | 'Editor'
+    | 'Analyst';
+  const isAdmin = userRole === 'Admin';
+  const isAdminOrEditor = userRole === 'Admin' || userRole === 'Editor';
+  const { contactsTotal, credits, alertThreshold, creditLimit, loading, refresh } = useAppMetrics();
+  const { activeDashboard, toggleDashboard, mobileSidebarOpen, setMobileSidebarOpen } =
+    useUiStore();
+
+  const closeMobile = () => setMobileSidebarOpen(false);
+  const dashboardClickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleDashboardClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (location.pathname === '/dashboard') {
+      return;
+    }
+
+    if (dashboardClickTimer.current) {
+      clearTimeout(dashboardClickTimer.current);
+    }
+
+    dashboardClickTimer.current = setTimeout(() => {
+      dashboardClickTimer.current = null;
+      navigate('/dashboard');
+    }, 180);
+  };
+
+  const handleDashboardDoubleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (dashboardClickTimer.current) {
+      clearTimeout(dashboardClickTimer.current);
+      dashboardClickTimer.current = null;
+    }
+    toggleDashboard();
+    navigate('/dashboard');
+  };
+
+  useEffect(() => {
+    return () => {
+      if (dashboardClickTimer.current) {
+        clearTimeout(dashboardClickTimer.current);
+      }
+    };
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -192,7 +289,9 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
+    <aside
+      className={`sidebar ${collapsed ? 'collapsed' : ''} ${mobileSidebarOpen ? 'mobile-open' : ''}`}
+    >
       <div className="sb-logo">
         <div className="sb-logomark">N</div>
         {!collapsed && (
@@ -209,64 +308,162 @@ export default function Sidebar() {
       </div>
       <div className="sb-nav">
         {!collapsed && (
-          <div className="sidebar-credits">
+          <div id="tour-sidebar-credits" className="sidebar-credits">
             <div className="credits-pill-top">
               <span className="credits-label">Crédits disponibles</span>
               <button className="credits-recharge" onClick={() => void refresh()}>
                 Recharger ↗
               </button>
             </div>
-            <div className="flex items-center gap-3">
-              <span className="credits-amount">
-                {credits == null ? '--' : credits.toLocaleString('fr-FR')}
-              </span>
-              <div style={{ flex: 1 }}>
-                <div className="credits-bar">
-                  <div className="credits-bar-fill" />
+            {(() => {
+              const gaugeMax =
+                creditLimit && creditLimit > 0
+                  ? creditLimit
+                  : alertThreshold && alertThreshold > 0
+                    ? alertThreshold
+                    : null;
+              const pct =
+                credits != null && gaugeMax != null && gaugeMax > 0
+                  ? Math.min(100, Math.round((credits / gaugeMax) * 100))
+                  : credits != null && credits > 0
+                    ? 100
+                    : 0;
+              const barColor =
+                pct < 20
+                  ? 'var(--color-error, #ef4444)'
+                  : pct < 50
+                    ? '#f59e0b'
+                    : 'var(--brand-gradient)';
+              const hint = loading
+                ? 'Chargement…'
+                : gaugeMax != null
+                  ? `${pct}% · Alerte < ${alertThreshold ? alertThreshold.toLocaleString('fr-FR') : '—'} FCFA`
+                  : credits != null && credits > 0
+                    ? `${credits.toLocaleString('fr-FR')} FCFA disponible`
+                    : 'Aucun crédit';
+              return (
+                <div className="flex items-center gap-3">
+                  <span className="credits-amount">
+                    {credits == null ? '--' : credits.toLocaleString('fr-FR')}
+                  </span>
+                  <div style={{ flex: 1 }}>
+                    <div className="credits-bar">
+                      <div
+                        className="credits-bar-fill"
+                        style={{
+                          width: `${pct}%`,
+                          background: barColor,
+                          transition: 'width 0.4s ease',
+                        }}
+                      />
+                    </div>
+                    <div className="credits-hint">{hint}</div>
+                  </div>
                 </div>
-                <div className="credits-hint">{loading ? 'Chargement…' : 'Mise à jour ok'}</div>
-              </div>
-            </div>
+              );
+            })()}
           </div>
         )}
 
         {!collapsed && <div className="sb-section-label">Principal</div>}
+        <a
+          href="/dashboard"
+          onClick={(e) => {
+            closeMobile();
+            handleDashboardClick(e);
+          }}
+          onDoubleClick={handleDashboardDoubleClick}
+          className={`nav-item ${location.pathname === '/dashboard' ? 'active' : ''}`}
+          title={`Double-clic pour basculer vers le tableau ${activeDashboard === 1 ? 'opérationnel' : 'analytique'}`}
+        >
+          <span className="nav-icon">
+            <DashboardIcon />
+          </span>
+          {!collapsed && <span className="nav-text">Tableau de bord</span>}
+        </a>
+        {isAdminOrEditor && (
+          <Item
+            to="/contacts"
+            id="tour-nav-contacts"
+            icon={<ContactsIcon />}
+            label="Contacts"
+            badge={contactsTotal > 0 ? contactsTotal.toLocaleString('fr-FR') : undefined}
+            collapsed={collapsed}
+            onNavigate={closeMobile}
+          />
+        )}
+        {isAdminOrEditor && (
+          <Item
+            to="/campaigns"
+            id="tour-nav-campaigns"
+            icon={<CampaignsIcon />}
+            label="Campagnes"
+            collapsed={collapsed}
+            onNavigate={closeMobile}
+          />
+        )}
+        {isAdminOrEditor && (
+          <Item
+            to="/automations"
+            id="tour-nav-automations"
+            icon={<AutomationsIcon />}
+            label="Automatisations"
+            collapsed={collapsed}
+            onNavigate={closeMobile}
+          />
+        )}
         <Item
-          to="/dashboard"
-          icon={<DashboardIcon />}
-          label="Tableau de bord"
+          to="/analytics"
+          id="tour-nav-analytics"
+          icon={<AnalyticsIcon />}
+          label="Analytics"
           collapsed={collapsed}
+          onNavigate={closeMobile}
         />
-        <Item
-          to="/contacts"
-          icon={<ContactsIcon />}
-          label="Contacts"
-          badge={contactsTotal > 0 ? contactsTotal.toLocaleString('fr-FR') : undefined}
-          collapsed={collapsed}
-        />
-        <Item to="/campaigns" icon={<CampaignsIcon />} label="Campagnes" collapsed={collapsed} />
-        <Item
-          to="/automations"
-          icon={<AutomationsIcon />}
-          label="Automatisations"
-          collapsed={collapsed}
-        />
-        <Item to="/analytics" icon={<AnalyticsIcon />} label="Analytics" collapsed={collapsed} />
 
         <div className="sb-divider" />
         {!collapsed && <div className="sb-section-label">Compte</div>}
+        {isAdmin && (
+          <Item
+            to="/rechargement"
+            id="tour-nav-rechargement"
+            icon={<CreditsIcon />}
+            label="Crédits"
+            collapsed={collapsed}
+            onNavigate={closeMobile}
+          />
+        )}
         <Item
           to="/account/security"
           icon={<SecurityIcon />}
           label="Sécurité"
           collapsed={collapsed}
+          onNavigate={closeMobile}
         />
-        <Item to="/account/team" icon={<TeamIcon />} label="Équipe" collapsed={collapsed} />
+        {isAdmin && (
+          <Item
+            to="/account/team"
+            icon={<TeamIcon />}
+            label="Équipe"
+            collapsed={collapsed}
+            onNavigate={closeMobile}
+          />
+        )}
+        {isAdmin && (
+          <Item
+            to="/account/developers"
+            icon={<ApiKeyIcon />}
+            label="Clés API"
+            collapsed={collapsed}
+            onNavigate={closeMobile}
+          />
+        )}
         <Item
           to="/account/settings"
           icon={<SettingsIcon />}
           label="Paramètres"
           collapsed={collapsed}
+          onNavigate={closeMobile}
         />
       </div>
       <div className="sb-footer">

@@ -6,6 +6,7 @@ import { CountrySelect } from './CountrySelect';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { authApi, extractAuthError } from '@/api/auth.api';
 
 const RegisterSchema = z.object({
   nom: z.string().min(2, 'Le nom complet doit contenir au moins 2 caractères'),
@@ -18,6 +19,9 @@ const RegisterSchema = z.object({
     .regex(/[^A-Za-z0-9]/, 'Au moins 1 caractère spécial requis'),
   nomBoutique: z.string().min(2, 'Le nom de la boutique est requis'),
   pays: z.string().min(2, 'Le pays est requis'),
+  acceptCGU: z.boolean().refine((v) => v === true, {
+    message: "Vous devez accepter les conditions d'utilisation",
+  }),
 });
 type RegisterDto = z.infer<typeof RegisterSchema>;
 
@@ -41,52 +45,32 @@ export default function RegisterForm() {
     setValue,
   } = useForm<RegisterDto>({
     resolver: zodResolver(RegisterSchema),
-    defaultValues: { pays: 'CI', email: initialEmail },
+    defaultValues: { pays: 'CI', email: initialEmail, acceptCGU: false },
   });
 
   const password = useWatch({ control, name: 'motDePasse' });
   const selectedCountry = useWatch({ control, name: 'pays' });
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
   const onSubmit = async (data: RegisterDto) => {
     setIsLoading(true);
     setServerError(null);
 
     try {
-      console.log("Tentative d'inscription vers:", `${apiUrl}/auth/register`);
-      console.log('Données envoyées:', { ...data, motDePasse: '***' });
+      const json = await authApi.register(data);
 
-      const res = await fetch(`${apiUrl}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-
-      console.log('Réponse reçue:', res.status);
-      const json = await res.json();
-      console.log('JSON réponse:', json);
-
-      if (res.ok && json.success) {
-        console.log('Inscription réussie, redirection...');
+      if (json.success) {
         localStorage.setItem('novasms-pending-confirmation-email', data.email);
         navigate('/confirm-email', { state: { email: data.email } });
       } else {
-        // Gestion des erreurs spécifiques
-        if (res.status === 409) {
-          setServerError('EMAIL DÉJÀ EXISTANT');
-        } else if (res.status === 404) {
-          setServerError('Service indisponible. Veuillez réessayer.');
-        } else if (json.errors?.[0]?.message) {
-          setServerError(json.errors[0].message);
-        } else if (json.message) {
-          setServerError(json.message);
-        } else {
-          setServerError('Une erreur est survenue. Veuillez réessayer.');
-        }
+        setServerError(json.errors?.[0]?.message ?? json.message ?? 'Une erreur est survenue.');
       }
-    } catch (error) {
-      console.error('Erreur réseau:', error);
-      setServerError('Impossible de contacter le serveur. Vérifiez que le backend tourne.');
+    } catch (err) {
+      const msg = extractAuthError(err, '');
+      if (msg.toLowerCase().includes('exist') || msg.toLowerCase().includes('409')) {
+        setServerError('EMAIL DÉJÀ EXISTANT');
+      } else {
+        setServerError(msg || 'Impossible de contacter le serveur.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -183,17 +167,27 @@ export default function RegisterForm() {
       </div>
 
       <div className="flex items-start gap-3 pt-2">
-        <input type="checkbox" id="cgu" className="mt-1 w-4 h-4 accent-primary" />
-        <label htmlFor="cgu" className="text-sm text-on-surface-variant">
-          J'accepte les{' '}
-          <a href="#" className="text-primary">
-            Conditions
-          </a>{' '}
-          et la{' '}
-          <a href="#" className="text-primary">
-            Politique de confidentialité
-          </a>
-        </label>
+        <input
+          {...register('acceptCGU')}
+          type="checkbox"
+          id="cgu"
+          className="mt-1 w-4 h-4 accent-primary"
+        />
+        <div>
+          <label htmlFor="cgu" className="text-sm text-on-surface-variant">
+            J'accepte les{' '}
+            <a href="#" className="text-primary">
+              Conditions
+            </a>{' '}
+            et la{' '}
+            <a href="#" className="text-primary">
+              Politique de confidentialité
+            </a>
+          </label>
+          {errors.acceptCGU && (
+            <p className="mt-1 text-xs text-red-600">{errors.acceptCGU.message}</p>
+          )}
+        </div>
       </div>
 
       <button

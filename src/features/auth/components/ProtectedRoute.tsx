@@ -8,7 +8,6 @@ type ProtectedRouteProps = {
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading, accessToken, isHydrated } = useAuthStore();
   const location = useLocation();
-
   // ✅ Attendre que le store soit hydraté depuis localStorage
   if (!isHydrated || isLoading) {
     return (

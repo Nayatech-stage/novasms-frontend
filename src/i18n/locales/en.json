@@ -1,0 +1,83 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "contacts": "Contacts",
+    "campaigns": "Campaigns",
+    "automations": "Automations",
+    "analytics": "Analytics",
+    "settings": "Settings",
+    "recharge": "Top up"
+  },
+  "header": {
+    "greeting": "Hello, {{name}}",
+    "credits": "Available credits",
+    "recharge": "Top up ↗",
+    "remaining": "{{pct}}% remaining",
+    "alertThreshold": "Alert below {{amount}} FCFA",
+    "notifications": "Notifications",
+    "alertCenter": "Alert center",
+    "refresh": "Refresh",
+    "noNotifications": "No recent notifications.",
+    "viewLog": "View log",
+    "settingsLabel": "Settings",
+    "newCampaign": "New campaign"
+  },
+  "auth": {
+    "login": "Sign in",
+    "logout": "Sign out",
+    "register": "Create account",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot password?",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?"
+  },
+  "contacts": {
+    "title": "Contacts",
+    "search": "Search a contact…",
+    "addContact": "Add contact",
+    "import": "Import",
+    "export": "Export",
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "tags": "Tags",
+    "addedOn": "Added on",
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Inactive",
+    "showing": "Showing {{from}}–{{to}} of {{total}}",
+    "prev": "Prev.",
+    "next": "Next",
+    "deleteContact": "Delete contact",
+    "segmentNew": "New segment"
+  },
+  "campaigns": {
+    "title": "Campaigns",
+    "new": "New campaign",
+    "draft": "Draft",
+    "scheduled": "Scheduled",
+    "sent": "Sent",
+    "failed": "Failed"
+  },
+  "common": {
+    "loading": "Loading…",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "confirm": "Confirm",
+    "close": "Close",
+    "search": "Search",
+    "filter": "Filter",
+    "actions": "Actions",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous"
+  },
+  "lang": {
+    "fr": "Français",
+    "en": "English",
+    "switch": "Switch language"
+  }
+}

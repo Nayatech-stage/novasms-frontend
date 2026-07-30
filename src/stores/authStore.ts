@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import api from '@/api/axios';
+import { authApi, extractAuthError } from '@/api/auth.api';
 
 export type User = {
   id: string;
@@ -63,49 +65,32 @@ export const useAuthStore = create<AuthState>()(
       login: async (email: string, password: string, rememberMe = false) => {
         set({ isLoading: true, error: null });
         try {
-          const res = await fetch('http://localhost:3000/api/auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, motDePasse: password }),
-          });
-
-          const data = await res.json();
-
-          if (!res.ok) {
-            set({
-              error: data.message || 'Échec de la connexion',
-              isLoading: false,
-              requiresTwoFactor: false,
-              twoFactorToken: null,
-              twoFactorMessage: null,
-            });
-            return false;
-          }
+          const data = await authApi.login(email, password);
 
           if (data.requiresTwoFactor) {
             set({
               isLoading: false,
               error: null,
               requiresTwoFactor: true,
-              twoFactorToken: data.twoFactorToken ?? null,
-              twoFactorMessage: data.message ?? 'Un code de vérification a été envoyé.',
+              twoFactorToken: (data.twoFactorToken as string) ?? null,
+              twoFactorMessage: (data.message as string) ?? 'Un code de vérification a été envoyé.',
               pendingRememberMe: rememberMe,
             });
             return false;
           }
 
-          // ✅ Calculer isFirstLogin depuis le backend
-          const onboardingCompleted = data.account?.onboardingCompleted ?? false;
+          const onboardingCompleted =
+            (data.account as Record<string, unknown>)?.onboardingCompleted ?? false;
           const sessionExpiresAt =
             Date.now() + (rememberMe ? 30 * 24 * 60 * 60 * 1000 : 8 * 60 * 60 * 1000);
 
           set({
-            accessToken: data.accessToken,
-            refreshToken: data.refreshToken,
-            user: data.account,
+            accessToken: data.accessToken as string,
+            refreshToken: data.refreshToken as string,
+            user: data.account as User,
             isAuthenticated: true,
             isLoading: false,
-            isFirstLogin: !onboardingCompleted, // ✅ Vrai si onboarding NON complété
+            isFirstLogin: !onboardingCompleted,
             rememberMe,
             sessionExpiresAt,
             requiresTwoFactor: false,
@@ -114,9 +99,9 @@ export const useAuthStore = create<AuthState>()(
             pendingRememberMe: false,
           });
           return true;
-        } catch {
+        } catch (err) {
           set({
-            error: 'Erreur de connexion au serveur',
+            error: extractAuthError(err, 'Échec de la connexion'),
             isLoading: false,
             requiresTwoFactor: false,
             twoFactorToken: null,
@@ -130,31 +115,18 @@ export const useAuthStore = create<AuthState>()(
       verifyTwoFactor: async (twoFactorToken: string, code: string) => {
         set({ isLoading: true, error: null });
         try {
-          const res = await fetch('http://localhost:3000/api/auth/verify-2fa', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ twoFactorToken, code }),
-          });
+          const data = await authApi.verifyTwoFactor(twoFactorToken, code);
 
-          const data = await res.json();
-
-          if (!res.ok) {
-            set({
-              error: data.message || 'Code de vérification invalide',
-              isLoading: false,
-            });
-            return false;
-          }
-
-          const onboardingCompleted = data.account?.onboardingCompleted ?? false;
+          const onboardingCompleted =
+            (data.account as Record<string, unknown>)?.onboardingCompleted ?? false;
           const rememberMe = get().pendingRememberMe;
           const sessionExpiresAt =
             Date.now() + (rememberMe ? 30 * 24 * 60 * 60 * 1000 : 8 * 60 * 60 * 1000);
 
           set({
-            accessToken: data.accessToken,
-            refreshToken: data.refreshToken,
-            user: data.account,
+            accessToken: data.accessToken as string,
+            refreshToken: data.refreshToken as string,
+            user: data.account as User,
             isAuthenticated: true,
             isLoading: false,
             error: null,
@@ -167,9 +139,9 @@ export const useAuthStore = create<AuthState>()(
             pendingRememberMe: false,
           });
           return true;
-        } catch {
+        } catch (err) {
           set({
-            error: 'Erreur de connexion au serveur',
+            error: extractAuthError(err, 'Code de vérification invalide'),
             isLoading: false,
             pendingRememberMe: false,
           });
@@ -178,6 +150,10 @@ export const useAuthStore = create<AuthState>()(
       },
 
       logout: () => {
+        // US-015: call backend to revoke JWT token immediately via Redis blacklist
+        api.post('/auth/logout').catch(() => {
+          /* fail-silent: token expires naturally */
+        });
         set({
           user: null,
           accessToken: null,
@@ -213,24 +189,16 @@ export const useAuthStore = create<AuthState>()(
 
       clearError: () => set({ error: null }),
 
-      // ✅ Action pour marquer l'onboarding comme complété (appelle le backend)
       markOnboardingCompleted: async () => {
-        const { user, accessToken } = get();
-        if (!user?.id || !accessToken) return;
+        const { user } = get();
+        if (!user?.id) return;
 
         try {
-          await fetch('http://localhost:3000/api/auth/onboarding/complete', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${accessToken}`,
-            },
-          });
+          await authApi.completeOnboarding();
         } catch (err) {
           console.error('Failed to mark onboarding completed', err);
         }
 
-        // Mettre à jour l'état local
         set((state) => ({
           user: state.user ? { ...state.user, onboardingCompleted: true } : null,
           isFirstLogin: false,
@@ -238,41 +206,31 @@ export const useAuthStore = create<AuthState>()(
       },
 
       saveWizardProfile: async ({ companyName, role, sector, primaryChannels }) => {
-        const { accessToken, user } = get();
-        if (!user?.id || !accessToken) return false;
+        const { user } = get();
+        if (!user?.id) return false;
 
         try {
-          const res = await fetch('http://localhost:3000/api/auth/profile', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${accessToken}`,
-            },
-            body: JSON.stringify({ companyName, role, sector, primaryChannels }),
-          });
-
-          const data = await res.json();
-
-          if (!res.ok) {
-            set({ error: data.message || 'Impossible de sauvegarder le profil' });
-            return false;
-          }
+          const data = await authApi.saveProfile({ companyName, role, sector, primaryChannels });
 
           set((state) => ({
             user: state.user
               ? {
                   ...state.user,
-                  name: data.account?.companyName ?? companyName,
-                  role: data.account?.role ?? role,
-                  sector: data.account?.sector ?? sector,
-                  primaryChannels: data.account?.primaryChannels ?? primaryChannels,
+                  name:
+                    ((data.account as Record<string, unknown>)?.companyName as string) ??
+                    companyName,
+                  role: ((data.account as Record<string, unknown>)?.role as string) ?? role,
+                  sector: ((data.account as Record<string, unknown>)?.sector as string) ?? sector,
+                  primaryChannels:
+                    ((data.account as Record<string, unknown>)?.primaryChannels as string[]) ??
+                    primaryChannels,
                 }
               : null,
           }));
 
           return true;
-        } catch {
-          set({ error: 'Erreur de connexion au serveur' });
+        } catch (err) {
+          set({ error: extractAuthError(err, 'Impossible de sauvegarder le profil') });
           return false;
         }
       },

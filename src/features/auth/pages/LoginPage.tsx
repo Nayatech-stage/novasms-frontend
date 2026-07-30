@@ -16,7 +16,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const navigate = useNavigate();
   // ✅ Ajouter isFirstLogin dans le destructuring
-  const { login, error, clearError, isLoading, isFirstLogin } = useAuthStore();
+  const { login, error, clearError, isLoading } = useAuthStore();
 
   const [formData, setFormData] = useState<LoginFormData>({ email: '', motDePasse: '' });
   const [errors, setErrors] = useState<Partial<LoginFormData>>({});
@@ -50,12 +50,7 @@ export default function LoginPage() {
     const success = await login(formData.email, formData.motDePasse);
 
     if (success) {
-      // ✅ REDIRECTION CONDITIONNELLE : Wizard si première connexion, sinon Dashboard
-      if (isFirstLogin) {
-        navigate('/onboarding');
-      } else {
-        navigate('/dashboard');
-      }
+      navigate('/dashboard');
     }
   };
 
@@ -100,13 +95,13 @@ export default function LoginPage() {
                 value={formData.email}
                 onChange={(e) => handleChange('email', e.target.value)}
                 className={`w-full pl-12 pr-4 py-3 rounded-xl border ${
-                  errors.email ? 'border-error bg-error/5' : 'border-outline-variant'
+                  errors.email ? 'border-error bg-red-50' : 'border-outline-variant'
                 } focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all`}
                 placeholder="contact@boutique.ci"
               />
             </div>
             {errors.email && (
-              <p className="mt-1 text-sm text-error flex items-center gap-1">
+              <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
                 <AlertCircle className="w-4 h-4" /> {errors.email}
               </p>
             )}
@@ -122,7 +117,7 @@ export default function LoginPage() {
                 value={formData.motDePasse}
                 onChange={(e) => handleChange('motDePasse', e.target.value)}
                 className={`w-full pl-12 pr-12 py-3 rounded-xl border ${
-                  errors.motDePasse ? 'border-error bg-error/5' : 'border-outline-variant'
+                  errors.motDePasse ? 'border-error bg-red-50' : 'border-outline-variant'
                 } focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all`}
                 placeholder="••••••••"
               />
@@ -135,7 +130,7 @@ export default function LoginPage() {
               </button>
             </div>
             {errors.motDePasse && (
-              <p className="mt-1 text-sm text-error flex items-center gap-1">
+              <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
                 <AlertCircle className="w-4 h-4" /> {errors.motDePasse}
               </p>
             )}
@@ -143,8 +138,8 @@ export default function LoginPage() {
 
           {/* Error message */}
           {error && (
-            <div className="p-4 rounded-xl bg-error/10 border border-error/20">
-              <p className="text-sm text-error font-medium">{error}</p>
+            <div className="p-4 rounded-xl bg-red-50 border border-red-200">
+              <p className="text-sm text-red-600 font-medium">{error}</p>
             </div>
           )}
 

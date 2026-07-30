@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, type Variants } from 'framer-motion';
+import PublicNavbar from '@/components/PublicNavbar';
 
 // Animations
 const fadeInUp: Variants = {
@@ -19,69 +20,10 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-background text-on-surface font-body antialiased selection:bg-primary selection:text-on-primary">
       {/* NAVBAR */}
-      <nav
-        className={`h-20 w-full fixed top-0 left-0 z-50 glass-header border-b border-outline-variant/30 px-6 lg:px-12 flex items-center justify-between transition-all duration-300 ${isScrolled ? 'backdrop-blur-md' : ''}`}
-      >
-        <div className="flex items-center gap-12">
-          {/* Logo */}
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary rounded flex items-center justify-center">
-              <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-              </svg>
-            </div>
-            <span className="font-headline font-extrabold text-2xl tracking-tight text-secondary">
-              NovaSMS
-            </span>
-          </div>
-
-          {/* Desktop Navigation */}
-          <div className="hidden lg:flex gap-8">
-            <a
-              href="/produit"
-              className="text-sm font-semibold text-secondary/70 hover:text-primary transition-colors"
-            >
-              Produit
-            </a>
-            <a
-              href="/solutions"
-              className="text-sm font-semibold text-secondary/70 hover:text-primary transition-colors"
-            >
-              Solutions
-            </a>
-            <a
-              href="/tarifs"
-              className="text-sm font-semibold text-secondary/70 hover:text-primary transition-colors"
-            >
-              Tarifs
-            </a>
-            <a
-              href="/ressources"
-              className="text-sm font-semibold text-secondary/70 hover:text-primary transition-colors"
-            >
-              Ressources
-            </a>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <a
-            href="/login"
-            className="text-sm font-bold text-secondary hover:bg-surface-variant/50 px-5 py-2.5 rounded-lg transition-all"
-          >
-            Connexion
-          </a>
-          <a
-            href="/register"
-            className="bg-primary text-white text-sm font-bold px-6 py-2.5 rounded-lg hover:brightness-110 transition-all shadow-lg shadow-primary/20"
-          >
-            Inscription
-          </a>
-        </div>
-      </nav>
+      <PublicNavbar isScrolled={isScrolled} activePath="/" />
 
       {/* HERO SECTION */}
-      <main className="relative pt-32 lg:pt-48 pb-24 px-6 lg:px-12 hero-gradient overflow-hidden">
+      <main className="relative pt-28 lg:pt-48 pb-16 lg:pb-24 px-4 sm:px-6 lg:px-12 hero-gradient overflow-hidden">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
           {/* Left Content */}
           <div className="lg:col-span-7 space-y-10">
@@ -102,7 +44,7 @@ export default function LandingPage() {
               animate="visible"
               className="space-y-6"
             >
-              <h1 className="font-headline text-5xl lg:text-7xl font-extrabold text-secondary leading-[1.1] tracking-tight">
+              <h1 className="pub-hero-h1 font-headline text-5xl lg:text-7xl font-extrabold text-secondary leading-[1.1] tracking-tight">
                 Convertissez chaque <span className="text-primary italic">clic</span> en client
                 fidèle.
               </h1>
@@ -120,7 +62,7 @@ export default function LandingPage() {
             >
               <a
                 href="/register"
-                className="bg-secondary text-white font-bold py-4 px-10 rounded-xl hover:bg-secondary/90 transition-all shadow-xl shadow-secondary/10 flex items-center justify-center gap-3"
+                className="pub-hero-btn bg-secondary text-white font-bold py-4 px-10 rounded-xl hover:bg-secondary/90 transition-all shadow-xl shadow-secondary/10 flex items-center justify-center gap-3"
               >
                 Démarrer gratuitement
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -132,7 +74,7 @@ export default function LandingPage() {
                   />
                 </svg>
               </a>
-              <button className="bg-white border border-outline text-secondary font-bold py-4 px-8 rounded-xl hover:bg-surface-variant/30 transition-all flex items-center justify-center gap-2">
+              <button className="pub-hero-btn bg-white border border-outline text-secondary font-bold py-4 px-8 rounded-xl hover:bg-surface-variant/30 transition-all flex items-center justify-center gap-2">
                 <svg className="w-5 h-5 text-primary" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M8 5v14l11-7z" />
                 </svg>
@@ -242,7 +184,7 @@ export default function LandingPage() {
       </main>
 
       {/* FEATURES SECTION */}
-      <section className="py-24 px-6 lg:px-12 bg-white relative">
+      <section className="pub-section py-24 px-4 sm:px-6 lg:px-12 bg-white relative">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col lg:flex-row justify-between items-end gap-8 mb-20">
             <div className="max-w-2xl space-y-4">
@@ -270,7 +212,7 @@ export default function LandingPage() {
             </a>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+          <div className="pub-features-grid grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
             {/* SMS Feature */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -463,7 +405,7 @@ export default function LandingPage() {
       </section>
 
       {/* TRUST SECTION */}
-      <section className="py-24 px-6 lg:px-12 bg-surface-variant/30 border-y border-outline-variant/20">
+      <section className="pub-section py-24 px-4 sm:px-6 lg:px-12 bg-surface-variant/30 border-y border-outline-variant/20">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div className="space-y-8">
             <h2 className="font-headline text-4xl font-extrabold text-secondary tracking-tight">
@@ -513,8 +455,8 @@ export default function LandingPage() {
       </section>
 
       {/* FINAL CTA */}
-      <section className="py-24 px-6 lg:px-12">
-        <div className="max-w-7xl mx-auto bg-secondary rounded-[32px] p-12 lg:p-24 text-center space-y-10 relative overflow-hidden">
+      <section className="pub-section py-24 px-4 sm:px-6 lg:px-12">
+        <div className="max-w-7xl mx-auto bg-secondary pub-cta-section rounded-[32px] p-12 lg:p-24 text-center space-y-10 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-96 h-96 bg-primary/20 blur-[120px] rounded-full translate-x-1/2 -translate-y-1/2"></div>
           <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary/10 blur-[80px] rounded-full -translate-x-1/2 translate-y-1/2"></div>
 
@@ -547,10 +489,10 @@ export default function LandingPage() {
       </section>
 
       {/* FOOTER */}
-      <footer className="py-12 px-6 lg:px-12 border-t border-outline-variant/20 bg-white">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+      <footer className="py-12 px-4 sm:px-6 lg:px-12 border-t border-outline-variant/20 bg-white">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6 text-center md:text-left">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-primary rounded flex items-center justify-center">
+            <div className="w-6 h-6 bg-primary rounded flex items-center justify-center flex-shrink-0">
               <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
               </svg>
@@ -560,19 +502,19 @@ export default function LandingPage() {
             </span>
           </div>
 
-          <div className="flex gap-8 text-sm font-semibold text-secondary/60">
+          <div className="pub-footer-links flex gap-6 text-sm font-semibold text-secondary/60">
             <a href="#" className="hover:text-primary transition-colors">
-              Politique de Confidentialité
+              Confidentialité
             </a>
             <a href="#" className="hover:text-primary transition-colors">
-              Conditions d'Utilisation
+              Conditions
             </a>
             <a href="#" className="hover:text-primary transition-colors">
               Support
             </a>
           </div>
 
-          <p className="text-sm text-secondary/40">© 2026 NovaSMS Inc. Tous droits réservés.</p>
+          <p className="text-sm text-secondary/40">© 2026 NovaSMS Inc.</p>
         </div>
       </footer>
     </div>

@@ -15,6 +15,8 @@ export default {
         'on-surface-variant': '#434D40',
         outline: '#D1D9CD',
         'outline-variant': '#E1E9DD',
+        error: '#DC2626',
+        success: '#16A34A',
       },
       borderRadius: {
         DEFAULT: '4px',

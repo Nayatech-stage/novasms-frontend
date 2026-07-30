@@ -1,19 +1,39 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import useContactDetail from '../hooks/useContactDetail';
 import Timeline from '../components/Timeline';
 import { contactsApi } from '@/api/contacts';
 
-type ContactNote = {
-  id: string;
-  content: string;
-  createdAt: string;
-};
+function parseTags(raw: unknown): string[] {
+  if (Array.isArray(raw)) return raw as string[];
+  if (typeof raw === 'string' && raw.startsWith('[')) {
+    try {
+      return JSON.parse(raw) as string[];
+    } catch {
+      /* ignore */
+    }
+  }
+  return [];
+}
+
+function extractErrorMessage(err: unknown): string {
+  if (typeof err === 'object' && err !== null) {
+    const e = err as { response?: { data?: { message?: string } }; message?: string };
+    const serverMsg = e.response?.data?.message;
+    if (typeof serverMsg === 'string' && serverMsg.trim()) return serverMsg;
+    if (typeof e.message === 'string' && !e.message.startsWith('Request failed')) return e.message;
+  }
+  return 'Une erreur est survenue. Veuillez reessayer.';
+}
+
+type ContactNote = { id: string; content: string; createdAt: string };
 
 export default function ContactDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { data, loading, error, refresh } = useContactDetail(id);
+
   const [activeTab, setActiveTab] = useState<'history' | 'notes'>('history');
   const [isEditing, setIsEditing] = useState(false);
   const [formValues, setFormValues] = useState({
@@ -23,21 +43,71 @@ export default function ContactDetail() {
     phone: '',
     location: '',
     tags: '',
+    birthday: '',
   });
   const [noteValue, setNoteValue] = useState('');
   const [savingNote, setSavingNote] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
-  const [noteError, setNoteError] = useState<string | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<'optout' | 'delete' | 'export' | null>(null);
 
-  if (loading) return <div className="p-6">Chargement…</div>;
-  if (error) return <div className="p-6 text-error">{error}</div>;
-  if (!data) return <div className="p-6">Contact non trouvé.</div>;
+  if (loading) {
+    return (
+      <div
+        className="content"
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 200 }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            color: 'var(--text-2)',
+            fontSize: 13,
+          }}
+        >
+          <span
+            className="material-symbols-outlined"
+            style={{ fontSize: 20, animation: 'spin 1s linear infinite' }}
+          >
+            progress_activity
+          </span>
+          Chargement du contact…
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="content" style={{ padding: 24 }}>
+        <button
+          onClick={() => navigate('/contacts')}
+          className="btn-sm"
+          style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 6 }}
+        >
+          <span className="material-symbols-outlined" style={{ fontSize: 16 }}>
+            arrow_back
+          </span>
+          Retour aux contacts
+        </button>
+        <div className="card" style={{ padding: 32, textAlign: 'center' }}>
+          <span
+            className="material-symbols-outlined"
+            style={{ fontSize: 48, color: 'var(--text-3)' }}
+          >
+            person_off
+          </span>
+          <p style={{ marginTop: 12, color: 'var(--text-2)', fontSize: 14 }}>
+            Contact introuvable ou acces refuse.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const contact = data;
-
-  const notes = Array.isArray(contact.notes) ? contact.notes : [];
+  const notes: ContactNote[] = Array.isArray(contact.notes) ? (contact.notes as ContactNote[]) : [];
+  const initials = (contact.firstName || contact.email || 'N').charAt(0).toUpperCase();
 
   const startEdit = () => {
     setFormValues({
@@ -46,44 +116,36 @@ export default function ContactDetail() {
       email: contact.email || '',
       phone: contact.phone || '',
       location: contact.location || '',
-      tags: Array.isArray(contact.tags) ? contact.tags.join(', ') : '',
+      tags: Array.isArray(contact.tags) ? (contact.tags as string[]).join(', ') : '',
+      birthday: contact.birthday ? contact.birthday.slice(0, 10) : '',
     });
     setIsEditing(true);
   };
 
-  const cancelEdit = () => {
-    setIsEditing(false);
-    setActionError(null);
-  };
+  const cancelEdit = () => setIsEditing(false);
 
   const handleSaveEdit = async () => {
     if (!id) return;
-    setActionError(null);
     setSavingEdit(true);
     try {
       const tags = formValues.tags
         .split(',')
-        .map((tag) => tag.trim())
+        .map((t) => t.trim())
         .filter(Boolean);
-
       await contactsApi.update(id, {
         firstName: formValues.firstName.trim() || undefined,
         lastName: formValues.lastName.trim() || undefined,
         email: formValues.email.trim() || undefined,
         phone: formValues.phone.trim() || undefined,
         location: formValues.location.trim() || undefined,
+        birthday: formValues.birthday || null,
         tags: tags.length > 0 ? tags : undefined,
       });
       await refresh();
       setIsEditing(false);
-    } catch (err: unknown) {
-      const message =
-        typeof err === 'object' && err !== null && 'response' in err
-          ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-          : err instanceof Error
-            ? err.message
-            : null;
-      setActionError(message || 'Erreur de mise à jour');
+      toast.success('Contact mis a jour');
+    } catch (err) {
+      toast.error(extractErrorMessage(err));
     } finally {
       setSavingEdit(false);
     }
@@ -92,21 +154,14 @@ export default function ContactDetail() {
   const handleSaveNote = async () => {
     const note = noteValue.trim();
     if (!id || !note) return;
-
     setSavingNote(true);
-    setNoteError(null);
     try {
       await contactsApi.addNote(id, note);
       setNoteValue('');
       await refresh();
-    } catch (err: unknown) {
-      const message =
-        typeof err === 'object' && err !== null && 'response' in err
-          ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-          : err instanceof Error
-            ? err.message
-            : null;
-      setNoteError(message || 'Erreur de sauvegarde');
+      toast.success('Note enregistree');
+    } catch (err) {
+      toast.error(extractErrorMessage(err));
     } finally {
       setSavingNote(false);
     }
@@ -114,19 +169,13 @@ export default function ContactDetail() {
 
   const handleOptOut = async () => {
     if (!id) return;
-    setActionError(null);
     setActionLoading('optout');
     try {
       await contactsApi.optOut(id);
       await refresh();
-    } catch (err: unknown) {
-      const message =
-        typeof err === 'object' && err !== null && 'response' in err
-          ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-          : err instanceof Error
-            ? err.message
-            : null;
-      setActionError(message || 'Erreur de désabonnement');
+      toast.success('Contact desabonne');
+    } catch (err) {
+      toast.error(extractErrorMessage(err));
     } finally {
       setActionLoading(null);
     }
@@ -136,27 +185,19 @@ export default function ContactDetail() {
     if (!id) return;
     const confirmed = window.confirm('Confirmer la suppression RGPD de ce contact ?');
     if (!confirmed) return;
-
-    setActionError(null);
     setActionLoading('delete');
     try {
       await contactsApi.delete(id);
+      toast.success('Contact supprime');
       navigate('/contacts');
-    } catch (err: unknown) {
-      const message =
-        typeof err === 'object' && err !== null && 'response' in err
-          ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-          : err instanceof Error
-            ? err.message
-            : null;
-      setActionError(message || 'Erreur de suppression');
+    } catch (err) {
+      toast.error(extractErrorMessage(err));
       setActionLoading(null);
     }
   };
 
   const handleExport = async () => {
     if (!id) return;
-    setActionError(null);
     setActionLoading('export');
     try {
       const blob = await contactsApi.exportById(id, 'csv');
@@ -168,128 +209,247 @@ export default function ContactDetail() {
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-    } catch (err: unknown) {
-      const message =
-        typeof err === 'object' && err !== null && 'response' in err
-          ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-          : err instanceof Error
-            ? err.message
-            : null;
-      setActionError(message || 'Erreur d\'export');
+      toast.success('Export telechargee');
+    } catch (err) {
+      toast.error(extractErrorMessage(err));
     } finally {
       setActionLoading(null);
     }
   };
 
   return (
-    <div className="p-6">
-      <button onClick={() => navigate('/contacts')} className="mb-4 text-sm text-on-surface-variant">← Retour</button>
+    <div className="content" style={{ padding: '20px 16px' }}>
+      {/* Header nav */}
+      <button
+        onClick={() => navigate('/contacts')}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          fontSize: 13,
+          color: 'var(--text-2)',
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          marginBottom: 16,
+          padding: 0,
+        }}
+      >
+        <span className="material-symbols-outlined" style={{ fontSize: 17 }}>
+          arrow_back
+        </span>
+        Retour aux contacts
+      </button>
 
-      <div className="bg-white rounded-xl p-6 shadow-sm">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-full bg-surface flex items-center justify-center text-xl font-bold">{(contact.firstName || contact.email || 'N').charAt(0)}</div>
+      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+        {/* Contact header */}
+        <div
+          style={{
+            padding: '20px 24px',
+            borderBottom: '1px solid var(--border)',
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
+            gap: 16,
+            flexWrap: 'wrap',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div
+              style={{
+                width: 52,
+                height: 52,
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg,#0c5460,#2ec80a)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 20,
+                fontWeight: 800,
+                color: 'white',
+                flexShrink: 0,
+              }}
+            >
+              {initials}
+            </div>
             <div>
-              <div className="text-lg font-semibold">{contact.firstName || contact.email}</div>
-              <div className="text-sm text-on-surface-variant">{contact.email}</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-1)' }}>
+                {[contact.firstName, contact.lastName].filter(Boolean).join(' ') ||
+                  contact.email ||
+                  'Contact'}
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 2 }}>
+                {contact.email}
+              </div>
             </div>
           </div>
-          <div className="text-sm text-right">
-            <div className="text-sm">
-              Statut: <span className="font-medium">{contact.optOut ? 'Inactif' : 'Actif'}</span>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <div style={{ textAlign: 'right', fontSize: 12 }}>
+              <span
+                style={{
+                  padding: '3px 10px',
+                  borderRadius: 20,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  background: contact.optOut ? 'rgba(220,38,38,0.1)' : 'rgba(22,163,74,0.1)',
+                  color: contact.optOut ? '#dc2626' : '#16a34a',
+                }}
+              >
+                {contact.optOut ? 'Inactif' : 'Actif'}
+              </span>
+              <div style={{ color: 'var(--text-2)', marginTop: 4 }}>
+                Ajouté le {new Date(contact.createdAt).toLocaleDateString('fr-FR')}
+              </div>
             </div>
-            <div className="text-sm text-on-surface-variant">Ajouté le {new Date(contact.createdAt).toLocaleDateString()}</div>
-            <div className="mt-3 flex items-center gap-2 justify-end">
-              {isEditing ? (
-                <>
-                  <button
-                    className="px-3 py-1.5 rounded-lg border text-sm"
-                    onClick={cancelEdit}
-                    disabled={savingEdit}
-                  >
-                    Annuler
-                  </button>
-                  <button
-                    className="px-3 py-1.5 rounded-lg bg-primary text-white text-sm disabled:opacity-50"
-                    onClick={handleSaveEdit}
-                    disabled={savingEdit}
-                  >
-                    {savingEdit ? 'Enregistrement…' : 'Enregistrer'}
-                  </button>
-                </>
-              ) : (
+            {isEditing ? (
+              <>
                 <button
-                  className="px-3 py-1.5 rounded-lg border text-sm"
-                  onClick={startEdit}
+                  className="btn-sm"
+                  onClick={cancelEdit}
+                  disabled={savingEdit}
+                  style={{ border: '1px solid var(--border)' }}
                 >
-                  Modifier
+                  Annuler
                 </button>
-              )}
-            </div>
+                <button
+                  className="btn-primary"
+                  onClick={handleSaveEdit}
+                  disabled={savingEdit}
+                  style={{ fontSize: 12 }}
+                >
+                  {savingEdit ? 'Enregistrement…' : 'Enregistrer'}
+                </button>
+              </>
+            ) : (
+              <button
+                className="btn-sm"
+                onClick={startEdit}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  border: '1px solid var(--border)',
+                }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: 15 }}>
+                  edit
+                </span>
+                Modifier
+              </button>
+            )}
           </div>
         </div>
 
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Body */}
+        <div
+          style={{
+            padding: 24,
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+            gap: 24,
+          }}
+        >
+          {/* Infos */}
           <div>
-            <h4 className="text-sm font-medium mb-2">Infos</h4>
+            <div className="card-title" style={{ marginBottom: 12 }}>
+              Informations
+            </div>
             {isEditing ? (
-              <div className="space-y-2">
-                <input
-                  className="w-full px-3 py-2 rounded-lg border border-outline-variant text-sm"
-                  placeholder="Prénom"
-                  value={formValues.firstName}
-                  onChange={(e) => setFormValues((prev) => ({ ...prev, firstName: e.target.value }))}
-                />
-                <input
-                  className="w-full px-3 py-2 rounded-lg border border-outline-variant text-sm"
-                  placeholder="Nom"
-                  value={formValues.lastName}
-                  onChange={(e) => setFormValues((prev) => ({ ...prev, lastName: e.target.value }))}
-                />
-                <input
-                  className="w-full px-3 py-2 rounded-lg border border-outline-variant text-sm"
-                  placeholder="Email"
-                  value={formValues.email}
-                  onChange={(e) => setFormValues((prev) => ({ ...prev, email: e.target.value }))}
-                />
-                <input
-                  className="w-full px-3 py-2 rounded-lg border border-outline-variant text-sm"
-                  placeholder="Téléphone"
-                  value={formValues.phone}
-                  onChange={(e) => setFormValues((prev) => ({ ...prev, phone: e.target.value }))}
-                />
-                <input
-                  className="w-full px-3 py-2 rounded-lg border border-outline-variant text-sm"
-                  placeholder="Localisation"
-                  value={formValues.location}
-                  onChange={(e) => setFormValues((prev) => ({ ...prev, location: e.target.value }))}
-                />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {[
+                  { key: 'firstName', placeholder: 'Prenom' },
+                  { key: 'lastName', placeholder: 'Nom' },
+                  { key: 'email', placeholder: 'Email' },
+                  { key: 'phone', placeholder: 'Telephone' },
+                  { key: 'location', placeholder: 'Localisation' },
+                ].map(({ key, placeholder }) => (
+                  <input
+                    key={key}
+                    className="form-input"
+                    placeholder={placeholder}
+                    value={formValues[key as keyof typeof formValues]}
+                    onChange={(e) => setFormValues((prev) => ({ ...prev, [key]: e.target.value }))}
+                  />
+                ))}
+                <div>
+                  <label
+                    style={{
+                      fontSize: 11,
+                      color: 'var(--text-2)',
+                      marginBottom: 4,
+                      display: 'block',
+                    }}
+                  >
+                    Date de naissance
+                  </label>
+                  <input
+                    type="date"
+                    className="form-input"
+                    value={formValues.birthday}
+                    onChange={(e) =>
+                      setFormValues((prev) => ({ ...prev, birthday: e.target.value }))
+                    }
+                  />
+                </div>
               </div>
             ) : (
-              <>
-                <div className="text-sm">Email: <span className="font-medium">{contact.email || '—'}</span></div>
-                <div className="text-sm">Téléphone: <span className="font-medium">{contact.phone || '—'}</span></div>
-                <div className="text-sm">Localisation: <span className="font-medium">{contact.location || '—'}</span></div>
-              </>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {[
+                  { label: 'Email', value: contact.email },
+                  { label: 'Telephone', value: contact.phone },
+                  { label: 'Localisation', value: contact.location },
+                  {
+                    label: 'Anniversaire',
+                    value: contact.birthday
+                      ? new Date(contact.birthday).toLocaleDateString('fr-FR', {
+                          day: '2-digit',
+                          month: 'long',
+                        })
+                      : null,
+                  },
+                ].map(({ label, value }) => (
+                  <div key={label} style={{ display: 'flex', gap: 8, fontSize: 13 }}>
+                    <span style={{ color: 'var(--text-2)', minWidth: 90 }}>{label}</span>
+                    <span style={{ fontWeight: 500, color: 'var(--text-1)' }}>{value || '—'}</span>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
 
+          {/* Tags */}
           <div>
-            <h4 className="text-sm font-medium mb-2">Tags</h4>
+            <div className="card-title" style={{ marginBottom: 12 }}>
+              Tags
+            </div>
             {isEditing ? (
               <input
-                className="w-full px-3 py-2 rounded-lg border border-outline-variant text-sm"
-                placeholder="VIP, Clients fidèles, Abidjan"
+                className="form-input"
+                placeholder="VIP, Clients, Abidjan"
                 value={formValues.tags}
                 onChange={(e) => setFormValues((prev) => ({ ...prev, tags: e.target.value }))}
               />
             ) : (
-              <div className="flex gap-2 flex-wrap">
-                {(contact.tags || []).length === 0 ? (
-                  <span className="text-sm text-on-surface-variant">Aucun tag</span>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {parseTags(contact.tags).length === 0 ? (
+                  <span style={{ fontSize: 13, color: 'var(--text-2)' }}>Aucun tag</span>
                 ) : (
-                  (contact.tags || []).map((t: string) => (
-                    <span key={t} className="px-2 py-1 text-xs bg-surface rounded-md">{t}</span>
+                  parseTags(contact.tags).map((t) => (
+                    <span
+                      key={t}
+                      style={{
+                        padding: '3px 10px',
+                        background: 'var(--muted)',
+                        borderRadius: 20,
+                        fontSize: 12,
+                        fontWeight: 500,
+                        color: 'var(--text-1)',
+                        border: '1px solid var(--border)',
+                      }}
+                    >
+                      {t}
+                    </span>
                   ))
                 )}
               </div>
@@ -297,82 +457,167 @@ export default function ContactDetail() {
           </div>
         </div>
 
-        <div className="mt-6">
-          <div className="border-b border-outline-variant">
-            <nav className="flex gap-4">
-              <button onClick={() => setActiveTab('history')} className={`py-2 ${activeTab === 'history' ? 'border-b-2 border-primary' : ''}`}>
-                Historique campagnes
+        {/* Tabs */}
+        <div style={{ borderTop: '1px solid var(--border)', padding: '0 24px' }}>
+          <div style={{ display: 'flex', gap: 0 }}>
+            {(['history', 'notes'] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                style={{
+                  padding: '12px 16px',
+                  fontSize: 13,
+                  fontWeight: activeTab === tab ? 600 : 400,
+                  color: activeTab === tab ? 'var(--primary, #0c5460)' : 'var(--text-2)',
+                  background: 'none',
+                  border: 'none',
+                  borderBottom:
+                    activeTab === tab
+                      ? '2px solid var(--primary, #0c5460)'
+                      : '2px solid transparent',
+                  cursor: 'pointer',
+                  marginBottom: -1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: 16 }}>
+                  {tab === 'history' ? 'history' : 'note'}
+                </span>
+                {tab === 'history' ? 'Historique' : 'Notes'}
               </button>
-              <button onClick={() => setActiveTab('notes')} className={`py-2 ${activeTab === 'notes' ? 'border-b-2 border-primary' : ''}`}>
-                Notes
-              </button>
-            </nav>
+            ))}
           </div>
+        </div>
 
-          <div className="mt-4">
-            {activeTab === 'history' ? (
-              <Timeline events={contact.history || []} />
-            ) : (
-              <div>
-                <textarea
-                  className="w-full min-h-[120px] p-3 border rounded-md"
-                  placeholder="Ajouter une note…"
-                  value={noteValue}
-                  onChange={(e) => setNoteValue(e.target.value)}
-                />
-                <div className="mt-3 flex items-center gap-3">
-                  <button
-                    className="px-4 py-2 bg-primary text-white rounded-lg disabled:opacity-50"
-                    disabled={savingNote || !noteValue.trim()}
-                    onClick={handleSaveNote}
-                  >
-                    {savingNote ? 'Enregistrement…' : 'Enregistrer la note'}
-                  </button>
-                  {noteError ? <span className="text-sm text-error">{noteError}</span> : null}
-                </div>
-
-                <div className="mt-4 space-y-2">
-                  {notes.length === 0 ? (
-                    <div className="text-sm text-on-surface-variant">Aucune note pour ce contact.</div>
-                  ) : (
-                    notes.map((note: ContactNote) => (
-                      <div key={note.id} className="p-3 border rounded-md bg-surface">
-                        <div className="text-sm">{note.content}</div>
-                        <div className="text-xs text-on-surface-variant mt-1">
-                          {new Date(note.createdAt).toLocaleString()}
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
+        {/* Tab content */}
+        <div style={{ padding: 24 }}>
+          {activeTab === 'history' ? (
+            <Timeline events={contact.history || []} />
+          ) : (
+            <div>
+              <textarea
+                className="form-input"
+                style={{ minHeight: 100, resize: 'vertical', width: '100%' }}
+                placeholder="Ajouter une note…"
+                value={noteValue}
+                onChange={(e) => setNoteValue(e.target.value)}
+              />
+              <div style={{ marginTop: 10 }}>
+                <button
+                  className="btn-primary"
+                  style={{ fontSize: 12 }}
+                  disabled={savingNote || !noteValue.trim()}
+                  onClick={handleSaveNote}
+                >
+                  {savingNote ? 'Enregistrement…' : 'Enregistrer la note'}
+                </button>
               </div>
-            )}
-          </div>
 
-          <div className="mt-6 flex gap-3 justify-end">
-            <button
-              className="px-4 py-2 rounded-lg border disabled:opacity-50"
-              onClick={handleOptOut}
-              disabled={actionLoading !== null || isEditing}
-            >
-              {actionLoading === 'optout' ? 'Désabonnement…' : 'Désabonner'}
-            </button>
-            <button
-              className="px-4 py-2 rounded-lg border text-error disabled:opacity-50"
-              onClick={handleDelete}
-              disabled={actionLoading !== null || isEditing}
-            >
-              {actionLoading === 'delete' ? 'Suppression…' : 'Supprimer'}
-            </button>
-            <button
-              className="px-4 py-2 bg-primary text-white rounded-lg disabled:opacity-50"
-              onClick={handleExport}
-              disabled={actionLoading !== null || isEditing}
-            >
-              {actionLoading === 'export' ? 'Export…' : 'Exporter'}
-            </button>
-          </div>
-          {actionError ? <div className="mt-3 text-sm text-error">{actionError}</div> : null}
+              <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {notes.length === 0 ? (
+                  <div
+                    style={{
+                      textAlign: 'center',
+                      padding: '24px 0',
+                      color: 'var(--text-2)',
+                      fontSize: 13,
+                    }}
+                  >
+                    <span
+                      className="material-symbols-outlined"
+                      style={{
+                        fontSize: 32,
+                        display: 'block',
+                        marginBottom: 8,
+                        color: 'var(--text-3)',
+                      }}
+                    >
+                      note_stack
+                    </span>
+                    Aucune note pour ce contact.
+                  </div>
+                ) : (
+                  notes.map((note) => (
+                    <div
+                      key={note.id}
+                      style={{
+                        padding: '12px 14px',
+                        background: 'var(--muted)',
+                        borderRadius: 10,
+                        border: '1px solid var(--border)',
+                      }}
+                    >
+                      <div style={{ fontSize: 13, color: 'var(--text-1)', lineHeight: 1.5 }}>
+                        {note.content}
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--text-2)', marginTop: 6 }}>
+                        {new Date(note.createdAt).toLocaleString('fr-FR')}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer actions */}
+        <div
+          style={{
+            padding: '16px 24px',
+            borderTop: '1px solid var(--border)',
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: 10,
+            flexWrap: 'wrap',
+          }}
+        >
+          <button
+            className="btn-sm"
+            onClick={handleOptOut}
+            disabled={actionLoading !== null || isEditing}
+            style={{
+              border: '1px solid var(--border)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+            }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: 15 }}>
+              unsubscribe
+            </span>
+            {actionLoading === 'optout' ? 'Desabonnement…' : 'Desabonner'}
+          </button>
+          <button
+            className="btn-sm"
+            onClick={handleDelete}
+            disabled={actionLoading !== null || isEditing}
+            style={{
+              border: '1px solid rgba(220,38,38,0.3)',
+              color: '#dc2626',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+            }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: 15 }}>
+              delete
+            </span>
+            {actionLoading === 'delete' ? 'Suppression…' : 'Supprimer'}
+          </button>
+          <button
+            className="btn-primary"
+            onClick={handleExport}
+            disabled={actionLoading !== null || isEditing}
+            style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 6 }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: 15 }}>
+              download
+            </span>
+            {actionLoading === 'export' ? 'Export…' : 'Exporter CSV'}
+          </button>
         </div>
       </div>
     </div>

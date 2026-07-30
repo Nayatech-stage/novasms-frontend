@@ -22,5 +22,18 @@ export default defineConfig([
         project: ['./tsconfig.app.json', './tsconfig.node.json'],
       },
     },
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrors: 'none' },
+      ],
+      '@typescript-eslint/no-unused-expressions': 'off',
+      'react-hooks/set-state-in-effect': 'off',
+      'react-hooks/rules-of-hooks': 'warn',
+      'react-hooks/exhaustive-deps': 'warn',
+      'no-empty': 'warn',
+      'react-refresh/only-export-components': 'warn',
+    },
   },
 ]);

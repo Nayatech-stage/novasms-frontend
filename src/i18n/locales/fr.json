@@ -1,0 +1,83 @@
+{
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "contacts": "Contacts",
+    "campaigns": "Campagnes",
+    "automations": "Automatisations",
+    "analytics": "Analytique",
+    "settings": "Paramètres",
+    "recharge": "Recharger"
+  },
+  "header": {
+    "greeting": "Bonjour, {{name}}",
+    "credits": "Crédits disponibles",
+    "recharge": "Recharger ↗",
+    "remaining": "{{pct}}% restant",
+    "alertThreshold": "Alerte sous {{amount}} FCFA",
+    "notifications": "Notifications",
+    "alertCenter": "Centre d'alerte",
+    "refresh": "Actualiser",
+    "noNotifications": "Aucune notification récente.",
+    "viewLog": "Voir le journal",
+    "settingsLabel": "Réglages",
+    "newCampaign": "Nouvelle campagne"
+  },
+  "auth": {
+    "login": "Connexion",
+    "logout": "Déconnexion",
+    "register": "Créer un compte",
+    "email": "E-mail",
+    "password": "Mot de passe",
+    "forgotPassword": "Mot de passe oublié ?",
+    "noAccount": "Pas encore de compte ?",
+    "hasAccount": "Déjà un compte ?"
+  },
+  "contacts": {
+    "title": "Contacts",
+    "search": "Rechercher un contact…",
+    "addContact": "Ajouter un contact",
+    "import": "Importer",
+    "export": "Exporter",
+    "name": "Nom",
+    "email": "Email",
+    "phone": "Téléphone",
+    "tags": "Tags",
+    "addedOn": "Ajouté le",
+    "status": "Statut",
+    "active": "Actif",
+    "inactive": "Inactif",
+    "showing": "Affichage {{from}}–{{to}} sur {{total}}",
+    "prev": "Préc.",
+    "next": "Suiv.",
+    "deleteContact": "Supprimer ce contact",
+    "segmentNew": "Nouveau segment"
+  },
+  "campaigns": {
+    "title": "Campagnes",
+    "new": "Nouvelle campagne",
+    "draft": "Brouillon",
+    "scheduled": "Planifiée",
+    "sent": "Envoyée",
+    "failed": "Échouée"
+  },
+  "common": {
+    "loading": "Chargement…",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "confirm": "Confirmer",
+    "close": "Fermer",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "actions": "Actions",
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Précédent"
+  },
+  "lang": {
+    "fr": "Français",
+    "en": "English",
+    "switch": "Changer de langue"
+  }
+}

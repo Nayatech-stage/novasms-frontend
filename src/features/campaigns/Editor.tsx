@@ -3,7 +3,7 @@ import React from 'react';
 type Block = { id: string; type: 'text' | 'image' | 'button' | 'separator'; content?: string };
 
 function uid() {
-  return Math.random().toString(36).slice(2, 9);
+  return crypto.randomUUID().replace(/-/g, '').slice(0, 9);
 }
 
 export default function Editor({

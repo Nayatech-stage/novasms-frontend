@@ -1,7 +1,28 @@
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Material Symbols Configuration - Icônes visibles uniquement */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined' !important;
+  font-weight: normal !important;
+  font-style: normal !important;
+  font-size: inherit !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  word-wrap: normal !important;
+  white-space: nowrap !important;
+  direction: ltr !important;
+  -webkit-font-feature-settings: 'liga' off !important;
+  font-feature-settings: 'liga' off !important;
+  -webkit-font-smoothing: antialiased !important;
+}
+
 :root {
   font-family: Inter, system-ui, sans-serif;
 }
@@ -125,6 +146,9 @@ body {
   white-space: nowrap;
   cursor: pointer;
 }
+/* Labels responsifs du bouton "Nouvelle campagne" */
+.btn-primary.new-campaign-btn .short-label { display: none; }
+.btn-primary.new-campaign-btn .long-label  { display: inline; }
 .notif-btn {
   position: relative;
   background: none;
@@ -331,4 +355,568 @@ body {
   color: var(--text-2);
   padding: 0;
   cursor: pointer;
+}
+
+/* Editor utils */
+.input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+.textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-family: inherit;
+}
+.btn-sm {
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 6px;
+}
+.btn-danger {
+  background: #feecec;
+  color: #7f1d1d;
+  border: 1px solid #f5c2c2;
+}
+.text-muted { color: var(--text-3); }
+
+/* ─── Layout Content ─────────────────────────────────────────────────────── */
+.content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+/* ─── KPI Grid ────────────────────────────────────────────────────────────── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.kpi {
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
+  padding: 15px 16px;
+}
+.kpi-label { font-size: 11px; color: var(--text-2); margin-bottom: 6px; }
+.kpi-value { font-size: 22px; font-weight: 700; color: var(--text-1); line-height: 1.1; }
+.kpi-delta { font-size: 10.5px; margin-top: 4px; color: var(--text-3); }
+.kpi-delta.up { color: #16A34A; }
+.kpi-delta.down { color: #DC2626; }
+
+/* ─── Data Table ──────────────────────────────────────────────────────────── */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.data-table th {
+  padding: 6px 10px;
+  text-align: left;
+  font-weight: 500;
+  color: var(--text-2);
+  border-bottom: 0.5px solid var(--border-md);
+  font-size: 11px;
+}
+.data-table td {
+  padding: 9px 10px;
+  border-bottom: 0.5px solid var(--border);
+  color: var(--text-2);
+}
+.data-table tbody tr:last-child td { border-bottom: none; }
+.data-table tbody tr:hover { background: var(--muted); }
+
+/* ─── Tags / Chips ────────────────────────────────────────────────────────── */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 500;
+}
+.tag.green { background: var(--brand-light); color: var(--brand-text); }
+.tag.teal { background: #e0edef; color: var(--brand-teal); }
+.tag.gray { background: var(--muted); color: var(--text-2); }
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  background: var(--muted);
+  color: var(--text-2);
+}
+
+/* ─── Divider ─────────────────────────────────────────────────────────────── */
+.divider {
+  height: 0.5px;
+  background: var(--border);
+  margin: 4px 0;
+}
+
+/* ─── Heatmap cell ────────────────────────────────────────────────────────── */
+.hm-cell {
+  height: 16px;
+  border-radius: 2px;
+  background: var(--muted);
+}
+
+/* ─── Toggle switch ───────────────────────────────────────────────────────── */
+.toggle {
+  width: 32px;
+  height: 18px;
+  border-radius: 20px;
+  position: relative;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+.toggle.on { background: var(--brand-primary); }
+.toggle.off { background: #D1D5DB; }
+.toggle-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: white;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.toggle.on .toggle-knob { transform: translateX(14px); }
+
+/* ─── Analytics stat ──────────────────────────────────────────────────────── */
+.analytics-stat {
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+.analytics-stat .big {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+.analytics-stat .lbl {
+  font-size: 10.5px;
+  color: var(--text-2);
+  margin: 4px 0 8px;
+}
+.progress-track {
+  height: 4px;
+  background: var(--muted);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--brand-gradient);
+  transition: width 0.4s ease;
+}
+
+/* ─── Card subtitle ───────────────────────────────────────────────────────── */
+.card-subtitle {
+  font-size: 10.5px;
+  color: var(--text-2);
+  margin-top: 2px;
+}
+
+/* ─── Flex / Gap utils ────────────────────────────────────────────────────── */
+.flex { display: flex; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.gap-4 { gap: 4px; }
+.gap-8 { gap: 8px; }
+.gap-12 { gap: 12px; }
+.gap-16 { gap: 16px; }
+.mb-8 { margin-bottom: 8px; }
+.mb-12 { margin-bottom: 12px; }
+.ml-auto { margin-left: auto; }
+.text-xs { font-size: 11px; }
+.text-sm { font-size: 12.5px; }
+.font-medium { font-weight: 500; }
+.font-semibold { font-weight: 600; }
+.font-bold { font-weight: 700; }
+
+
+/* ─── Driver.js — NovaSMS brand overrides ────────────────────────────────── */
+.novasms-tour-popover.driver-popover {
+  border-radius: 16px;
+  border: 1.5px solid rgba(46, 200, 10, 0.15);
+  box-shadow: 0 20px 60px rgba(12, 84, 96, 0.18), 0 4px 16px rgba(0,0,0,0.08);
+  padding: 20px 22px 16px;
+  max-width: 340px;
+  font-family: inherit;
+}
+.novasms-tour-popover .driver-popover-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--brand-teal, #0c5460);
+  margin-bottom: 6px;
+}
+.novasms-tour-popover .driver-popover-description {
+  font-size: 13.5px;
+  color: var(--text-2, #6b7280);
+  line-height: 1.55;
+}
+.novasms-tour-popover .driver-popover-footer {
+  margin-top: 16px;
+  gap: 8px;
+}
+.novasms-tour-popover .driver-popover-next-btn {
+  background: var(--brand-gradient, linear-gradient(135deg,#2ec80a,#aaee22));
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 7px 16px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.novasms-tour-popover .driver-popover-next-btn:hover { opacity: 0.88; }
+.novasms-tour-popover .driver-popover-prev-btn {
+  background: var(--muted, #f0f7f0);
+  color: var(--text-1, #1a1a1a);
+  border: 1px solid var(--border, rgba(0,0,0,0.08));
+  border-radius: 8px;
+  font-size: 13px;
+  padding: 7px 14px;
+  cursor: pointer;
+}
+.novasms-tour-popover .driver-popover-prev-btn:hover { background: #e4f0e4; }
+.novasms-tour-popover .driver-popover-close-btn {
+  color: var(--text-3, #9ca3af);
+  font-size: 18px;
+}
+.novasms-tour-popover .driver-popover-progress-text {
+  font-size: 11px;
+  color: var(--text-3, #9ca3af);
+}
+/* Highlight ring NovaSMS vert */
+.driver-active .driver-overlay { background: rgba(0,0,0,0.52); }
+
+/* ─── Form input ──────────────────────────────────────────────────────────── */
+.form-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  background: var(--surface);
+  color: var(--text-1);
+  outline: none;
+  box-sizing: border-box;
+}
+.form-input:focus {
+  border-color: var(--brand-teal);
+  box-shadow: 0 0 0 2px rgba(12, 84, 96, 0.1);
+}
+
+/* ─── Hamburger button (mobile only) ─────────────────────────────────────── */
+.mobile-menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-1);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* ─── Sidebar overlay backdrop (mobile) ──────────────────────────────────── */
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 39;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+/* ─── Responsive: Tablet (≤ 1024px) ──────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  #tour-kpi-grid-alt {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+  .credits-pill {
+    display: none;
+  }
+  /* Data table scrollable dès le tablet */
+  .data-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* ─── Responsive: Mobile (≤ 767px) ───────────────────────────────────────── */
+@media (max-width: 767px) {
+  /* Sidebar: hidden off-screen, slides in as overlay */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 40;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    box-shadow: none;
+  }
+  .sidebar.mobile-open {
+    transform: translateX(0);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.18);
+  }
+  /* Backdrop visible when sidebar open */
+  .sidebar-backdrop.active {
+    display: block;
+  }
+  /* Hamburger visible */
+  .mobile-menu-btn {
+    display: flex;
+  }
+  /* Content padding tighter */
+  .content {
+    padding: 12px;
+  }
+  /* Header compress */
+  .header {
+    padding: 0 10px;
+    gap: 8px;
+  }
+  .hdr-title p {
+    display: none;
+  }
+  .credits-pill {
+    display: none;
+  }
+  /* "Nouvelle campagne" text shortened */
+  .btn-primary.new-campaign-btn .long-label { display: none; }
+  .btn-primary.new-campaign-btn .short-label { display: inline; }
+  /* KPI grid: 2 cols */
+  .kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .kpi-value { font-size: 18px; }
+  /* Alt dashboard 5-col grid */
+  #tour-kpi-grid-alt {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  /* Charts row: stack */
+  .charts-row {
+    grid-template-columns: 1fr !important;
+  }
+  /* Data table: horizontal scroll */
+  .data-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* Heatmap: overflow scroll */
+  .heatmap-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    min-width: 0;
+  }
+  /* Cards: padding réduit */
+  .card {
+    padding: 14px;
+  }
+  /* Modals: marges safe */
+  .modal-overlay {
+    padding: 12px;
+  }
+}
+
+/* ─── Responsive: Small mobile (≤ 480px) ─────────────────────────────────── */
+@media (max-width: 480px) {
+  .kpi-value { font-size: 16px; }
+  .kpi-grid {
+    gap: 8px;
+  }
+  .content {
+    padding: 10px;
+  }
+  /* Header: gap minimal */
+  .header {
+    padding: 0 8px;
+    gap: 6px;
+  }
+  /* Bouton campagne: icône seulement */
+  .btn-primary.new-campaign-btn {
+    padding: 7px 10px;
+    min-width: 32px;
+  }
+}
+
+/* ─── Dashboard inline grids responsive ──────────────────────────────────── */
+@media (max-width: 767px) {
+  /* Charts row: force 1 colonne quand inline style est 2 cols */
+  .charts-row[style] {
+    grid-template-columns: 1fr !important;
+  }
+  /* Onboarding steps: column sur mobile */
+  .flex.gap-16.items-center {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  /* Dashboard operational grid 2-cols: force 1-col */
+  [style*="minmax(0,1fr) minmax(0,1fr)"] {
+    grid-template-columns: 1fr !important;
+  }
+  /* Dashboard 5-col alt: handled by kpi-grid alt override above */
+}
+
+/* ─── Public Navbar (LandingPage, Produit, Tarifs, Solutions, Ressources) ──── */
+
+/* Hamburger bouton — caché par défaut, visible mobile */
+.pub-nav-hamburger {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: none;
+  border: 1px solid rgba(0,0,0,0.12);
+  color: var(--text-1, #1a1a1a);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* Menu mobile overlay */
+.pub-nav-mobile-menu {
+  display: none;
+  position: fixed;
+  top: 80px;  /* hauteur de la navbar h-20 */
+  left: 0;
+  right: 0;
+  z-index: 49;
+  background: rgba(253,253,253,0.97);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+  padding: 16px 20px 24px;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+}
+.pub-nav-mobile-menu.open {
+  display: flex;
+}
+.pub-nav-mobile-menu a {
+  padding: 12px 16px;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 10px;
+  text-decoration: none;
+  color: #1a1a1a;
+  transition: background 0.15s;
+}
+.pub-nav-mobile-menu a:hover {
+  background: rgba(46,200,10,0.08);
+  color: var(--brand-primary, #2ec80a);
+}
+.pub-nav-mobile-menu .pub-nav-mobile-cta {
+  margin-top: 12px;
+  padding: 13px 16px;
+  text-align: center;
+  background: var(--brand-primary, #2ec80a);
+  color: white;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+}
+.pub-nav-mobile-menu .pub-nav-mobile-login {
+  padding: 12px 16px;
+  text-align: center;
+  border: 1.5px solid rgba(0,0,0,0.12);
+  color: #1a1a1a;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  background: transparent;
+}
+
+@media (max-width: 767px) {
+  .pub-nav-hamburger {
+    display: flex;
+  }
+  /* Cacher les boutons CTA desktop dans la navbar */
+  .pub-nav-cta-desktop {
+    display: none !important;
+  }
+  /* Hero h1: réduire la taille sur mobile */
+  .pub-hero-h1 {
+    font-size: 2.5rem !important;   /* text-4xl = 36px approx */
+    line-height: 1.15 !important;
+  }
+  /* CTA section: padding réduit */
+  .pub-cta-section {
+    padding: 2.5rem 1.5rem !important;
+    border-radius: 20px !important;
+  }
+  /* Footer liens: wrap */
+  .pub-footer-links {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 16px !important;
+  }
+  /* Tarifs: neutraliser le scale-105 sur la card populaire */
+  .pub-plan-popular {
+    transform: scale(1) !important;
+  }
+  /* Solutions stats: 1 colonne sur mobile */
+  .pub-stats-grid {
+    grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+  /* Ressources newsletter: colonne */
+  .pub-newsletter-row {
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+  /* Sections générales: padding réduit */
+  .pub-section {
+    padding-top: 4rem !important;
+    padding-bottom: 4rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .pub-hero-h1 {
+    font-size: 2rem !important;   /* text-3xl */
+  }
+  .pub-cta-section {
+    padding: 2rem 1.25rem !important;
+    border-radius: 16px !important;
+  }
+  /* Boutons hero: padding réduit */
+  .pub-hero-btn {
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
+    padding-top: 0.875rem !important;
+    padding-bottom: 0.875rem !important;
+    font-size: 0.9rem !important;
+  }
+  /* Sections grid: 1 colonne forcée */
+  .pub-features-grid {
+    grid-template-columns: 1fr !important;
+  }
+  /* Stats grid Solutions: rester en 1 col sur très petit écran (hérité du 767px) */
 }
