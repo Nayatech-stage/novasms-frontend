@@ -137,6 +137,25 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
     setMapping((prev) => ({ ...prev, [targetField]: sourceColumn }));
   };
 
+  /** Applique le mapping CSV→champs NovaSMS sur une ligne brute */
+  const applyMapping = (row: Record<string, unknown>): Record<string, unknown> => {
+    const result: Record<string, unknown> = {};
+    for (const [targetField, sourceCol] of Object.entries(mapping)) {
+      if (!sourceCol) continue;
+      const value = row[sourceCol];
+      if (value === undefined || value === null || value === '') continue;
+      if (targetField === 'tags') {
+        result.tags = String(value)
+          .split(/[,;|]/)
+          .map((x) => x.trim())
+          .filter(Boolean);
+      } else {
+        result[targetField] = typeof value === 'string' ? value.trim() : String(value).trim();
+      }
+    }
+    return result;
+  };
+
   const handleStartImport = async () => {
     if (!file || !parsedData || !accessToken) return;
 
@@ -168,9 +187,12 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
         );
         const fileId = startRes.data.fileId;
 
-        // 2) Envoyer les chunks séquentiellement
+        // 2) Envoyer les chunks séquentiellement avec mapping appliqué
         for (let i = 0; i < parsedData.rows.length; i += CHUNK_SIZE) {
-          const chunk = parsedData.rows.slice(i, i + CHUNK_SIZE);
+          const chunk = parsedData.rows
+            .slice(i, i + CHUNK_SIZE)
+            .map(applyMapping)
+            .filter((r) => r.email || r.phone);
           await api.post(
             '/contacts/import/chunk',
             { fileId, rows: chunk },

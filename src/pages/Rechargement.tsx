@@ -150,8 +150,13 @@ export default function Rechargement() {
     }
   }
 
-  function startPolling(txId: string, paid: number) {
+  function startPolling(txId: string, paid: number, op?: Operator) {
     stopPolling();
+    // WAVE / NOVASEND : l'utilisateur doit ouvrir un lien externe → 10 min
+    // MOMO / MOOV / ORANGE : push téléphone → 5 min
+    const currentOp = op ?? pendingOperator;
+    const timeoutMs = currentOp === 'WAVE' || currentOp === 'NOVASEND' ? 600_000 : 300_000;
+    const timeoutLabel = timeoutMs === 600_000 ? '10 min' : '5 min';
 
     pollingRef.current = setInterval(() => {
       void (async () => {
@@ -188,8 +193,11 @@ export default function Rechargement() {
     pollingTimeoutRef.current = setTimeout(() => {
       stopPolling();
       setWaitingPayment(false);
-      toast.error('Délai de paiement dépassé (2 min). Veuillez réessayer.');
-    }, 120_000);
+      toast.error(
+        `Délai de paiement dépassé (${timeoutLabel}). Vous êtes revenu sur la page de rechargement — réessayez si nécessaire.`,
+        { duration: 8000 },
+      );
+    }, timeoutMs);
   }
 
   async function handleConfirm() {
@@ -213,9 +221,8 @@ export default function Rechargement() {
 
         const silentConfig = { _silent: true } as Parameters<typeof api.post>[2];
 
-        if (operator === 'NOVASEND' || operator === 'WAVE') {
-          // Session NovaSend — WAVE retourne 403 sur direct payin en staging
-          // (activer WAVE direct payin sur le compte NovaSend pour la production)
+        if (operator === 'NOVASEND') {
+          // Session NovaSend Wallet uniquement
           const res = await api.post(
             '/mobile-money/session',
             {
@@ -230,7 +237,7 @@ export default function Rechargement() {
           txId = d?.transactionId ?? null;
           pUrl = d.paymentUrl ?? null;
         } else {
-          // Direct payin : ORANGE (OTP #144*82#), MOMO, MOOV (push téléphone)
+          // Direct payin : WAVE (→ paymentUrl Wave QR), ORANGE (OTP), MOMO, MOOV
           const body: Record<string, unknown> = {
             operator,
             phoneNumber: `+225${phone.replace(/\D/g, '')}`,
@@ -251,16 +258,15 @@ export default function Rechargement() {
 
         if (!txId) throw new Error('Transaction introuvable — réessayez');
 
-        if (pUrl) {
-          window.open(pUrl, '_blank', 'noopener,noreferrer');
-        }
+        // Ne pas auto-ouvrir : les navigateurs bloquent window.open après un await.
+        // Le lien est affiché sur l'écran d'attente pour que l'utilisateur clique directement.
 
         setPendingTxId(txId);
         setPendingAmount(paid);
         setPendingOperator(operator);
         setWavePaymentUrl(pUrl);
         setWaitingPayment(true);
-        startPolling(txId, paid);
+        startPolling(txId, paid, operator);
       } else {
         // Visa — flux direct inchangé
         const [expiryMonth = '', expiryYearRaw = ''] = cardExp.split('/');
@@ -332,7 +338,8 @@ export default function Rechargement() {
     },
     WAVE: {
       label: 'Wave',
-      instruction: 'Ouvrez le lien de paiement pour confirmer dans votre application Wave.',
+      instruction:
+        "Cliquez sur le bouton ci-dessous pour ouvrir Wave et scanner le QR code ou confirmer dans l'application.",
       ussd: null,
     },
     ORANGE: {
@@ -370,12 +377,73 @@ export default function Rechargement() {
         }}
       >
         <div style={{ width: '100%', maxWidth: 480 }}>
-          <div className="card" style={{ padding: 40, textAlign: 'center' }}>
-            {/* Spinner */}
-            <div style={{ margin: '0 auto 24px', width: 64, height: 64, position: 'relative' }}>
+          <div className="card" style={{ padding: 36, textAlign: 'center' }}>
+            {/* ── Bouton lien de paiement (Wave / NovaSend) — affiché EN PREMIER ── */}
+            {wavePaymentUrl && (
+              <div style={{ marginBottom: 28 }}>
+                <div style={{ fontSize: 12, color: 'var(--text-2)', marginBottom: 12 }}>
+                  {waitInfo?.instruction ?? 'Cliquez ci-dessous pour confirmer le paiement.'}
+                </div>
+                <a
+                  href={wavePaymentUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 10,
+                    padding: '14px 28px',
+                    borderRadius: 14,
+                    background: 'linear-gradient(135deg,#0c5460,#2ec80a)',
+                    color: 'white',
+                    fontWeight: 700,
+                    fontSize: 15,
+                    textDecoration: 'none',
+                    boxShadow: '0 4px 14px rgba(12,84,96,0.3)',
+                  }}
+                >
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                    <polyline points="15 3 21 3 21 9" />
+                    <line x1="10" y1="14" x2="21" y2="3" />
+                  </svg>
+                  Ouvrir {waitInfo?.label ?? 'le lien de paiement'} pour confirmer
+                </a>
+                <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 10 }}>
+                  ↑ Cliquez ce bouton — une nouvelle page s'ouvre pour finaliser le paiement
+                </div>
+                <div
+                  style={{
+                    margin: '20px auto 0',
+                    height: 1,
+                    background: 'var(--border)',
+                    maxWidth: 300,
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Spinner + titre (affiché après le bouton si lien présent) */}
+            <div
+              style={{
+                margin: `${wavePaymentUrl ? '0' : '0'} auto 20px`,
+                width: 52,
+                height: 52,
+                position: 'relative',
+              }}
+            >
               <svg
                 viewBox="0 0 64 64"
-                style={{ width: 64, height: 64, animation: 'spin 1.1s linear infinite' }}
+                style={{ width: 52, height: 52, animation: 'spin 1.1s linear infinite' }}
               >
                 <circle cx="32" cy="32" r="28" fill="none" stroke="var(--border)" strokeWidth="5" />
                 <circle
@@ -393,43 +461,32 @@ export default function Rechargement() {
               <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
             </div>
 
-            <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-1)', marginBottom: 8 }}>
-              Paiement en attente
+            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-1)', marginBottom: 6 }}>
+              En attente de confirmation…
             </div>
-            <div style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 20 }}>
-              {waitInfo?.instruction ?? 'Validation en cours…'}
-            </div>
+            {!wavePaymentUrl && (
+              <div style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 16 }}>
+                {waitInfo?.instruction ?? 'Validation en cours…'}
+              </div>
+            )}
 
             {/* USSD fallback */}
             {waitInfo?.ussd && (
               <div
                 style={{
-                  margin: '0 auto 20px',
+                  margin: '0 auto 16px',
                   maxWidth: 340,
-                  padding: '12px 16px',
+                  padding: '10px 14px',
                   background: '#fffbeb',
                   border: '1px solid #fcd34d',
                   borderRadius: 10,
                 }}
               >
                 <div style={{ fontSize: 12, color: '#92400e', lineHeight: 1.6 }}>
-                  Si le pop-up de validation n'apparaît pas, composez{' '}
+                  Si la notification n'apparaît pas sur votre téléphone, composez{' '}
                   <strong style={{ fontFamily: 'monospace', fontSize: 13 }}>{waitInfo.ussd}</strong>{' '}
-                  sur votre téléphone pour valider l'opération en attente.
+                  pour valider manuellement.
                 </div>
-              </div>
-            )}
-
-            {/* Bouton paiement si l'opérateur retourne un lien (Wave = pay.wave.com) */}
-            {wavePaymentUrl && (
-              <div style={{ marginBottom: 20 }}>
-                <button
-                  className="btn-primary"
-                  onClick={() => window.open(wavePaymentUrl, '_blank', 'noopener,noreferrer')}
-                  style={{ fontSize: 13 }}
-                >
-                  Ouvrir {waitInfo?.label ?? 'le lien de paiement'} →
-                </button>
               </div>
             )}
 

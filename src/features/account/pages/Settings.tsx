@@ -94,9 +94,24 @@ export default function Settings() {
   const userRole = (useAuthStore((s) => s.user?.role) ?? 'Admin') as 'Admin' | 'Editor' | 'Analyst';
   const isAdmin = userRole === 'Admin';
   const saved = loadSettings();
-  const [activeTab, setActiveTab] = useState<'general' | 'notifications' | 'api' | 'data'>(
-    'general',
-  );
+  const [activeTab, setActiveTab] = useState<
+    'general' | 'notifications' | 'api' | 'data' | 'payments'
+  >('general');
+
+  // ── Historique paiements ────────────────────────────────────────────────────
+  type PaymentTx = {
+    id: string;
+    status: 'pending' | 'completed' | 'failed' | 'cancelled';
+    operator: string;
+    phoneNumber: string;
+    amount: string;
+    currency: string;
+    createdAt: string;
+    completedAt: string | null;
+  };
+  const [payments, setPayments] = useState<PaymentTx[]>([]);
+  const [paymentsLoading, setPaymentsLoading] = useState(false);
+  const [paymentPeriod, setPaymentPeriod] = useState<'week' | 'month' | 'year'>('month');
 
   const [language, setLanguage] = useState<string>((saved.language as string) || 'fr');
   const [timezone, setTimezone] = useState<string>((saved.timezone as string) || 'Africa/Abidjan');
@@ -295,6 +310,17 @@ export default function Settings() {
     return () => window.removeEventListener('novasms:balance-refresh', fetchBalance);
   }, []);
 
+  // Charger les transactions quand l'onglet Paiements est actif
+  useEffect(() => {
+    if (activeTab !== 'payments') return;
+    setPaymentsLoading(true);
+    api
+      .get<{ transactions: PaymentTx[] }>('/mobile-money/transactions?limit=200')
+      .then((res) => setPayments(res.data.transactions ?? []))
+      .catch(() => {})
+      .finally(() => setPaymentsLoading(false));
+  }, [activeTab]);
+
   const handleLanguageChange = (lang: string) => {
     setLanguage(lang);
     // lang est 'fr' ou 'en' (valeurs du select)
@@ -365,10 +391,14 @@ export default function Settings() {
     }
   };
 
-  const TABS: { id: 'general' | 'notifications' | 'api' | 'data'; label: string }[] = [
+  const TABS: {
+    id: 'general' | 'notifications' | 'api' | 'data' | 'payments';
+    label: string;
+  }[] = [
     { id: 'general', label: 'Général' },
     { id: 'notifications', label: 'Notifications' },
     { id: 'api', label: 'Clés API & Intégrations' },
+    { id: 'payments', label: 'Paiements' },
     { id: 'data', label: 'Données' },
   ];
 
@@ -1095,6 +1125,320 @@ export default function Settings() {
           </div>
         </div>
       )}
+
+      {/* ─── Onglet Paiements ─── */}
+      {activeTab === 'payments' &&
+        (() => {
+          const now = new Date();
+          const filtered = payments.filter((tx) => {
+            const d = new Date(tx.createdAt);
+            if (paymentPeriod === 'week') {
+              const weekAgo = new Date(now);
+              weekAgo.setDate(now.getDate() - 7);
+              return d >= weekAgo;
+            }
+            if (paymentPeriod === 'month') {
+              return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+            }
+            // year
+            return d.getFullYear() === now.getFullYear();
+          });
+
+          const completed = filtered.filter((t) => t.status === 'completed');
+          const failed = filtered.filter((t) => t.status === 'failed');
+          const totalAmount = completed.reduce((s, t) => s + parseFloat(String(t.amount)), 0);
+
+          const STATUS_LABEL: Record<string, string> = {
+            completed: 'Réussi',
+            pending: 'En attente',
+            failed: 'Échoué',
+            cancelled: 'Annulé',
+          };
+          const STATUS_COLOR: Record<string, string> = {
+            completed: '#16a34a',
+            pending: '#d97706',
+            failed: '#dc2626',
+            cancelled: '#6b7280',
+          };
+          const STATUS_BG: Record<string, string> = {
+            completed: '#f0fdf4',
+            pending: '#fffbeb',
+            failed: '#fef2f2',
+            cancelled: '#f8fafc',
+          };
+          const OP_COLOR: Record<string, string> = {
+            WAVE: '#3b82f6',
+            ORANGE: '#f97316',
+            MOMO: '#eab308',
+            MOOV: '#0c5460',
+            NOVASEND: '#2ec80a',
+          };
+
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              {/* Filtres période */}
+              <div className="card" style={{ padding: '16px 20px' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: 12,
+                  }}
+                >
+                  <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-1)' }}>
+                    Historique des rechargements
+                  </div>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    {(['week', 'month', 'year'] as const).map((p) => (
+                      <button
+                        key={p}
+                        onClick={() => setPaymentPeriod(p)}
+                        style={{
+                          padding: '6px 14px',
+                          borderRadius: 8,
+                          fontSize: 12,
+                          fontWeight: 600,
+                          border: `1.5px solid ${paymentPeriod === p ? '#0c5460' : 'var(--border)'}`,
+                          background: paymentPeriod === p ? '#0c5460' : 'var(--surface)',
+                          color: paymentPeriod === p ? 'white' : 'var(--text-2)',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s',
+                        }}
+                      >
+                        {p === 'week' ? 'Semaine' : p === 'month' ? 'Mois' : 'Année'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Cartes résumé */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))',
+                  gap: 12,
+                }}
+              >
+                {[
+                  {
+                    label: 'Total rechargé',
+                    value: `${totalAmount.toLocaleString('fr-FR')} FCFA`,
+                    color: '#0c5460',
+                    bg: '#f0fdff',
+                    border: '#bae6fd',
+                  },
+                  {
+                    label: 'Transactions',
+                    value: filtered.length,
+                    color: '#0c5460',
+                    bg: 'var(--muted)',
+                    border: 'var(--border)',
+                  },
+                  {
+                    label: 'Réussies',
+                    value: completed.length,
+                    color: '#16a34a',
+                    bg: '#f0fdf4',
+                    border: '#bbf7d0',
+                  },
+                  {
+                    label: 'Échouées',
+                    value: failed.length,
+                    color: '#dc2626',
+                    bg: '#fef2f2',
+                    border: '#fecaca',
+                  },
+                ].map((s) => (
+                  <div
+                    key={s.label}
+                    className="card"
+                    style={{
+                      padding: '16px 18px',
+                      border: `1.5px solid ${s.border}`,
+                      background: s.bg,
+                    }}
+                  >
+                    <div style={{ fontSize: 22, fontWeight: 800, color: s.color, lineHeight: 1.1 }}>
+                      {String(s.value)}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 11,
+                        color: 'var(--text-2)',
+                        marginTop: 4,
+                        fontWeight: 600,
+                      }}
+                    >
+                      {s.label}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Table transactions */}
+              <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+                {paymentsLoading ? (
+                  <div
+                    style={{
+                      padding: 40,
+                      textAlign: 'center',
+                      color: 'var(--text-2)',
+                      fontSize: 13,
+                    }}
+                  >
+                    Chargement…
+                  </div>
+                ) : filtered.length === 0 ? (
+                  <div
+                    style={{
+                      padding: 40,
+                      textAlign: 'center',
+                      color: 'var(--text-2)',
+                      fontSize: 13,
+                    }}
+                  >
+                    Aucun paiement sur cette période.
+                  </div>
+                ) : (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                      <thead>
+                        <tr
+                          style={{
+                            background: 'var(--muted)',
+                            borderBottom: '1px solid var(--border)',
+                          }}
+                        >
+                          {['Date', 'Opérateur', 'Numéro', 'Montant', 'Statut', 'Référence'].map(
+                            (h) => (
+                              <th
+                                key={h}
+                                style={{
+                                  padding: '10px 16px',
+                                  textAlign: 'left',
+                                  fontWeight: 600,
+                                  color: 'var(--text-2)',
+                                  fontSize: 11,
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.05em',
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                {h}
+                              </th>
+                            ),
+                          )}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filtered.map((tx, i) => (
+                          <tr
+                            key={tx.id}
+                            style={{
+                              borderBottom: '1px solid var(--border)',
+                              background: i % 2 === 0 ? 'var(--surface)' : 'var(--muted)',
+                            }}
+                          >
+                            <td
+                              style={{
+                                padding: '11px 16px',
+                                color: 'var(--text-1)',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {new Date(tx.createdAt).toLocaleDateString('fr-FR', {
+                                day: '2-digit',
+                                month: 'short',
+                                year: 'numeric',
+                              })}
+                              <span
+                                style={{ display: 'block', fontSize: 11, color: 'var(--text-3)' }}
+                              >
+                                {new Date(tx.createdAt).toLocaleTimeString('fr-FR', {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}
+                              </span>
+                            </td>
+                            <td style={{ padding: '11px 16px' }}>
+                              <span
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: 6,
+                                  padding: '3px 10px',
+                                  borderRadius: 20,
+                                  background: `${OP_COLOR[tx.operator] ?? '#6b7280'}18`,
+                                  fontSize: 11,
+                                  fontWeight: 700,
+                                  color: OP_COLOR[tx.operator] ?? '#6b7280',
+                                }}
+                              >
+                                {tx.operator}
+                              </span>
+                            </td>
+                            <td
+                              style={{
+                                padding: '11px 16px',
+                                color: 'var(--text-2)',
+                                fontFamily: 'monospace',
+                                fontSize: 12,
+                              }}
+                            >
+                              {tx.phoneNumber}
+                            </td>
+                            <td
+                              style={{
+                                padding: '11px 16px',
+                                fontWeight: 700,
+                                color: 'var(--text-1)',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {parseFloat(String(tx.amount)).toLocaleString('fr-FR')} {tx.currency}
+                            </td>
+                            <td style={{ padding: '11px 16px' }}>
+                              <span
+                                style={{
+                                  display: 'inline-block',
+                                  padding: '3px 10px',
+                                  borderRadius: 20,
+                                  fontSize: 11,
+                                  fontWeight: 600,
+                                  background: STATUS_BG[tx.status] ?? '#f8fafc',
+                                  color: STATUS_COLOR[tx.status] ?? '#6b7280',
+                                }}
+                              >
+                                {STATUS_LABEL[tx.status] ?? tx.status}
+                              </span>
+                            </td>
+                            <td
+                              style={{
+                                padding: '11px 16px',
+                                color: 'var(--text-3)',
+                                fontFamily: 'monospace',
+                                fontSize: 11,
+                                maxWidth: 140,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {tx.id}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })()}
 
       {/* ─── Onglet Données ─── */}
       {activeTab === 'data' && (
