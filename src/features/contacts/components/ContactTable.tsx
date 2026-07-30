@@ -1,17 +1,27 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 
-/** Normalise le champ tags : Prisma Json? peut arriver en tableau OU en string JSON */
+/** Normalise le champ tags : Prisma Json? peut arriver en tableau de strings OU d'objets {name} */
 function parseTags(raw: unknown): string[] {
-  if (Array.isArray(raw)) return raw as string[];
-  if (typeof raw === 'string' && raw.startsWith('[')) {
+  let arr: unknown[] = [];
+  if (Array.isArray(raw)) {
+    arr = raw;
+  } else if (typeof raw === 'string' && raw.trim().startsWith('[')) {
     try {
-      return JSON.parse(raw) as string[];
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) arr = parsed;
     } catch {
       /* ignore */
     }
   }
-  return [];
+  return arr
+    .map((item) => {
+      if (typeof item === 'string') return item;
+      if (item && typeof item === 'object' && 'name' in item)
+        return (item as { name: string }).name;
+      return '';
+    })
+    .filter(Boolean);
 }
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -979,6 +989,9 @@ export default function ContactTable({
                 Tags
               </th>
               <th className="hidden lg:table-cell px-4 py-3 text-left font-semibold text-on-surface">
+                Localisation
+              </th>
+              <th className="hidden lg:table-cell px-4 py-3 text-left font-semibold text-on-surface">
                 Ajouté le
               </th>
               <th className="px-4 py-3 text-left font-semibold text-on-surface">Statut</th>
@@ -1078,22 +1091,60 @@ export default function ContactTable({
                     onClick={() => onContactClick?.(contact)}
                   >
                     <div className="flex flex-wrap gap-1">
-                      {parseTags(contact.tags)
-                        .slice(0, 2)
-                        .map((tag) => (
-                          <span
-                            key={tag}
-                            className="px-2 py-0.5 text-xs rounded-full bg-primary/10 text-primary font-medium"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      {(contact.tags || []).length > 2 && (
-                        <span className="text-xs text-on-surface-variant">
-                          +{(contact.tags || []).length - 2}
-                        </span>
-                      )}
+                      {(() => {
+                        const tags = parseTags(contact.tags);
+                        return (
+                          <>
+                            {tags.slice(0, 2).map((tag) => (
+                              <span
+                                key={tag}
+                                className="px-2 py-0.5 text-xs rounded-full bg-primary/10 text-primary font-medium whitespace-nowrap"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                            {tags.length > 2 && (
+                              <span className="text-xs text-on-surface-variant font-medium">
+                                +{tags.length - 2}
+                              </span>
+                            )}
+                            {tags.length === 0 && (
+                              <span className="text-xs text-on-surface-variant/50">—</span>
+                            )}
+                          </>
+                        );
+                      })()}
                     </div>
+                  </td>
+
+                  {/* Localisation */}
+                  <td
+                    className="hidden lg:table-cell px-4 py-3 cursor-pointer"
+                    onClick={() => onContactClick?.(contact)}
+                  >
+                    {contact.location ? (
+                      <div className="flex items-center gap-1.5">
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="text-on-surface-variant shrink-0"
+                        >
+                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                          <circle cx="12" cy="10" r="3" />
+                        </svg>
+                        <span className="text-sm text-on-surface truncate max-w-[120px]">
+                          {contact.location}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-on-surface-variant/50">—</span>
+                    )}
                   </td>
 
                   {/* Date d'ajout */}
