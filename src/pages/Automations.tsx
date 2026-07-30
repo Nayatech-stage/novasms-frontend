@@ -343,6 +343,7 @@ function buildTriggerConfigPayload(draft: DraftAutomation) {
   const triggerConfig: Record<string, unknown> = {};
 
   if (draft.trigger === 'birthday') {
+    triggerConfig.type = 'anniversary';
     triggerConfig.daysOffset = Number(draft.triggerConfig.daysOffset) || 0;
     if (draft.triggerConfig.segmentId) triggerConfig.segmentId = draft.triggerConfig.segmentId;
   } else if (draft.trigger === 'date_based') {

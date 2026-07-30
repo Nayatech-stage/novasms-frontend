@@ -7,7 +7,10 @@ export type AutomationTrigger =
   | 'tag_added'
   | 'campaign_opened'
   | 'link_clicked'
-  | 'date_based';
+  | 'date_based'
+  | 'birthday'
+  | 'inactivity_window'
+  | 'recurring_schedule';
 export type AutomationChannel = 'Email' | 'SMS' | 'WhatsApp';
 export type AutomationStatus = 'Active' | 'Inactive' | 'Draft';
 
