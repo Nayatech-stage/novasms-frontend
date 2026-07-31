@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   ArrowLeft,
   Download,
@@ -42,16 +43,19 @@ function StatCard({
   icon: React.ReactNode;
   color: string;
 }) {
+  const { t } = useTranslation();
   const pct = total ? ((value / total) * 100).toFixed(1) : '0.0';
   return (
-    <div className="rounded-3xl border border-outline-variant/20 bg-surface-container-lowest p-6 shadow-sm">
+    <div className="rounded-3xl border border-outline-variant/20 bg-surface-container-lowest p-4 sm:p-6 shadow-sm">
       <div className="flex items-start justify-between">
         <div>
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">
             {label}
           </p>
           <p className={`mt-2 text-3xl font-bold ${color}`}>{value.toLocaleString('fr-FR')}</p>
-          <p className="text-xs text-on-surface-variant">{pct}% du total</p>
+          <p className="text-xs text-on-surface-variant">
+            {pct}% {t('campaignReport.percentTotal')}
+          </p>
         </div>
         {icon}
       </div>
@@ -66,6 +70,7 @@ function StatCard({
 }
 
 export default function CampaignReport() {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const [data, setData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -107,7 +112,7 @@ export default function CampaignReport() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f7f9f7] p-4 sm:p-6">
+    <div className="min-h-screen bg-[#f7f9f7] p-3 sm:p-6">
       <div className="mx-auto w-full max-w-6xl space-y-6">
         {/* Header */}
         <div className="flex flex-wrap items-start justify-between gap-4">
@@ -120,10 +125,12 @@ export default function CampaignReport() {
             </Link>
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-on-surface-variant">
-                Analyse de campagne
+                {t('campaignReport.analysisLabel')}
               </p>
               <h1 className="text-2xl font-bold text-secondary">
-                {loading ? 'Chargement…' : (data?.campaign.name ?? 'Rapport')}
+                {loading
+                  ? t('campaignReport.loading')
+                  : (data?.campaign.name ?? t('campaignReport.report'))}
               </h1>
             </div>
           </div>
@@ -131,7 +138,7 @@ export default function CampaignReport() {
             onClick={handleExport}
             className="inline-flex items-center gap-2 rounded-xl border border-outline-variant/30 bg-white px-4 py-2 text-sm font-semibold text-secondary hover:border-primary/40 hover:text-primary transition"
           >
-            <Download className="h-4 w-4" /> Exporter CSV
+            <Download className="h-4 w-4" /> {t('campaignReport.exportCsv')}
           </button>
         </div>
 
@@ -144,10 +151,10 @@ export default function CampaignReport() {
         {!loading && !error && data && (
           <>
             {/* KPI Cards */}
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-              <div className="rounded-3xl border border-outline-variant/20 bg-surface-container-lowest p-6 shadow-sm col-span-1 flex flex-col items-start justify-between">
+            <div className="campaign-report-kpi-grid grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
+              <div className="rounded-3xl border border-outline-variant/20 bg-surface-container-lowest p-5 sm:p-6 shadow-sm col-span-2 sm:col-span-1 flex flex-col items-start justify-between">
                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">
-                  Total envoyé
+                  {t('campaignReport.totalSent')}
                 </p>
                 <div className="flex items-end gap-2 mt-2">
                   <span className="text-3xl font-bold text-on-surface">
@@ -157,28 +164,28 @@ export default function CampaignReport() {
                 </div>
               </div>
               <StatCard
-                label="Ouverts"
+                label={t('campaignReport.opened')}
                 value={data.opened}
                 total={data.totalSent}
                 icon={<Mail className="h-7 w-7 text-success opacity-20" />}
                 color="text-success"
               />
               <StatCard
-                label="Clics"
+                label={t('campaignReport.clicks')}
                 value={data.clicked}
                 total={data.totalSent}
                 icon={<MousePointerClick className="h-7 w-7 text-secondary opacity-20" />}
                 color="text-secondary"
               />
               <StatCard
-                label="Bounces"
+                label={t('campaignReport.bounces')}
                 value={data.bounced}
                 total={data.totalSent}
                 icon={<AlertTriangle className="h-7 w-7 text-amber-500 opacity-20" />}
                 color="text-amber-600"
               />
               <StatCard
-                label="Désinscrits"
+                label={t('campaignReport.unsubscribed')}
                 value={data.unsubscribed}
                 total={data.totalSent}
                 icon={<UserMinus className="h-7 w-7 text-error opacity-20" />}
@@ -187,14 +194,14 @@ export default function CampaignReport() {
             </div>
 
             {/* Contacts ayant ouvert / cliqué */}
-            <div className="grid gap-6 lg:grid-cols-2">
+            <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
               <ContactTable
-                title="Contacts ayant ouvert"
+                title={t('campaignReport.contactsOpened')}
                 items={data.contactsOpened}
                 color="text-success"
               />
               <ContactTable
-                title="Contacts ayant cliqué"
+                title={t('campaignReport.contactsClicked')}
                 items={data.contactsClicked}
                 color="text-secondary"
               />
@@ -203,10 +210,10 @@ export default function CampaignReport() {
             {data.clickHeat.length > 0 && (
               <div className="rounded-3xl border border-outline-variant/20 bg-white p-6 shadow-sm">
                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant mb-1">
-                  Engagement
+                  {t('campaignReport.engagement')}
                 </p>
                 <h2 className="text-xl font-bold text-on-surface mb-4">
-                  Heatmap des zones de clic
+                  {t('campaignReport.clickHeatmap')}
                 </h2>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                   {data.clickHeat.map((z) => {
@@ -236,7 +243,7 @@ export default function CampaignReport() {
 
         {loading && (
           <div className="flex h-64 items-center justify-center text-on-surface-variant">
-            Chargement du rapport…
+            {t('campaignReport.loadingReport')}
           </div>
         )}
       </div>
@@ -253,11 +260,14 @@ function ContactTable({
   items: ReportData['contactsOpened'];
   color: string;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="rounded-3xl border border-outline-variant/20 bg-white p-6 shadow-sm">
       <h2 className={`text-xl font-bold ${color} mb-4`}>{title}</h2>
       {items.length === 0 ? (
-        <p className="text-sm text-on-surface-variant py-4 text-center">Aucun contact</p>
+        <p className="text-sm text-on-surface-variant py-4 text-center">
+          {t('campaignReport.noContact')}
+        </p>
       ) : (
         <div className="divide-y divide-outline-variant/10 max-h-72 overflow-y-auto">
           {items.map((item, i) => (

@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores/authStore';
 import api from '@/api/axios';
 import { toast } from 'sonner';
@@ -90,6 +91,7 @@ interface BalanceData {
 }
 
 export default function Settings() {
+  const { t } = useTranslation();
   const { logout } = useAuthStore();
   const userRole = (useAuthStore((s) => s.user?.role) ?? 'Admin') as 'Admin' | 'Editor' | 'Analyst';
   const isAdmin = userRole === 'Admin';
@@ -395,11 +397,11 @@ export default function Settings() {
     id: 'general' | 'notifications' | 'api' | 'data' | 'payments';
     label: string;
   }[] = [
-    { id: 'general', label: 'Général' },
-    { id: 'notifications', label: 'Notifications' },
-    { id: 'api', label: 'Clés API & Intégrations' },
-    { id: 'payments', label: 'Paiements' },
-    { id: 'data', label: 'Données' },
+    { id: 'general', label: t('settings.tabs.general') },
+    { id: 'notifications', label: t('settings.tabs.notifications') },
+    { id: 'api', label: t('settings.tabs.api') },
+    { id: 'payments', label: t('settings.tabs.payments') },
+    { id: 'data', label: t('settings.tabs.data') },
   ];
 
   return (
@@ -407,6 +409,7 @@ export default function Settings() {
       {/* En-tête + onglets */}
       <div className="card" style={{ padding: '16px 20px 0', marginBottom: 0 }}>
         <div
+          className="settings-header-row"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -415,9 +418,11 @@ export default function Settings() {
           }}
         >
           <div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a' }}>Paramètres</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a' }}>
+              {t('settings.title')}
+            </div>
             <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
-              Préférences de l&apos;espace de travail
+              {t('settings.subtitle')}
             </div>
           </div>
           {balance && (
@@ -437,7 +442,10 @@ export default function Settings() {
         </div>
 
         {/* Barre d'onglets style underline */}
-        <div style={{ display: 'flex', borderBottom: '2px solid #e2e8f0' }}>
+        <div
+          className="settings-tabs-bar"
+          style={{ display: 'flex', borderBottom: '2px solid #e2e8f0' }}
+        >
           {TABS.map((tab) => {
             const active = activeTab === tab.id;
             return (
@@ -482,13 +490,13 @@ export default function Settings() {
       {/* ─── Onglet Général ─── */}
       {activeTab === 'general' && (
         <div className="card">
-          <div className="card-title mb-16">Préférences générales</div>
+          <div className="card-title mb-16">{t('settings.general.title')}</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 480 }}>
             <div>
               <div
                 style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-2)', marginBottom: 6 }}
               >
-                Langue de l&apos;interface
+                {t('settings.general.languageLabel')}
               </div>
               <select
                 className="input"
@@ -503,7 +511,7 @@ export default function Settings() {
               <div
                 style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-2)', marginBottom: 6 }}
               >
-                Fuseau horaire
+                {t('settings.general.timezoneLabel')}
               </div>
               <select
                 className="input"
@@ -532,7 +540,7 @@ export default function Settings() {
               <div
                 style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-2)', marginBottom: 6 }}
               >
-                Seuil d&apos;alerte crédits faibles (FCFA)
+                {t('settings.general.alertThresholdLabel')}
               </div>
               <input
                 type="number"
@@ -540,17 +548,17 @@ export default function Settings() {
                 className="input"
                 value={alertThreshold}
                 onChange={(e) => setAlertThreshold(e.target.value)}
-                placeholder="ex: 100 000"
+                placeholder={t('settings.general.alertThresholdPlaceholder')}
               />
               <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 4 }}>
-                Notification email quand le solde passe sous ce seuil
+                {t('settings.general.alertThresholdHint')}
               </div>
             </div>
             <div>
               <div
                 style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-2)', marginBottom: 6 }}
               >
-                Limite d&apos;utilisation (FCFA)
+                {t('settings.general.creditLimitLabel')}
               </div>
               <input
                 type="number"
@@ -559,7 +567,7 @@ export default function Settings() {
                 className="input"
                 value={creditLimitInput}
                 onChange={(e) => setCreditLimitInput(e.target.value)}
-                placeholder="ex: 50 000"
+                placeholder={t('settings.general.creditLimitPlaceholder')}
               />
               <div
                 style={{
@@ -571,13 +579,13 @@ export default function Settings() {
                   marginTop: 4,
                 }}
               >
-                Doit être ≤ solde actuel
+                {t('settings.general.creditLimitHint')}
                 {balance ? ` (${balance.creditBalance.toLocaleString('fr-FR')} FCFA)` : ''}
               </div>
             </div>
             <div style={{ paddingTop: 8 }}>
               <button className="btn-primary" onClick={handleSave} disabled={saving}>
-                {saving ? 'Enregistrement…' : 'Enregistrer'}
+                {saving ? t('settings.general.saving') : t('settings.general.save')}
               </button>
             </div>
           </div>
@@ -587,39 +595,41 @@ export default function Settings() {
       {/* ─── Onglet Notifications ─── */}
       {activeTab === 'notifications' && (
         <div className="card">
-          <div className="card-title mb-16">Notifications par email</div>
+          <div className="card-title mb-16">{t('settings.notifications.title')}</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 480 }}>
             <ToggleRow
-              label="Campagnes envoyées"
-              sub="Email à chaque envoi de campagne terminé"
+              label={t('settings.notifications.campaigns')}
+              sub={t('settings.notifications.campaignsSub')}
               checked={notifCampaigns}
               onChange={setNotifCampaigns}
             />
             <ToggleRow
-              label="Alertes crédits faibles"
+              label={t('settings.notifications.credits')}
               sub={
                 alertThreshold
-                  ? `Sous ${Number(alertThreshold).toLocaleString('fr-FR')} FCFA`
-                  : "Définir un seuil d'alerte"
+                  ? t('settings.notifications.creditsSubWithThreshold', {
+                      amount: Number(alertThreshold).toLocaleString('fr-FR'),
+                    })
+                  : t('settings.notifications.creditsSubNoThreshold')
               }
               checked={notifCredits}
               onChange={setNotifCredits}
             />
             <ToggleRow
-              label="Rapports hebdomadaires"
-              sub="Résumé des performances chaque lundi"
+              label={t('settings.notifications.reports')}
+              sub={t('settings.notifications.reportsSub')}
               checked={notifReports}
               onChange={setNotifReports}
             />
             <ToggleRow
-              label="Automatisations"
-              sub="Alertes d'exécution et d'erreur"
+              label={t('settings.notifications.automations')}
+              sub={t('settings.notifications.automationsSub')}
               checked={notifAutomations}
               onChange={setNotifAutomations}
             />
             <div style={{ paddingTop: 8 }}>
               <button className="btn-primary" onClick={handleSave} disabled={saving}>
-                {saving ? 'Enregistrement…' : 'Enregistrer'}
+                {saving ? t('settings.notifications.saving') : t('settings.notifications.save')}
               </button>
             </div>
           </div>
@@ -642,9 +652,11 @@ export default function Settings() {
               }}
             >
               <div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a' }}>Clés API</div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a' }}>
+                  {t('settings.api.title')}
+                </div>
                 <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
-                  Connectez votre site web, application mobile ou outil externe à NovaSMS
+                  {t('settings.api.subtitle')}
                 </div>
               </div>
               <button
@@ -666,7 +678,7 @@ export default function Settings() {
                   opacity: apiKeys.length >= 10 ? 0.5 : 1,
                 }}
               >
-                + Générer une clé API
+                {t('settings.api.generateKey')}
               </button>
             </div>
 
@@ -682,8 +694,7 @@ export default function Settings() {
                 color: '#92400e',
               }}
             >
-              ⚠️ Chaque clé donne un accès programmatique à votre compte. Gardez-les secrètes et ne
-              les partagez jamais publiquement.
+              {t('settings.api.warning')}
             </div>
 
             {/* Liste des clés */}
@@ -696,7 +707,7 @@ export default function Settings() {
                   fontSize: 13,
                 }}
               >
-                Chargement…
+                {t('common.loading')}
               </div>
             ) : apiKeys.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '48px 0' }}>
@@ -718,7 +729,7 @@ export default function Settings() {
                 <div
                   style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-1)', marginBottom: 6 }}
                 >
-                  Aucune clé créée
+                  {t('settings.api.noKeyTitle')}
                 </div>
                 <div
                   style={{
@@ -728,7 +739,7 @@ export default function Settings() {
                     margin: '0 auto 16px',
                   }}
                 >
-                  Créez une clé pour permettre à votre site ou application d&apos;utiliser NovaSMS
+                  {t('settings.api.noKeySubtitle')}
                 </div>
                 <button
                   onClick={() => setShowCreateModal(true)}
@@ -743,13 +754,13 @@ export default function Settings() {
                     cursor: 'pointer',
                   }}
                 >
-                  Générer ma première clé
+                  {t('settings.api.generateFirst')}
                 </button>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 4 }}>
-                  {apiKeys.length}/10 clés utilisées
+                  {t('settings.api.keysUsed', { count: apiKeys.length })}
                 </div>
                 {apiKeys.map((k) => {
                   const expired = k.expiresAt && new Date(k.expiresAt) < new Date();
@@ -793,7 +804,7 @@ export default function Settings() {
                                   fontWeight: 600,
                                 }}
                               >
-                                Expirée
+                                {t('settings.api.expired')}
                               </span>
                             )}
                           </div>
@@ -841,8 +852,10 @@ export default function Settings() {
                         >
                           <span>
                             {k.lastUsedAt
-                              ? `Utilisée le ${new Date(k.lastUsedAt).toLocaleDateString('fr-FR')}`
-                              : 'Jamais utilisée'}
+                              ? t('settings.api.lastUsed', {
+                                  date: new Date(k.lastUsedAt).toLocaleDateString('fr-FR'),
+                                })
+                              : t('settings.api.neverUsed')}
                           </span>
                           <div style={{ display: 'flex', gap: 6 }}>
                             <button
@@ -884,7 +897,9 @@ export default function Settings() {
                                 fontWeight: 500,
                               }}
                             >
-                              {revokingId === k.id ? '…' : 'Révoquer'}
+                              {revokingId === k.id
+                                ? t('settings.api.revoking')
+                                : t('settings.api.revoke')}
                             </button>
                           </div>
                         </div>
@@ -899,10 +914,13 @@ export default function Settings() {
                           }}
                         >
                           {loadingStatsId === k.id || !keyStats[k.id] ? (
-                            <div style={{ fontSize: 12, color: 'var(--text-2)' }}>Chargement…</div>
+                            <div style={{ fontSize: 12, color: 'var(--text-2)' }}>
+                              {t('common.loading')}
+                            </div>
                           ) : (
                             <>
                               <div
+                                className="api-key-stats-grid"
                                 style={{
                                   display: 'grid',
                                   gridTemplateColumns: 'repeat(3, 1fr)',
@@ -911,14 +929,17 @@ export default function Settings() {
                                 }}
                               >
                                 {[
-                                  { v: keyStats[k.id].callsToday, l: "Appels aujourd'hui" },
-                                  { v: keyStats[k.id].callsThisMonth, l: 'Appels ce mois' },
+                                  { v: keyStats[k.id].callsToday, l: t('settings.api.usageToday') },
+                                  {
+                                    v: keyStats[k.id].callsThisMonth,
+                                    l: t('settings.api.usageMonth'),
+                                  },
                                   {
                                     v:
                                       keyStats[k.id].creditsThisMonth > 0
                                         ? `${keyStats[k.id].creditsThisMonth.toLocaleString('fr-FR')} F`
                                         : '—',
-                                    l: 'Crédits dépensés',
+                                    l: t('settings.api.creditsMonth'),
                                   },
                                 ].map(({ v, l }) => (
                                   <div
@@ -960,7 +981,7 @@ export default function Settings() {
                                       letterSpacing: 0.5,
                                     }}
                                   >
-                                    10 derniers appels
+                                    {t('settings.api.recentCalls')}
                                   </div>
                                   <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                                     {keyStats[k.id].recentLogs.map((log, i) => (
@@ -1030,10 +1051,10 @@ export default function Settings() {
           <div className="card">
             <div style={{ marginBottom: 14 }}>
               <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', marginBottom: 4 }}>
-                Connecter NovaSMS à vos outils
+                {t('settings.api.integrations.title')}
               </div>
               <div style={{ fontSize: 12, color: '#64748b' }}>
-                Automatisez vos envois sans écrire une ligne de code grâce à ces intégrations.
+                {t('settings.api.integrations.subtitle')}
               </div>
             </div>
             <div
@@ -1117,7 +1138,7 @@ export default function Settings() {
                       fontWeight: 600,
                     }}
                   >
-                    Bientôt
+                    {t('settings.api.integrations.soon')}
                   </span>
                 </div>
               ))}
@@ -1149,10 +1170,10 @@ export default function Settings() {
           const totalAmount = completed.reduce((s, t) => s + parseFloat(String(t.amount)), 0);
 
           const STATUS_LABEL: Record<string, string> = {
-            completed: 'Réussi',
-            pending: 'En attente',
-            failed: 'Échoué',
-            cancelled: 'Annulé',
+            completed: t('settings.payments.statusCompleted'),
+            pending: t('settings.payments.statusPending'),
+            failed: t('settings.payments.statusFailed'),
+            cancelled: t('settings.payments.statusCancelled'),
           };
           const STATUS_COLOR: Record<string, string> = {
             completed: '#16a34a',
@@ -1188,7 +1209,7 @@ export default function Settings() {
                   }}
                 >
                   <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-1)' }}>
-                    Historique des rechargements
+                    {t('settings.payments.title')}
                   </div>
                   <div style={{ display: 'flex', gap: 6 }}>
                     {(['week', 'month', 'year'] as const).map((p) => (
@@ -1207,7 +1228,11 @@ export default function Settings() {
                           transition: 'all 0.15s',
                         }}
                       >
-                        {p === 'week' ? 'Semaine' : p === 'month' ? 'Mois' : 'Année'}
+                        {p === 'week'
+                          ? t('settings.payments.periodWeek')
+                          : p === 'month'
+                            ? t('settings.payments.periodMonth')
+                            : t('settings.payments.periodYear')}
                       </button>
                     ))}
                   </div>
@@ -1224,28 +1249,28 @@ export default function Settings() {
               >
                 {[
                   {
-                    label: 'Total rechargé',
+                    label: t('settings.payments.totalRecharged'),
                     value: `${totalAmount.toLocaleString('fr-FR')} FCFA`,
                     color: '#0c5460',
                     bg: '#f0fdff',
                     border: '#bae6fd',
                   },
                   {
-                    label: 'Transactions',
+                    label: t('settings.payments.transactions'),
                     value: filtered.length,
                     color: '#0c5460',
                     bg: 'var(--muted)',
                     border: 'var(--border)',
                   },
                   {
-                    label: 'Réussies',
+                    label: t('settings.payments.successful'),
                     value: completed.length,
                     color: '#16a34a',
                     bg: '#f0fdf4',
                     border: '#bbf7d0',
                   },
                   {
-                    label: 'Échouées',
+                    label: t('settings.payments.failed'),
                     value: failed.length,
                     color: '#dc2626',
                     bg: '#fef2f2',
@@ -1289,7 +1314,7 @@ export default function Settings() {
                       fontSize: 13,
                     }}
                   >
-                    Chargement…
+                    {t('common.loading')}
                   </div>
                 ) : filtered.length === 0 ? (
                   <div
@@ -1300,7 +1325,7 @@ export default function Settings() {
                       fontSize: 13,
                     }}
                   >
-                    Aucun paiement sur cette période.
+                    {t('settings.payments.noPayments')}
                   </div>
                 ) : (
                   <div style={{ overflowX: 'auto' }}>
@@ -1312,25 +1337,30 @@ export default function Settings() {
                             borderBottom: '1px solid var(--border)',
                           }}
                         >
-                          {['Date', 'Opérateur', 'Numéro', 'Montant', 'Statut', 'Référence'].map(
-                            (h) => (
-                              <th
-                                key={h}
-                                style={{
-                                  padding: '10px 16px',
-                                  textAlign: 'left',
-                                  fontWeight: 600,
-                                  color: 'var(--text-2)',
-                                  fontSize: 11,
-                                  textTransform: 'uppercase',
-                                  letterSpacing: '0.05em',
-                                  whiteSpace: 'nowrap',
-                                }}
-                              >
-                                {h}
-                              </th>
-                            ),
-                          )}
+                          {[
+                            t('settings.payments.colDate'),
+                            t('settings.payments.colOperator'),
+                            t('settings.payments.colPhone'),
+                            t('settings.payments.colAmount'),
+                            t('settings.payments.colStatus'),
+                            t('settings.payments.colRef'),
+                          ].map((h) => (
+                            <th
+                              key={h}
+                              style={{
+                                padding: '10px 16px',
+                                textAlign: 'left',
+                                fontWeight: 600,
+                                color: 'var(--text-2)',
+                                fontSize: 11,
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.05em',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {h}
+                            </th>
+                          ))}
                         </tr>
                       </thead>
                       <tbody>
@@ -1443,17 +1473,16 @@ export default function Settings() {
       {/* ─── Onglet Données ─── */}
       {activeTab === 'data' && (
         <div className="card">
-          <div className="card-title mb-16">Données & confidentialité</div>
+          <div className="card-title mb-16">{t('settings.data.title')}</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 480 }}>
             <div style={{ padding: '14px 16px', background: 'var(--muted)', borderRadius: 10 }}>
               <div
                 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-1)', marginBottom: 4 }}
               >
-                Exporter mes données
+                {t('settings.data.exportTitle')}
               </div>
               <div style={{ fontSize: 12, color: 'var(--text-2)', marginBottom: 10 }}>
-                Téléchargez l&apos;ensemble de vos données (contacts, campagnes, analytics) au
-                format JSON/CSV.
+                {t('settings.data.exportSubtitle')}
               </div>
               <button
                 className="btn-sm"
@@ -1473,7 +1502,7 @@ export default function Settings() {
                     .catch(() => toast.error("Erreur lors de l'export"));
                 }}
               >
-                Demander l&apos;export
+                {t('settings.data.exportButton')}
               </button>
             </div>
 
@@ -1481,13 +1510,12 @@ export default function Settings() {
               <div
                 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-1)', marginBottom: 4 }}
               >
-                Conformité RGPD
+                {t('settings.data.rgpdTitle')}
               </div>
               <div style={{ fontSize: 12, color: 'var(--text-2)', marginBottom: 10 }}>
-                NovaSMS est conforme au Règlement Général sur la Protection des Données. Vos données
-                sont hébergées en Europe.
+                {t('settings.data.rgpdSubtitle')}
               </div>
-              <span className="tag green">Conforme RGPD</span>
+              <span className="tag green">{t('settings.data.rgpdBadge')}</span>
             </div>
 
             <button
@@ -1520,7 +1548,7 @@ export default function Settings() {
               >
                 <path d="M5 2H2a1 1 0 00-1 1v8a1 1 0 001 1h3M9 10l3-3-3-3M5 7h8" />
               </svg>
-              Se déconnecter
+              {t('settings.data.logout')}
             </button>
           </div>
         </div>
@@ -1551,10 +1579,10 @@ export default function Settings() {
             }}
           >
             <div style={{ fontSize: 16, fontWeight: 700, color: '#0f172a', marginBottom: 6 }}>
-              Nouvelle clé API
+              {t('settings.api.modal.title')}
             </div>
             <p style={{ margin: '0 0 20px', fontSize: 12, color: '#64748b' }}>
-              Cette clé permettra à votre site ou application de communiquer avec NovaSMS.
+              {t('settings.api.modal.subtitle')}
             </p>
 
             <label
@@ -1566,11 +1594,11 @@ export default function Settings() {
                 marginBottom: 6,
               }}
             >
-              Donnez un nom à cette clé pour vous y retrouver
+              {t('settings.api.modal.nameLabel')}
             </label>
             <input
               className="input"
-              placeholder="Ex : Mon site e-commerce, Application mobile…"
+              placeholder={t('settings.api.modal.namePlaceholder')}
               value={newKeyName}
               onChange={(e) => setNewKeyName(e.target.value)}
               style={{ marginBottom: 20, width: '100%', boxSizing: 'border-box' }}
@@ -1586,7 +1614,7 @@ export default function Settings() {
                 marginBottom: 10,
               }}
             >
-              Que pourra faire cette clé ?
+              {t('settings.api.modal.permissionsLabel')}
             </label>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 24 }}>
               {PERMISSION_GROUPS.map((g) => (
@@ -1638,7 +1666,7 @@ export default function Settings() {
                   fontWeight: 500,
                 }}
               >
-                Annuler
+                {t('settings.api.modal.cancel')}
               </button>
               <button
                 disabled={creatingKey}
@@ -1655,7 +1683,7 @@ export default function Settings() {
                   cursor: creatingKey ? 'not-allowed' : 'pointer',
                 }}
               >
-                {creatingKey ? 'Création…' : 'Créer la clé'}
+                {creatingKey ? t('settings.api.modal.creating') : t('settings.api.modal.create')}
               </button>
             </div>
           </div>
@@ -1702,7 +1730,7 @@ export default function Settings() {
                 🔑
               </div>
               <div style={{ fontSize: 16, fontWeight: 700, color: '#0f172a' }}>
-                Votre clé a été créée
+                {t('settings.api.generatedModal.title')}
               </div>
             </div>
 
@@ -1718,8 +1746,7 @@ export default function Settings() {
                 fontWeight: 500,
               }}
             >
-              ⚠ Copiez cette clé maintenant. Pour des raisons de sécurité, elle ne sera{' '}
-              <strong>plus jamais affichée</strong> après fermeture.
+              {t('settings.api.generatedModal.warning')}
             </div>
 
             <div
@@ -1759,7 +1786,9 @@ export default function Settings() {
                   cursor: 'pointer',
                 }}
               >
-                {keyCopied ? '✓ Copié' : 'Copier'}
+                {keyCopied
+                  ? t('settings.api.generatedModal.copied')
+                  : t('settings.api.generatedModal.copy')}
               </button>
             </div>
 
@@ -1778,13 +1807,13 @@ export default function Settings() {
                 onChange={(e) => setConfirmedCopy(e.target.checked)}
               />
               <span style={{ fontSize: 12, color: '#475569' }}>
-                J&apos;ai bien copié et sauvegardé cette clé
+                {t('settings.api.generatedModal.confirmedLabel')}
               </span>
             </label>
 
             <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: 16, marginBottom: 20 }}>
               <div style={{ fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 8 }}>
-                ✉ Envoyer cette clé à votre développeur par email
+                {t('settings.api.generatedModal.sendToDev')}
               </div>
               {emailSent ? (
                 <div
@@ -1797,14 +1826,14 @@ export default function Settings() {
                     fontWeight: 500,
                   }}
                 >
-                  ✓ Email envoyé à {devEmail} — votre développeur reçoit la clé et la documentation.
+                  {t('settings.api.generatedModal.emailSent', { email: devEmail })}
                 </div>
               ) : (
                 <div style={{ display: 'flex', gap: 8 }}>
                   <input
                     type="email"
                     className="input"
-                    placeholder="developpeur@agence.com"
+                    placeholder={t('settings.api.generatedModal.emailPlaceholder')}
                     value={devEmail}
                     onChange={(e) => setDevEmail(e.target.value)}
                     style={{ flex: 1 }}
@@ -1824,7 +1853,9 @@ export default function Settings() {
                       cursor: 'pointer',
                     }}
                   >
-                    {sendingEmail ? 'Envoi…' : 'Envoyer'}
+                    {sendingEmail
+                      ? t('settings.api.generatedModal.sending')
+                      : t('settings.api.generatedModal.send')}
                   </button>
                 </div>
               )}
@@ -1845,7 +1876,9 @@ export default function Settings() {
                 cursor: confirmedCopy ? 'pointer' : 'not-allowed',
               }}
             >
-              {confirmedCopy ? 'Terminé' : 'Confirmez avoir copié la clé avant de fermer'}
+              {confirmedCopy
+                ? t('settings.api.generatedModal.done')
+                : t('settings.api.generatedModal.confirmFirst')}
             </button>
           </div>
         </div>

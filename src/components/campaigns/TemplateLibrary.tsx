@@ -33,7 +33,7 @@ export const TemplateLibrary: FC<TemplateLibraryProps> = ({ onTemplateSelect }) 
   });
 
   return (
-    <div className="max-w-6xl mx-auto px-8 py-12 space-y-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8 sm:py-12 space-y-6 sm:space-y-8">
       {/* Header */}
       <div>
         <h2 className="font-headline font-black text-3xl text-on-surface mb-2">

@@ -598,10 +598,10 @@ export const CampaignScheduleStep: FC<CampaignScheduleStepProps> = ({ onPrev }) 
       : `${variantBSubject || draft.emailContent?.subject || 'Objet de test B'}\n${buildEmailTextContent() || 'Aucun contenu'}`;
 
   return (
-    <div className="max-w-6xl mx-auto px-8 py-12 space-y-10">
+    <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8 sm:py-12 space-y-8 sm:space-y-10">
       {/* Step Indicator */}
-      <div className="flex justify-center">
-        <div className="flex items-center gap-4 w-full max-w-4xl">
+      <div className="flex justify-center overflow-x-auto">
+        <div className="campaign-step-bar-inner flex items-center gap-2 sm:gap-4 w-full max-w-4xl min-w-0">
           <div className="flex flex-col items-center gap-2 flex-1 opacity-40">
             <span className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center font-bold text-sm border-2 border-primary/40">
               ✓

@@ -21,7 +21,7 @@ export const CampaignChannelStep: FC<CampaignChannelStepProps> = ({ onNext }) =>
   const isAutomationMode = draft.mode === 'automation';
 
   return (
-    <div className="max-w-4xl mx-auto px-8 py-12 space-y-12">
+    <div className="max-w-4xl mx-auto px-4 sm:px-8 py-8 sm:py-12 space-y-8 sm:space-y-12">
       {/* Header */}
       <div className="text-center space-y-4">
         <div className="flex justify-center">

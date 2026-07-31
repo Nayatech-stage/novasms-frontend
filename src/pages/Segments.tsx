@@ -1,5 +1,6 @@
 import type { FC } from 'react';
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   segmentsApi,
   type Segment,
@@ -40,13 +41,13 @@ const FilterRow: FC<{
   onChange: (index: number, f: SegmentFilter) => void;
   onRemove: (index: number) => void;
 }> = ({ filter, index, onChange, onRemove }) => (
-  <div className="flex items-center gap-3 bg-surface-container rounded-xl p-3">
+  <div className="segment-filter-row flex items-center gap-3 bg-surface-container rounded-xl p-3 flex-wrap">
     <select
       value={filter.field}
       onChange={(e) =>
         onChange(index, { ...filter, field: e.target.value as SegmentFilter['field'] })
       }
-      className="flex-1 bg-surface-container-lowest border border-outline-variant/20 rounded-lg px-3 py-2 text-sm text-on-surface"
+      className="flex-1 min-w-[120px] bg-surface-container-lowest border border-outline-variant/20 rounded-lg px-3 py-2 text-sm text-on-surface"
     >
       {Object.entries(FIELD_LABELS).map(([val, label]) => (
         <option key={val} value={val}>
@@ -57,7 +58,7 @@ const FilterRow: FC<{
     <select
       value={filter.op}
       onChange={(e) => onChange(index, { ...filter, op: e.target.value as SegmentFilter['op'] })}
-      className="w-24 bg-surface-container-lowest border border-outline-variant/20 rounded-lg px-3 py-2 text-sm text-on-surface"
+      className="min-w-[80px] bg-surface-container-lowest border border-outline-variant/20 rounded-lg px-3 py-2 text-sm text-on-surface"
     >
       {Object.entries(OP_LABELS).map(([val, label]) => (
         <option key={val} value={val}>
@@ -70,7 +71,7 @@ const FilterRow: FC<{
       value={Array.isArray(filter.value) ? filter.value.join(', ') : filter.value}
       onChange={(e) => onChange(index, { ...filter, value: e.target.value })}
       placeholder="Valeur..."
-      className="flex-1 bg-surface-container-lowest border border-outline-variant/20 rounded-lg px-3 py-2 text-sm text-on-surface"
+      className="flex-1 min-w-[100px] bg-surface-container-lowest border border-outline-variant/20 rounded-lg px-3 py-2 text-sm text-on-surface"
     />
     <button
       type="button"
@@ -85,6 +86,7 @@ const FilterRow: FC<{
 );
 
 export default function SegmentsPage() {
+  const { t } = useTranslation();
   const [segments, setSegments] = useState<Segment[]>([]);
   const [loading, setLoading] = useState(true);
   const [showBuilder, setShowBuilder] = useState(false);
@@ -194,7 +196,7 @@ export default function SegmentsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Supprimer ce segment ?')) return;
+    if (!confirm(t('segments.deleteConfirm'))) return;
     try {
       await segmentsApi.remove(id);
       setSegments((prev) => prev.filter((s) => s.id !== id));
@@ -205,16 +207,14 @@ export default function SegmentsPage() {
 
   return (
     <div className="content">
-      <div className="max-w-5xl mx-auto px-8 py-10 space-y-8">
+      <div className="segments-container max-w-5xl mx-auto px-4 sm:px-8 py-6 sm:py-10 space-y-8">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="font-headline font-black text-3xl text-on-surface">
-              Segments dynamiques
+              {t('segments.title')}
             </h1>
-            <p className="text-on-surface-variant text-sm mt-1">
-              Créez des groupes de contacts mis à jour automatiquement selon vos critères.
-            </p>
+            <p className="text-on-surface-variant text-sm mt-1">{t('segments.subtitle')}</p>
           </div>
           <button
             type="button"
@@ -224,7 +224,7 @@ export default function SegmentsPage() {
             <span className="material-symbols-outlined" style={{ fontSize: 18 }}>
               add
             </span>
-            Nouveau segment
+            {t('segments.newSegment')}
           </button>
         </div>
 
@@ -242,7 +242,7 @@ export default function SegmentsPage() {
           <div className="rounded-2xl border-2 border-primary/20 bg-surface-container-lowest p-6 space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="font-bold text-lg text-on-surface">
-                {editingId ? 'Modifier le segment' : 'Nouveau segment'}
+                {editingId ? t('segments.editSegment') : t('segments.newSegment')}
               </h2>
               <button
                 type="button"
@@ -256,7 +256,7 @@ export default function SegmentsPage() {
             {/* Nom */}
             <div className="space-y-2">
               <label className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">
-                Nom du segment
+                {t('segments.segmentNameLabel')}
               </label>
               <input
                 type="text"
@@ -269,7 +269,9 @@ export default function SegmentsPage() {
 
             {/* Opérateur */}
             <div className="flex items-center gap-4">
-              <span className="text-sm text-on-surface-variant">Combiner les filtres avec</span>
+              <span className="text-sm text-on-surface-variant">
+                {t('segments.combineFilters')}
+              </span>
               {(['AND', 'OR'] as const).map((op) => (
                 <button
                   key={op}
@@ -289,12 +291,10 @@ export default function SegmentsPage() {
             {/* Filtres */}
             <div className="space-y-3">
               <label className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">
-                Critères
+                {t('segments.criteriaLabel')}
               </label>
               {criteria.filters.length === 0 && (
-                <p className="text-sm text-on-surface-variant italic">
-                  Aucun filtre — ce segment contiendra tous les contacts actifs.
-                </p>
+                <p className="text-sm text-on-surface-variant italic">{t('segments.noFilter')}</p>
               )}
               {criteria.filters.map((f, i) => (
                 <FilterRow
@@ -313,7 +313,7 @@ export default function SegmentsPage() {
                 <span className="material-symbols-outlined" style={{ fontSize: 16 }}>
                   add_circle
                 </span>
-                Ajouter un filtre
+                {t('segments.addFilter')}
               </button>
             </div>
 
@@ -321,12 +321,12 @@ export default function SegmentsPage() {
             <div className="flex items-center gap-4 p-4 bg-surface-container rounded-xl">
               <span className="material-symbols-outlined text-primary">people</span>
               <div>
-                <p className="text-xs text-on-surface-variant">
-                  Contacts correspondants (temps réel)
-                </p>
+                <p className="text-xs text-on-surface-variant">{t('segments.matchingContacts')}</p>
                 <p className="text-2xl font-black text-on-surface">
                   {previewLoading ? (
-                    <span className="text-on-surface-variant text-base">Calcul...</span>
+                    <span className="text-on-surface-variant text-base">
+                      {t('segments.calculating')}
+                    </span>
                   ) : previewCount !== null ? (
                     previewCount.toLocaleString('fr-FR')
                   ) : (
@@ -356,7 +356,11 @@ export default function SegmentsPage() {
                 disabled={saving}
                 className="px-6 py-2.5 bg-primary text-on-primary font-bold rounded-xl hover:brightness-110 transition-all disabled:opacity-50"
               >
-                {saving ? 'Sauvegarde...' : editingId ? 'Mettre à jour' : 'Créer le segment'}
+                {saving
+                  ? t('segments.saving')
+                  : editingId
+                    ? t('segments.update')
+                    : t('segments.createSegment')}
               </button>
             </div>
           </div>
@@ -366,20 +370,20 @@ export default function SegmentsPage() {
         {loading ? (
           <div className="text-center py-16 text-on-surface-variant">
             <span className="material-symbols-outlined text-4xl animate-spin">refresh</span>
-            <p className="mt-2 text-sm">Chargement des segments...</p>
+            <p className="mt-2 text-sm">{t('segments.loading')}</p>
           </div>
         ) : segments.length === 0 && !showBuilder ? (
           <div className="text-center py-16 space-y-4">
             <span className="material-symbols-outlined text-6xl text-on-surface-variant">
               group_work
             </span>
-            <p className="text-on-surface-variant">Aucun segment créé pour le moment.</p>
+            <p className="text-on-surface-variant">{t('segments.empty')}</p>
             <button
               type="button"
               onClick={openNew}
               className="px-6 py-3 bg-primary text-on-primary font-bold rounded-xl hover:brightness-110 transition-all"
             >
-              Créer mon premier segment
+              {t('segments.createFirst')}
             </button>
           </div>
         ) : (
@@ -459,7 +463,9 @@ export default function SegmentsPage() {
                     )}
                   </div>
 
-                  <p className="text-[11px] text-on-surface-variant">Créé le {createdLabel}</p>
+                  <p className="text-[11px] text-on-surface-variant">
+                    {t('segments.createdOn', { date: createdLabel })}
+                  </p>
                 </div>
               );
             })}

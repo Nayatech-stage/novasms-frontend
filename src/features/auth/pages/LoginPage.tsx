@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { Bolt, Mail, Lock, Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../../stores/authStore';
 
 // Schema de validation Zod
@@ -14,6 +15,7 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   // ✅ Ajouter isFirstLogin dans le destructuring
   const { login, error, clearError, isLoading } = useAuthStore();
@@ -76,7 +78,7 @@ export default function LoginPage() {
             </div>
             <div>
               <h1 className="font-headline text-xl font-bold text-secondary">NovaSMS</h1>
-              <p className="text-sm text-on-surface-variant">Connexion marchand</p>
+              <p className="text-sm text-on-surface-variant">{t('login.merchantLogin')}</p>
             </div>
           </div>
         </div>
@@ -86,7 +88,7 @@ export default function LoginPage() {
           {/* Email */}
           <div>
             <label className="block text-sm font-medium text-on-surface mb-2">
-              Email professionnel
+              {t('login.professionalEmail')}
             </label>
             <div className="relative">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-on-surface-variant" />
@@ -109,7 +111,9 @@ export default function LoginPage() {
 
           {/* Password */}
           <div>
-            <label className="block text-sm font-medium text-on-surface mb-2">Mot de passe</label>
+            <label className="block text-sm font-medium text-on-surface mb-2">
+              {t('login.passwordLabel')}
+            </label>
             <div className="relative">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-on-surface-variant" />
               <input
@@ -151,22 +155,22 @@ export default function LoginPage() {
           >
             {isLoading ? (
               <>
-                <Loader2 className="w-5 h-5 animate-spin" /> Connexion...
+                <Loader2 className="w-5 h-5 animate-spin" /> {t('login.connecting')}
               </>
             ) : (
-              'Se connecter'
+              t('login.signIn')
             )}
           </button>
 
           {/* Links */}
           <div className="text-center space-y-3">
             <Link to="/forgot-password" className="text-sm text-primary hover:underline">
-              Mot de passe oublié ?
+              {t('auth.forgotPassword')}
             </Link>
             <p className="text-sm text-on-surface-variant">
-              Pas encore de compte ?{' '}
+              {t('login.noAccount')}{' '}
               <Link to="/register" className="text-primary font-medium hover:underline">
-                Créer un compte marchand
+                {t('login.createMerchant')}
               </Link>
             </p>
           </div>

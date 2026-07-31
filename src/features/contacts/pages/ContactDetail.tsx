@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import useContactDetail from '../hooks/useContactDetail';
@@ -30,6 +31,7 @@ function extractErrorMessage(err: unknown): string {
 type ContactNote = { id: string; content: string; createdAt: string };
 
 export default function ContactDetail() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const { data, loading, error, refresh } = useContactDetail(id);
@@ -71,7 +73,7 @@ export default function ContactDetail() {
           >
             progress_activity
           </span>
-          Chargement du contact…
+          {t('contactDetail.loading')}
         </div>
       </div>
     );
@@ -88,7 +90,7 @@ export default function ContactDetail() {
           <span className="material-symbols-outlined" style={{ fontSize: 16 }}>
             arrow_back
           </span>
-          Retour aux contacts
+          {t('contactDetail.backToContacts')}
         </button>
         <div className="card" style={{ padding: 32, textAlign: 'center' }}>
           <span
@@ -98,7 +100,7 @@ export default function ContactDetail() {
             person_off
           </span>
           <p style={{ marginTop: 12, color: 'var(--text-2)', fontSize: 14 }}>
-            Contact introuvable ou acces refuse.
+            {t('contactDetail.notFound')}
           </p>
         </div>
       </div>
@@ -183,7 +185,7 @@ export default function ContactDetail() {
 
   const handleDelete = async () => {
     if (!id) return;
-    const confirmed = window.confirm('Confirmer la suppression RGPD de ce contact ?');
+    const confirmed = window.confirm(t('contactDetail.deleteConfirm'));
     if (!confirmed) return;
     setActionLoading('delete');
     try {
@@ -238,7 +240,7 @@ export default function ContactDetail() {
         <span className="material-symbols-outlined" style={{ fontSize: 17 }}>
           arrow_back
         </span>
-        Retour aux contacts
+        {t('contactDetail.backToContacts')}
       </button>
 
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
@@ -296,10 +298,11 @@ export default function ContactDetail() {
                   color: contact.optOut ? '#dc2626' : '#16a34a',
                 }}
               >
-                {contact.optOut ? 'Inactif' : 'Actif'}
+                {contact.optOut ? t('contactDetail.inactive') : t('contactDetail.active')}
               </span>
               <div style={{ color: 'var(--text-2)', marginTop: 4 }}>
-                Ajouté le {new Date(contact.createdAt).toLocaleDateString('fr-FR')}
+                {t('contactDetail.addedOn')}{' '}
+                {new Date(contact.createdAt).toLocaleDateString('fr-FR')}
               </div>
             </div>
             {isEditing ? (
@@ -310,7 +313,7 @@ export default function ContactDetail() {
                   disabled={savingEdit}
                   style={{ border: '1px solid var(--border)' }}
                 >
-                  Annuler
+                  {t('contactDetail.cancel')}
                 </button>
                 <button
                   className="btn-primary"
@@ -318,7 +321,7 @@ export default function ContactDetail() {
                   disabled={savingEdit}
                   style={{ fontSize: 12 }}
                 >
-                  {savingEdit ? 'Enregistrement…' : 'Enregistrer'}
+                  {savingEdit ? t('contactDetail.saving') : t('contactDetail.save')}
                 </button>
               </>
             ) : (
@@ -353,7 +356,7 @@ export default function ContactDetail() {
           {/* Infos */}
           <div>
             <div className="card-title" style={{ marginBottom: 12 }}>
-              Informations
+              {t('contactDetail.infoTitle')}
             </div>
             {isEditing ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -381,7 +384,7 @@ export default function ContactDetail() {
                       display: 'block',
                     }}
                   >
-                    Date de naissance
+                    {t('contactDetail.birthdayLabel')}
                   </label>
                   <input
                     type="date"
@@ -421,7 +424,7 @@ export default function ContactDetail() {
           {/* Tags */}
           <div>
             <div className="card-title" style={{ marginBottom: 12 }}>
-              Tags
+              {t('contactDetail.tagsTitle')}
             </div>
             {isEditing ? (
               <input
@@ -433,11 +436,13 @@ export default function ContactDetail() {
             ) : (
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {parseTags(contact.tags).length === 0 ? (
-                  <span style={{ fontSize: 13, color: 'var(--text-2)' }}>Aucun tag</span>
+                  <span style={{ fontSize: 13, color: 'var(--text-2)' }}>
+                    {t('contactDetail.noTag')}
+                  </span>
                 ) : (
-                  parseTags(contact.tags).map((t) => (
+                  parseTags(contact.tags).map((tag) => (
                     <span
-                      key={t}
+                      key={tag}
                       style={{
                         padding: '3px 10px',
                         background: 'var(--muted)',
@@ -448,7 +453,7 @@ export default function ContactDetail() {
                         border: '1px solid var(--border)',
                       }}
                     >
-                      {t}
+                      {tag}
                     </span>
                   ))
                 )}
@@ -485,7 +490,7 @@ export default function ContactDetail() {
                 <span className="material-symbols-outlined" style={{ fontSize: 16 }}>
                   {tab === 'history' ? 'history' : 'note'}
                 </span>
-                {tab === 'history' ? 'Historique' : 'Notes'}
+                {tab === 'history' ? t('contactDetail.historyTab') : t('contactDetail.notesTab')}
               </button>
             ))}
           </div>
@@ -500,7 +505,7 @@ export default function ContactDetail() {
               <textarea
                 className="form-input"
                 style={{ minHeight: 100, resize: 'vertical', width: '100%' }}
-                placeholder="Ajouter une note…"
+                placeholder={t('contactDetail.notePlaceholder')}
                 value={noteValue}
                 onChange={(e) => setNoteValue(e.target.value)}
               />
@@ -511,7 +516,7 @@ export default function ContactDetail() {
                   disabled={savingNote || !noteValue.trim()}
                   onClick={handleSaveNote}
                 >
-                  {savingNote ? 'Enregistrement…' : 'Enregistrer la note'}
+                  {savingNote ? t('contactDetail.noteSaving') : t('contactDetail.saveNote')}
                 </button>
               </div>
 
@@ -536,7 +541,7 @@ export default function ContactDetail() {
                     >
                       note_stack
                     </span>
-                    Aucune note pour ce contact.
+                    {t('contactDetail.noNotes')}
                   </div>
                 ) : (
                   notes.map((note) => (
@@ -588,7 +593,9 @@ export default function ContactDetail() {
             <span className="material-symbols-outlined" style={{ fontSize: 15 }}>
               unsubscribe
             </span>
-            {actionLoading === 'optout' ? 'Desabonnement…' : 'Desabonner'}
+            {actionLoading === 'optout'
+              ? t('contactDetail.unsubscribing')
+              : t('contactDetail.unsubscribe')}
           </button>
           <button
             className="btn-sm"
@@ -605,7 +612,9 @@ export default function ContactDetail() {
             <span className="material-symbols-outlined" style={{ fontSize: 15 }}>
               delete
             </span>
-            {actionLoading === 'delete' ? 'Suppression…' : 'Supprimer'}
+            {actionLoading === 'delete'
+              ? t('contactDetail.deleting')
+              : t('contactDetail.deleteContact')}
           </button>
           <button
             className="btn-primary"
@@ -616,7 +625,9 @@ export default function ContactDetail() {
             <span className="material-symbols-outlined" style={{ fontSize: 15 }}>
               download
             </span>
-            {actionLoading === 'export' ? 'Export…' : 'Exporter CSV'}
+            {actionLoading === 'export'
+              ? t('contactDetail.exporting')
+              : t('contactDetail.exportCsv')}
           </button>
         </div>
       </div>

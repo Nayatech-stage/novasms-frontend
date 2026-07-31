@@ -144,7 +144,7 @@ const CampaignListDashboard: FC = () => {
         </div>
       </div>
 
-      <div className="flex shrink-0 items-center gap-1">
+      <div className="campaign-action-btns flex shrink-0 items-center gap-1">
         <Link
           to={`/campaigns/${campaign.id}`}
           className="p-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors"
@@ -203,11 +203,11 @@ const CampaignListDashboard: FC = () => {
   );
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="campaigns-page-wrapper space-y-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="campaigns-header-row flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-on-surface">Campagnes</h1>
+          <h1 className="campaigns-h1 text-2xl font-semibold text-on-surface">Campagnes</h1>
           <p className="text-sm text-on-surface-variant mt-1">
             {campaigns.length} campagne{campaigns.length !== 1 ? 's' : ''}
           </p>

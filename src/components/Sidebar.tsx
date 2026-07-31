@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { useAppMetrics } from '@/hooks/useAppMetrics';
@@ -232,6 +233,7 @@ function Item({
 }
 
 export default function Sidebar() {
+  const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -301,7 +303,7 @@ export default function Sidebar() {
           type="button"
           className="sb-collapse"
           onClick={() => setCollapsed((value) => !value)}
-          aria-label={collapsed ? 'Ouvrir la navigation' : 'Réduire la navigation'}
+          aria-label={collapsed ? t('nav.open') : t('nav.collapse')}
         >
           {collapsed ? '›' : '‹'}
         </button>
@@ -310,9 +312,9 @@ export default function Sidebar() {
         {!collapsed && (
           <div id="tour-sidebar-credits" className="sidebar-credits">
             <div className="credits-pill-top">
-              <span className="credits-label">Crédits disponibles</span>
+              <span className="credits-label">{t('sidebar.creditsAvailable')}</span>
               <button className="credits-recharge" onClick={() => void refresh()}>
-                Recharger ↗
+                {t('sidebar.recharge')}
               </button>
             </div>
             {(() => {
@@ -335,12 +337,12 @@ export default function Sidebar() {
                     ? '#f59e0b'
                     : 'var(--brand-gradient)';
               const hint = loading
-                ? 'Chargement…'
+                ? t('sidebar.loading')
                 : gaugeMax != null
                   ? `${pct}% · Alerte < ${alertThreshold ? alertThreshold.toLocaleString('fr-FR') : '—'} FCFA`
                   : credits != null && credits > 0
                     ? `${credits.toLocaleString('fr-FR')} FCFA disponible`
-                    : 'Aucun crédit';
+                    : t('sidebar.noCredits');
               return (
                 <div className="flex items-center gap-3">
                   <span className="credits-amount">
@@ -365,7 +367,7 @@ export default function Sidebar() {
           </div>
         )}
 
-        {!collapsed && <div className="sb-section-label">Principal</div>}
+        {!collapsed && <div className="sb-section-label">{t('nav.principal')}</div>}
         <a
           href="/dashboard"
           onClick={(e) => {
@@ -374,19 +376,21 @@ export default function Sidebar() {
           }}
           onDoubleClick={handleDashboardDoubleClick}
           className={`nav-item ${location.pathname === '/dashboard' ? 'active' : ''}`}
-          title={`Double-clic pour basculer vers le tableau ${activeDashboard === 1 ? 'opérationnel' : 'analytique'}`}
+          title={t('sidebar.dashboardTooltip', {
+            mode: activeDashboard === 1 ? 'opérationnel' : 'analytique',
+          })}
         >
           <span className="nav-icon">
             <DashboardIcon />
           </span>
-          {!collapsed && <span className="nav-text">Tableau de bord</span>}
+          {!collapsed && <span className="nav-text">{t('nav.dashboard')}</span>}
         </a>
         {isAdminOrEditor && (
           <Item
             to="/contacts"
             id="tour-nav-contacts"
             icon={<ContactsIcon />}
-            label="Contacts"
+            label={t('nav.contacts')}
             badge={contactsTotal > 0 ? contactsTotal.toLocaleString('fr-FR') : undefined}
             collapsed={collapsed}
             onNavigate={closeMobile}
@@ -397,7 +401,7 @@ export default function Sidebar() {
             to="/campaigns"
             id="tour-nav-campaigns"
             icon={<CampaignsIcon />}
-            label="Campagnes"
+            label={t('nav.campaigns')}
             collapsed={collapsed}
             onNavigate={closeMobile}
           />
@@ -407,7 +411,7 @@ export default function Sidebar() {
             to="/automations"
             id="tour-nav-automations"
             icon={<AutomationsIcon />}
-            label="Automatisations"
+            label={t('nav.automations')}
             collapsed={collapsed}
             onNavigate={closeMobile}
           />
@@ -416,19 +420,19 @@ export default function Sidebar() {
           to="/analytics"
           id="tour-nav-analytics"
           icon={<AnalyticsIcon />}
-          label="Analytics"
+          label={t('nav.analytics')}
           collapsed={collapsed}
           onNavigate={closeMobile}
         />
 
         <div className="sb-divider" />
-        {!collapsed && <div className="sb-section-label">Compte</div>}
+        {!collapsed && <div className="sb-section-label">{t('nav.account')}</div>}
         {isAdmin && (
           <Item
             to="/rechargement"
             id="tour-nav-rechargement"
             icon={<CreditsIcon />}
-            label="Crédits"
+            label={t('nav.recharge')}
             collapsed={collapsed}
             onNavigate={closeMobile}
           />
@@ -436,7 +440,7 @@ export default function Sidebar() {
         <Item
           to="/account/security"
           icon={<SecurityIcon />}
-          label="Sécurité"
+          label={t('nav.security')}
           collapsed={collapsed}
           onNavigate={closeMobile}
         />
@@ -444,7 +448,7 @@ export default function Sidebar() {
           <Item
             to="/account/team"
             icon={<TeamIcon />}
-            label="Équipe"
+            label={t('nav.team')}
             collapsed={collapsed}
             onNavigate={closeMobile}
           />
@@ -453,7 +457,7 @@ export default function Sidebar() {
           <Item
             to="/account/developers"
             icon={<ApiKeyIcon />}
-            label="Clés API"
+            label={t('nav.apiKeys')}
             collapsed={collapsed}
             onNavigate={closeMobile}
           />
@@ -461,7 +465,7 @@ export default function Sidebar() {
         <Item
           to="/account/settings"
           icon={<SettingsIcon />}
-          label="Paramètres"
+          label={t('nav.settings')}
           collapsed={collapsed}
           onNavigate={closeMobile}
         />
@@ -471,7 +475,7 @@ export default function Sidebar() {
           <span className="nav-icon" aria-hidden="true">
             <LogoutIcon />
           </span>
-          {!collapsed && <span className="nav-text">Déconnexion</span>}
+          {!collapsed && <span className="nav-text">{t('sidebar.logout')}</span>}
         </button>
       </div>
     </aside>

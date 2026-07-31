@@ -2,10 +2,12 @@ import { motion } from 'framer-motion';
 import { Bolt, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import RegisterForm from '../components/RegisterForm';
 import { useAuthStore } from '@/stores/authStore';
 
 export default function Register() {
+  const { t } = useTranslation();
   const logout = useAuthStore((state) => state.logout);
 
   useEffect(() => {
@@ -27,7 +29,7 @@ export default function Register() {
           to="/login"
           className="text-sm font-bold text-secondary hover:text-primary transition-colors"
         >
-          Déjà un compte ? Se connecter
+          {t('register.hasAccount')}
         </Link>
       </header>
 
@@ -43,25 +45,20 @@ export default function Register() {
 
             <div className="relative z-10 space-y-6">
               <h1 className="font-headline text-3xl lg:text-4xl font-extrabold tracking-tight">
-                Rejoignez l'élite du marketing
+                {t('register.joinElite')}
               </h1>
-              <p className="text-white/80 text-lg leading-relaxed">
-                Créez votre compte en moins de 2 minutes. Accédez à des campagnes SMS, Email et
-                WhatsApp avec une précision chirurgicale.
-              </p>
+              <p className="text-white/80 text-lg leading-relaxed">{t('register.pitch')}</p>
               <ul className="space-y-3 pt-4">
-                {[
-                  "14 jours d'essai gratuit",
-                  'Aucune carte bancaire requise',
-                  'Support dédié 24/7',
-                ].map((item, i) => (
-                  <li key={i} className="flex items-center gap-3 text-sm font-semibold">
-                    <div className="w-5 h-5 rounded-full bg-primary/30 flex items-center justify-center">
-                      ✓
-                    </div>
-                    {item}
-                  </li>
-                ))}
+                {[t('register.freeTrial'), t('register.noCard'), t('register.support')].map(
+                  (item, i) => (
+                    <li key={i} className="flex items-center gap-3 text-sm font-semibold">
+                      <div className="w-5 h-5 rounded-full bg-primary/30 flex items-center justify-center">
+                        ✓
+                      </div>
+                      {item}
+                    </li>
+                  ),
+                )}
               </ul>
             </div>
           </div>
@@ -69,11 +66,9 @@ export default function Register() {
           <div className="lg:w-1/2 p-8 lg:p-12 bg-white">
             <div className="mb-8">
               <h2 className="font-headline text-2xl font-bold text-secondary mb-2">
-                Créer un compte expert
+                {t('register.createExpert')}
               </h2>
-              <p className="text-on-surface-variant text-sm">
-                Remplissez les informations ci-dessous pour initialiser votre espace marchand.
-              </p>
+              <p className="text-on-surface-variant text-sm">{t('register.fillInfo')}</p>
             </div>
             <RegisterForm />
             <div className="mt-8 text-center">
@@ -81,7 +76,7 @@ export default function Register() {
                 to="/login"
                 className="inline-flex items-center gap-2 text-sm font-semibold text-secondary/70 hover:text-primary transition-colors"
               >
-                <ArrowLeft className="w-4 h-4" /> Retour à la connexion
+                <ArrowLeft className="w-4 h-4" /> {t('register.backToLogin')}
               </Link>
             </div>
           </div>
@@ -89,7 +84,7 @@ export default function Register() {
       </main>
 
       <footer className="py-6 text-center text-xs text-secondary/40 border-t border-outline-variant/20 bg-white">
-        © 2026 NovaSMS Inc. Tous droits réservés.
+        {t('register.copyright')}
       </footer>
     </div>
   );

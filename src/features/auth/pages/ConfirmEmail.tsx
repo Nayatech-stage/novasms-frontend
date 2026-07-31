@@ -2,8 +2,10 @@ import { motion } from 'framer-motion';
 import { Bolt, Info, Loader2, PencilLine, Check, X } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { authApi, extractAuthError } from '@/api/auth.api';
 export default function ConfirmEmail() {
+  const { t } = useTranslation();
   // do not forcibly logout when showing confirmation instructions
   const location = useLocation();
   const [isResending, setIsResending] = useState(false);
@@ -81,28 +83,22 @@ export default function ConfirmEmail() {
         >
           <div className="p-8 lg:p-12 text-center">
             <h1 className="font-headline text-2xl lg:text-3xl font-extrabold text-secondary mb-3">
-              Presque là. L'excellence vous attend.
+              {t('confirmEmail.almost')}
             </h1>
-            <p className="text-on-surface-variant mb-8">
-              Vérifiez votre boîte de réception pour activer votre accès.
-            </p>
+            <p className="text-on-surface-variant mb-8">{t('confirmEmail.checkInbox')}</p>
             <div className="bg-surface-variant/50 rounded-xl p-5 border border-outline-variant/20 mb-4">
-              <h3 className="font-bold text-secondary mb-2">Vérifiez votre boîte mail</h3>
-              <p className="text-sm text-on-surface-variant">
-                Un lien de confirmation vient d'être envoyé à votre adresse professionnelle.
-              </p>
+              <h3 className="font-bold text-secondary mb-2">{t('confirmEmail.checkMailTitle')}</h3>
+              <p className="text-sm text-on-surface-variant">{t('confirmEmail.linkSent')}</p>
             </div>
             <div className="flex items-start gap-2 text-left p-3 bg-primary/5 rounded-lg border border-primary/10 mb-8">
               <Info className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-              <p className="text-xs text-on-surface-variant">
-                Vous n'avez rien reçu ? Vérifiez vos spams.
-              </p>
+              <p className="text-xs text-on-surface-variant">{t('confirmEmail.noEmail')}</p>
             </div>
             {isEditingEmail ? (
               <div className="space-y-3">
                 <div className="text-left">
                   <label className="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-2">
-                    Nouvelle adresse email
+                    {t('confirmEmail.newEmailLabel')}
                   </label>
                   <input
                     type="email"
@@ -124,7 +120,7 @@ export default function ConfirmEmail() {
                     ) : (
                       <Check className="w-4 h-4" />
                     )}
-                    Enregistrer et renvoyer
+                    {t('confirmEmail.saveAndResend')}
                   </button>
                   <button
                     type="button"
@@ -132,7 +128,7 @@ export default function ConfirmEmail() {
                     className="px-5 py-3 bg-surface text-secondary font-semibold rounded-xl hover:bg-surface-variant transition-all border border-outline-variant inline-flex items-center justify-center gap-2"
                   >
                     <X className="w-4 h-4" />
-                    Annuler
+                    {t('confirmEmail.cancel')}
                   </button>
                 </div>
               </div>
@@ -145,7 +141,7 @@ export default function ConfirmEmail() {
                   className="px-5 py-3 bg-surface text-secondary font-semibold rounded-xl hover:bg-surface-variant transition-all border border-outline-variant disabled:opacity-70 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
                 >
                   {isResending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                  Renvoyer le lien
+                  {t('confirmEmail.resendLink')}
                 </button>
                 <button
                   type="button"
@@ -153,7 +149,7 @@ export default function ConfirmEmail() {
                   className="px-5 py-3 bg-surface text-secondary font-semibold rounded-xl hover:bg-surface-variant transition-all border border-outline-variant inline-flex items-center justify-center gap-2"
                 >
                   <PencilLine className="w-4 h-4" />
-                  Modifier l'email
+                  {t('confirmEmail.editEmail')}
                 </button>
               </div>
             )}
@@ -164,7 +160,7 @@ export default function ConfirmEmail() {
       <footer className="py-6 text-center text-xs text-secondary/40 border-t border-outline-variant/20 bg-white">
         Copyright 2026 NovaSMS —{' '}
         <Link to="/" className="hover:text-primary">
-          Retour au site
+          {t('confirmEmail.backToSite')}
         </Link>
       </footer>
     </div>

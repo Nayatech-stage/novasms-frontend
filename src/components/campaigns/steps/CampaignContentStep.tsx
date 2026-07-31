@@ -45,8 +45,8 @@ export const CampaignContentStep: FC<CampaignContentStepProps> = ({ onNext, onPr
   return (
     <div className="space-y-8">
       {/* Step Indicator */}
-      <div className="flex justify-center px-8">
-        <div className="flex items-center gap-4 w-full max-w-4xl">
+      <div className="flex justify-center px-4 sm:px-8 overflow-x-auto">
+        <div className="campaign-step-bar-inner flex items-center gap-2 sm:gap-4 w-full max-w-4xl min-w-0">
           <div className="flex flex-col items-center gap-2 flex-1 opacity-40">
             <span className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center font-bold text-sm border-2 border-primary/40">
               ✓

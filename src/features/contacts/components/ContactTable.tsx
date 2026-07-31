@@ -46,6 +46,7 @@ import {
 import ExportModal from './ExportModal';
 import { useAuthStore } from '@/stores/authStore';
 import { contactsApi } from '@/api/contacts';
+import { useTranslation } from 'react-i18next';
 import type {
   Contact,
   ContactFilter,
@@ -66,6 +67,7 @@ function SegmentDetail({
   onRemove: (s: SegmentWithContacts) => void;
   formatFormula: (c: SegmentWithContacts['criteria']) => string;
 }) {
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const q = query.trim().toLowerCase();
   const visible = q
@@ -125,9 +127,9 @@ function SegmentDetail({
         {visible.length > 0 ? (
           <div className="space-y-1 max-h-48 overflow-y-auto">
             <div className="grid grid-cols-3 gap-1 pb-1 border-b border-outline-variant/20 text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider">
-              <span>Nom</span>
-              <span>Email</span>
-              <span>Téléphone</span>
+              <span>{t('contactTable.name')}</span>
+              <span>{t('contactTable.email')}</span>
+              <span>{t('contactTable.phone')}</span>
             </div>
             {visible.map((contact) => (
               <div
@@ -168,6 +170,7 @@ export default function ContactTable({
   onImportClick,
   onAddContactClick,
 }: ContactTableProps) {
+  const { t } = useTranslation();
   const { accessToken } = useAuthStore();
 
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -626,10 +629,8 @@ export default function ContactTable({
     return (
       <div className="text-center py-12">
         <User className="w-12 h-12 text-on-surface-variant mx-auto mb-4 opacity-50" />
-        <p className="text-on-surface font-medium">Aucun contact trouvé</p>
-        <p className="text-sm text-on-surface-variant mt-1 mb-4">
-          Importez votre premier fichier CSV ou ajoutez un contact manuellement
-        </p>
+        <p className="text-on-surface font-medium">{t('contactTable.noContactEmpty')}</p>
+        <p className="text-sm text-on-surface-variant mt-1 mb-4">{t('contactTable.importFirst')}</p>
         <div className="flex items-center justify-center gap-3">
           <button
             id="tour-import-btn"
@@ -637,14 +638,14 @@ export default function ContactTable({
             className="px-4 py-2 bg-primary text-white font-medium rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2"
           >
             <Download className="w-4 h-4" />
-            Importer CSV / XLS
+            {t('contactTable.importCsv')}
           </button>
           <button
             onClick={onAddContactClick}
             className="px-4 py-2 border border-outline-variant rounded-lg hover:bg-surface-container transition-colors flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
-            Ajouter un contact
+            {t('contactTable.addContact')}
           </button>
         </div>
       </div>
@@ -655,55 +656,64 @@ export default function ContactTable({
     <div className="space-y-4">
       {/* Header Actions - Conforme maquette */}
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             id="tour-import-btn"
             onClick={onImportClick}
-            className="px-4 py-2 bg-primary text-white font-medium rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2"
+            className="px-3 py-2 bg-primary text-white font-medium rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2 text-sm"
           >
             <Download className="w-4 h-4" />
-            Importer CSV / XLS
+            <span className="hidden sm:inline">{t('contactTable.importCsv')}</span>
+            <span className="sm:hidden">Import</span>
           </button>
           <button
             onClick={onAddContactClick}
-            className="px-4 py-2 border border-outline-variant rounded-lg hover:bg-surface-container transition-colors flex items-center gap-2"
+            className="px-3 py-2 border border-outline-variant rounded-lg hover:bg-surface-container transition-colors flex items-center gap-2 text-sm"
           >
             <Plus className="w-4 h-4" />
-            Ajouter un contact
+            <span className="hidden sm:inline">{t('contactTable.addContact')}</span>
+            <span className="sm:hidden">Ajouter</span>
           </button>
           <button
             onClick={() => setShowExportModal(true)}
-            className="px-4 py-2 border border-outline-variant rounded-lg hover:bg-surface-container transition-colors flex items-center gap-2 text-sm font-medium"
+            className="px-3 py-2 border border-outline-variant rounded-lg hover:bg-surface-container transition-colors flex items-center gap-2 text-sm font-medium"
             style={{ color: '#0c5460' }}
           >
             <FileDown className="w-4 h-4" />
-            Exporter
+            <span className="hidden md:inline">{t('contactTable.export')}</span>
           </button>
           <button
             onClick={toggleSelectAll}
-            className={`px-4 py-2 border rounded-lg transition-colors flex items-center gap-2 text-sm font-medium ${
+            className={`px-3 py-2 border rounded-lg transition-colors flex items-center gap-2 text-sm font-medium ${
               selectedContactIds.size > 0
                 ? 'border-primary bg-primary/10 text-primary'
                 : 'border-outline-variant text-on-surface-variant hover:bg-surface-container'
             }`}
           >
             <CheckCircle className="w-4 h-4" />
-            {selectedContactIds.size > 0
-              ? `${selectedContactIds.size} sélectionné${selectedContactIds.size > 1 ? 's' : ''}`
-              : 'Sélectionner'}
+            <span className="hidden sm:inline">
+              {selectedContactIds.size > 0
+                ? `${selectedContactIds.size} sélectionné${selectedContactIds.size > 1 ? 's' : ''}`
+                : 'Sélectionner'}
+            </span>
+            <span className="sm:hidden">
+              {selectedContactIds.size > 0 ? selectedContactIds.size : ''}
+            </span>
           </button>
 
           <button
             onClick={() => void deleteSelectedContacts()}
             disabled={selectedContactIds.size === 0 || isDeleting}
-            className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-3 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {isDeleting ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               <Trash2 className="w-4 h-4" />
             )}
-            {selectedContactIds.size > 0 ? `Supprimer (${selectedContactIds.size})` : 'Supprimer'}
+            <span className="hidden sm:inline">
+              {selectedContactIds.size > 0 ? `Supprimer (${selectedContactIds.size})` : 'Supprimer'}
+            </span>
           </button>
         </div>
 
@@ -717,7 +727,7 @@ export default function ContactTable({
           >
             <option value="all">Tous les champs</option>
             <option value="tag">Tag</option>
-            <option value="location">Localisation</option>
+            <option value="location">{t('contactTable.locationCol')}</option>
           </select>
           <div className="relative flex-1">
             <Search
@@ -777,7 +787,7 @@ export default function ContactTable({
             onClick={clearAllFilters}
             className="text-sm text-on-surface-variant hover:text-on-surface underline"
           >
-            Effacer tout
+            {t('contactTable.clearAll')}
           </button>
         )}
 
@@ -791,7 +801,7 @@ export default function ContactTable({
               onChange={(e) => setSelectedSegmentId(e.target.value)}
               className="px-3 py-2 rounded-lg border border-outline-variant bg-surface text-sm"
             >
-              <option value="">Segments sauvegardés</option>
+              <option value="">{t('contactTable.savedSegments')}</option>
               {segments.map((segment) => (
                 <option key={segment.id} value={segment.id}>
                   {(segment.name || 'Sans nom') + ` (${segment.contactCount})`}
@@ -821,7 +831,7 @@ export default function ContactTable({
           }}
           className="px-4 py-2 text-primary font-medium rounded-lg hover:bg-primary/5 transition-colors text-sm"
         >
-          + Nouveau segment
+          {t('contactTable.newSegment')}
         </button>
       </div>
 
@@ -835,7 +845,9 @@ export default function ContactTable({
             className="p-4 rounded-xl border border-outline-variant bg-surface space-y-4 overflow-hidden"
           >
             <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-medium text-on-surface">Créer un segment dynamique</p>
+              <p className="text-sm font-medium text-on-surface">
+                {t('contactTable.dynamicSegment')}
+              </p>
               <button
                 data-testid="segment-save-button"
                 className="text-sm text-primary font-medium hover:text-primary/80 disabled:opacity-50"
@@ -856,7 +868,7 @@ export default function ContactTable({
               value={segmentName}
               onChange={(e) => setSegmentName(e.target.value)}
               className="w-full px-3 py-2 rounded-lg border border-outline-variant bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 text-sm"
-              placeholder="Nom du segment"
+              placeholder={t('contactTable.segmentNamePlaceholder')}
             />
 
             <div className="space-y-3">
@@ -876,7 +888,7 @@ export default function ContactTable({
                   onClick={addCriterion}
                 >
                   <Plus className="w-3 h-3" />
-                  Ajouter un critère
+                  {t('contactTable.addCriterion')}
                 </button>
               </div>
 
@@ -893,11 +905,11 @@ export default function ContactTable({
                     className="px-3 py-2 rounded-lg border border-outline-variant bg-background text-sm min-w-[150px]"
                   >
                     <option value="tag">Tag</option>
-                    <option value="status">Statut</option>
-                    <option value="email">Email</option>
-                    <option value="phone">Téléphone</option>
+                    <option value="status">{t('contactTable.status')}</option>
+                    <option value="email">{t('contactTable.email')}</option>
+                    <option value="phone">{t('contactTable.phone')}</option>
                     <option value="firstName">Prénom</option>
-                    <option value="lastName">Nom</option>
+                    <option value="lastName">{t('contactTable.name')}</option>
                   </select>
 
                   <select
@@ -937,14 +949,17 @@ export default function ContactTable({
               <div className="flex items-center gap-2">
                 {isPreviewLoading && <Loader2 className="w-3 h-3 text-primary animate-spin" />}
                 <p className="text-sm text-on-surface-variant">
-                  <span className="font-semibold text-on-surface">{previewCount}</span> contacts
+                  <span className="font-semibold text-on-surface">{previewCount}</span>{' '}
+                  {t('contactTable.contacts')}
                   correspondent
                 </p>
               </div>
               {segmentError ? <p className="text-sm text-red-600 mt-2">{segmentError}</p> : null}
               {segments.length > 0 ? (
                 <div className="mt-4 space-y-3">
-                  <p className="text-xs text-on-surface-variant">Contacts par segment</p>
+                  <p className="text-xs text-on-surface-variant">
+                    {t('contactTable.contactsPerSegment')}
+                  </p>
                   <div className="space-y-3">
                     {segments.map((segment) => (
                       <SegmentDetail
@@ -980,11 +995,15 @@ export default function ContactTable({
                   className="w-4 h-4 rounded border-outline-variant"
                 />
               </th>
-              <th className="px-4 py-3 text-left font-semibold text-on-surface">Nom</th>
+              <th className="px-4 py-3 text-left font-semibold text-on-surface">
+                {t('contactTable.name')}
+              </th>
               <th className="hidden md:table-cell px-4 py-3 text-left font-semibold text-on-surface">
                 Email
               </th>
-              <th className="px-4 py-3 text-left font-semibold text-on-surface">Téléphone</th>
+              <th className="px-4 py-3 text-left font-semibold text-on-surface">
+                {t('contactTable.phone')}
+              </th>
               <th className="hidden sm:table-cell px-4 py-3 text-left font-semibold text-on-surface">
                 Tags
               </th>
@@ -994,7 +1013,9 @@ export default function ContactTable({
               <th className="hidden lg:table-cell px-4 py-3 text-left font-semibold text-on-surface">
                 Ajouté le
               </th>
-              <th className="px-4 py-3 text-left font-semibold text-on-surface">Statut</th>
+              <th className="px-4 py-3 text-left font-semibold text-on-surface">
+                {t('contactTable.status')}
+              </th>
               <th className="px-4 py-3 text-right font-semibold text-on-surface"></th>
             </tr>
           </thead>
@@ -1004,7 +1025,7 @@ export default function ContactTable({
               <tr>
                 <td colSpan={8} className="py-12 text-center">
                   <Search className="w-8 h-8 text-on-surface-variant mx-auto mb-3 opacity-50" />
-                  <p className="text-on-surface font-medium">Aucun résultat</p>
+                  <p className="text-on-surface font-medium">{t('contactTable.noResults')}</p>
                   <p className="text-sm text-on-surface-variant mt-1">
                     {debouncedSearch
                       ? `Aucun contact ne correspond à "${debouncedSearch}"`
@@ -1014,7 +1035,7 @@ export default function ContactTable({
                     onClick={clearAllFilters}
                     className="mt-3 text-sm text-primary hover:underline"
                   >
-                    Effacer la recherche
+                    {t('contactTable.clearSearch')}
                   </button>
                 </td>
               </tr>
@@ -1173,7 +1194,7 @@ export default function ContactTable({
                       ) : (
                         <CheckCircle className="w-3 h-3" />
                       )}
-                      {contact.optOut ? 'Inactif' : 'Actif'}
+                      {contact.optOut ? t('contactTable.inactive') : t('contactTable.active')}
                     </span>
                   </td>
 
@@ -1206,7 +1227,7 @@ export default function ContactTable({
                             disabled={isDeleting}
                             className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-t-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           >
-                            Supprimer ce contact
+                            {t('contactTable.deleteContact')}
                           </button>
                         </div>
                       )}
@@ -1241,7 +1262,7 @@ export default function ContactTable({
             className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-outline-variant text-sm font-medium text-on-surface-variant hover:bg-surface-container disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
-            Préc.
+            {t('contactTable.prev')}
           </button>
 
           <button
@@ -1249,7 +1270,7 @@ export default function ContactTable({
             disabled={!hasMore || isLoading}
             className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-outline-variant text-sm font-medium text-on-surface-variant hover:bg-surface-container disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
-            Suiv.
+            {t('contactTable.next')}
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>
@@ -1271,7 +1292,7 @@ export default function ContactTable({
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 80, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3 bg-surface border border-outline-variant rounded-2xl shadow-xl"
+            className="contact-bulk-bar fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 sm:gap-3 px-3 sm:px-5 py-2.5 sm:py-3 bg-surface border border-outline-variant rounded-2xl shadow-xl"
           >
             <span className="text-sm font-semibold text-on-surface">
               {selectedContactIds.size} contact{selectedContactIds.size > 1 ? 's' : ''} sélectionné
@@ -1283,8 +1304,8 @@ export default function ContactTable({
               className="text-sm text-on-surface-variant hover:text-on-surface transition-colors"
             >
               {selectedContactIds.size === contacts.length
-                ? 'Tout désélectionner'
-                : 'Tout sélectionner'}
+                ? t('contactTable.deselectAll')
+                : t('contactTable.selectAll')}
             </button>
             <button
               onClick={deleteSelectedContacts}

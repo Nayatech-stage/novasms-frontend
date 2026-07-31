@@ -1,4 +1,5 @@
 import { useState, useEffect, type FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, X, CheckCircle2, XCircle, HelpCircle } from 'lucide-react';
 import { toast } from 'sonner';
@@ -27,6 +28,7 @@ const initialContactDraft: ContactDraft = {
 };
 
 export default function ContactsPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [isImportOpen, setImportOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -129,7 +131,7 @@ export default function ContactsPage() {
 
   return (
     <div className="p-6">
-      <h1 className="mb-4 text-2xl font-semibold">Contacts</h1>
+      <h1 className="mb-4 text-2xl font-semibold">{t('contacts.title')}</h1>
       <ContactTable
         key={refreshKey}
         onImportClick={handleImportClick}
@@ -144,20 +146,22 @@ export default function ContactsPage() {
       />
 
       {isAddOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4 py-6 backdrop-blur-sm">
-          <div className="w-full max-w-2xl overflow-hidden rounded-[28px] border border-outline-variant/40 bg-white shadow-[0_28px_90px_rgba(12,84,96,0.22)]">
-            <div className="flex items-start justify-between gap-4 border-b border-outline-variant/30 px-6 py-5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-3 py-4 sm:px-4 sm:py-6 backdrop-blur-sm">
+          <div className="w-full max-w-2xl overflow-hidden overflow-y-auto max-h-[calc(100vh-32px)] rounded-[20px] sm:rounded-[28px] border border-outline-variant/40 bg-white shadow-[0_28px_90px_rgba(12,84,96,0.22)]">
+            <div className="flex items-start justify-between gap-4 border-b border-outline-variant/30 px-4 sm:px-6 py-4 sm:py-5">
               <div>
-                <h2 className="text-xl font-black text-secondary">Ajouter un contact</h2>
+                <h2 className="text-xl font-black text-secondary">
+                  {t('contacts.addContactTitle')}
+                </h2>
                 <p className="mt-1 text-sm text-on-surface-variant">
-                  Créez un contact manuel pour le workflow de bienvenue ou vos campagnes.
+                  {t('contacts.addContactSubtitle')}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={closeAddModal}
                 className="rounded-full border border-outline-variant/40 p-2 text-on-surface-variant transition hover:border-primary/40 hover:text-primary"
-                aria-label="Fermer"
+                aria-label={t('common.close')}
               >
                 <X className="h-4 w-4" />
               </button>
@@ -165,11 +169,11 @@ export default function ContactsPage() {
 
             <form
               onSubmit={(event) => void handleCreateContact(event)}
-              className="space-y-5 px-6 py-6"
+              className="space-y-4 px-4 sm:px-6 py-4 sm:py-6"
             >
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="space-y-2 text-sm font-semibold text-secondary">
-                  Prénom
+                  {t('contacts.firstName')}
                   <input
                     className="w-full rounded-2xl border border-outline-variant/40 bg-white px-4 py-3 text-sm text-secondary outline-none transition focus:border-primary"
                     value={contactDraft.firstName}
@@ -181,7 +185,7 @@ export default function ContactsPage() {
                 </label>
 
                 <label className="space-y-2 text-sm font-semibold text-secondary">
-                  Nom
+                  {t('contacts.lastName')}
                   <input
                     className="w-full rounded-2xl border border-outline-variant/40 bg-white px-4 py-3 text-sm text-secondary outline-none transition focus:border-primary"
                     value={contactDraft.lastName}
@@ -195,7 +199,7 @@ export default function ContactsPage() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="space-y-2 text-sm font-semibold text-secondary">
-                  Email
+                  {t('contacts.email')}
                   <input
                     type="email"
                     className="w-full rounded-2xl border border-outline-variant/40 bg-white px-4 py-3 text-sm text-secondary outline-none transition focus:border-primary"
@@ -208,7 +212,7 @@ export default function ContactsPage() {
                 </label>
 
                 <label className="space-y-2 text-sm font-semibold text-secondary">
-                  Téléphone
+                  {t('contacts.phone')}
                   <div className="relative">
                     <input
                       className={`w-full rounded-2xl border bg-white px-4 py-3 pr-10 text-sm text-secondary outline-none transition focus:border-primary ${
@@ -238,7 +242,7 @@ export default function ContactsPage() {
                   </div>
                   {phoneValidation?.status === 'VALID' && phoneValidation.formatted && (
                     <p className="text-xs text-green-600 mt-1">
-                      Numéro valide — {phoneValidation.formatted}
+                      {t('contacts.phoneValid', { formatted: phoneValidation.formatted })}
                     </p>
                   )}
                   {phoneValidation?.status === 'INVALID' && phoneValidation.message && (
@@ -247,9 +251,9 @@ export default function ContactsPage() {
                 </label>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-[1.2fr_0.8fr]">
+              <div className="grid gap-4 min-[480px]:grid-cols-[1.2fr_0.8fr]">
                 <label className="space-y-2 text-sm font-semibold text-secondary">
-                  Localisation
+                  {t('contacts.location')}
                   <input
                     className="w-full rounded-2xl border border-outline-variant/40 bg-white px-4 py-3 text-sm text-secondary outline-none transition focus:border-primary"
                     value={contactDraft.location}
@@ -261,7 +265,7 @@ export default function ContactsPage() {
                 </label>
 
                 <label className="space-y-2 text-sm font-semibold text-secondary">
-                  Tags
+                  {t('contacts.tags')}
                   <input
                     className="w-full rounded-2xl border border-outline-variant/40 bg-white px-4 py-3 text-sm text-secondary outline-none transition focus:border-primary"
                     value={contactDraft.tags}
@@ -274,7 +278,7 @@ export default function ContactsPage() {
               </div>
 
               <label className="space-y-2 text-sm font-semibold text-secondary">
-                Date de naissance
+                {t('contacts.birthday')}
                 <input
                   type="date"
                   className="w-full rounded-2xl border border-outline-variant/40 bg-white px-4 py-3 text-sm text-secondary outline-none transition focus:border-primary"
@@ -284,7 +288,7 @@ export default function ContactsPage() {
                   }
                 />
                 <span className="text-xs font-normal text-on-surface-variant">
-                  Utilisée pour l'automatisation d'anniversaire
+                  {t('contacts.birthdayHint')}
                 </span>
               </label>
 
@@ -300,7 +304,7 @@ export default function ContactsPage() {
                   onClick={closeAddModal}
                   className="rounded-2xl border border-outline-variant/40 px-4 py-3 text-sm font-semibold text-secondary transition hover:border-primary/40 hover:text-primary"
                 >
-                  Annuler
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
@@ -308,7 +312,7 @@ export default function ContactsPage() {
                   className="inline-flex items-center justify-center gap-2 rounded-2xl bg-secondary px-5 py-3 text-sm font-bold text-white transition hover:bg-secondary/90 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isCreating ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                  Créer le contact
+                  {isCreating ? t('contacts.creating') : t('contacts.createContact')}
                 </button>
               </div>
             </form>

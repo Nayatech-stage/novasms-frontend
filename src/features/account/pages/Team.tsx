@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores/authStore';
 import api from '@/api/axios';
 import { toast } from 'sonner';
@@ -108,6 +109,7 @@ function Avatar({ email, size = 32 }: { email: string; size?: number }) {
 }
 
 export default function Team() {
+  const { t } = useTranslation();
   const currentUser = useAuthStore((state) => state.user);
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
@@ -250,7 +252,7 @@ export default function Team() {
             </div>
             <div>
               <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-1)' }}>
-                Gestion de l'équipe
+                {t('team.title')}
               </div>
               <div style={{ fontSize: 10.5, color: 'var(--text-2)', marginTop: 2 }}>
                 {members.length} membre{members.length > 1 ? 's' : ''} · {pendingInvites.length}{' '}
@@ -274,7 +276,7 @@ export default function Team() {
             >
               <path d="M6.5 1v11M1 6.5h11" />
             </svg>
-            Inviter un membre
+            {t('team.inviteMember')}
           </button>
         </div>
       </div>
@@ -291,10 +293,10 @@ export default function Team() {
           </div>
         ))}
         <div className="kpi">
-          <div className="kpi-label">Invitations en attente</div>
+          <div className="kpi-label">{t('team.pendingInvitesTitle')}</div>
           <div className="kpi-value">{pendingInvites.length}</div>
           <div style={{ fontSize: 10.5, color: 'var(--text-3)', marginTop: 4 }}>
-            Expire après 7 jours
+            {t('team.pendingExpires')}
           </div>
         </div>
       </div>
@@ -302,29 +304,29 @@ export default function Team() {
       {/* Membres actifs */}
       <div className="card">
         <div className="flex items-center justify-between mb-12">
-          <div className="card-title">Membres actifs</div>
+          <div className="card-title">{t('team.activeMembersTitle')}</div>
           <span className="chip">
             {members.length} membre{members.length > 1 ? 's' : ''}
           </span>
         </div>
         {loading ? (
           <div style={{ textAlign: 'center', padding: 24, color: 'var(--text-2)', fontSize: 12 }}>
-            Chargement…
+            {t('team.loading')}
           </div>
         ) : members.length === 0 ? (
           <div
             style={{ textAlign: 'center', padding: '24px 0', color: 'var(--text-2)', fontSize: 12 }}
           >
-            Aucun membre dans l'équipe.
+            {t('team.noMembers')}
           </div>
         ) : (
           <table className="data-table">
             <thead>
               <tr>
-                <th>Membre</th>
-                <th>Rôle</th>
-                <th>Dernière connexion</th>
-                <th>Actions</th>
+                <th>{t('team.memberCol')}</th>
+                <th>{t('team.roleCol')}</th>
+                <th>{t('team.lastLoginCol')}</th>
+                <th>{t('team.actionsCol')}</th>
               </tr>
             </thead>
             <tbody>
@@ -339,7 +341,7 @@ export default function Team() {
                         </div>
                         {m.id === currentUser?.id && (
                           <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 1 }}>
-                            Vous
+                            {t('team.you')}
                           </div>
                         )}
                       </div>
@@ -368,7 +370,7 @@ export default function Team() {
                         year: 'numeric',
                       })
                     ) : (
-                      <span style={{ color: 'var(--text-3)' }}>Jamais connecté</span>
+                      <span style={{ color: 'var(--text-3)' }}>{t('team.neverLoggedIn')}</span>
                     )}
                   </td>
                   <td>
@@ -379,7 +381,7 @@ export default function Team() {
                         className="btn-sm btn-danger"
                         style={{ fontSize: 11 }}
                       >
-                        {revoking === m.id ? '…' : 'Révoquer'}
+                        {revoking === m.id ? t('team.revoking') : t('team.revoke')}
                       </button>
                     ) : (
                       <span style={{ fontSize: 11, color: 'var(--text-3)' }}>—</span>
@@ -396,7 +398,7 @@ export default function Team() {
       {pendingInvites.length > 0 && (
         <div className="card">
           <div className="flex items-center justify-between mb-12">
-            <div className="card-title">Invitations en attente</div>
+            <div className="card-title">{t('team.pendingInvitesTitle')}</div>
             <span className="chip">{pendingInvites.length}</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -461,7 +463,7 @@ export default function Team() {
                       padding: '2px 8px',
                     }}
                   >
-                    En attente
+                    {t('team.pending')}
                   </span>
                   <button
                     onClick={() => handleCancelInvite(inv.id)}
@@ -469,7 +471,7 @@ export default function Team() {
                     className="btn-sm"
                     style={{ color: '#dc2626' }}
                   >
-                    {cancelling === inv.id ? '…' : 'Annuler'}
+                    {cancelling === inv.id ? t('team.cancelling') : t('team.cancelInvite')}
                   </button>
                 </div>
               </div>
@@ -482,7 +484,7 @@ export default function Team() {
       {currentUser?.role === 'Admin' && spending && (
         <div className="card">
           <div className="flex items-center justify-between mb-12">
-            <div className="card-title">Dépenses ce mois</div>
+            <div className="card-title">{t('team.spendingTitle')}</div>
             <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--brand)' }}>
               {spending.monthTotal.toLocaleString('fr-FR')} FCFA
             </span>
@@ -500,7 +502,7 @@ export default function Team() {
                 marginBottom: 8,
               }}
             >
-              Par canal
+              {t('team.byChannel')}
             </div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {spending.byChannel.map((c) => (
@@ -534,9 +536,7 @@ export default function Team() {
                 </div>
               ))}
               {spending.byChannel.length === 0 && (
-                <span style={{ fontSize: 12, color: 'var(--text-3)' }}>
-                  Aucune dépense enregistrée
-                </span>
+                <span style={{ fontSize: 12, color: 'var(--text-3)' }}>{t('team.noSpending')}</span>
               )}
             </div>
           </div>
@@ -553,7 +553,7 @@ export default function Team() {
                 marginBottom: 8,
               }}
             >
-              Par source
+              {t('team.bySource')}
             </div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {spending.bySource.map((s) => {
@@ -608,7 +608,7 @@ export default function Team() {
                   marginBottom: 8,
                 }}
               >
-                Par membre
+                {t('team.byMember')}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {spending.byMember.map((m) => {
@@ -652,7 +652,7 @@ export default function Team() {
 
       {/* Carte rôles & permissions */}
       <div className="card">
-        <div className="card-title mb-12">Rôles et permissions</div>
+        <div className="card-title mb-12">{t('team.rolesTitle')}</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 10 }}>
           {(['Admin', 'Editor', 'Analyst'] as TeamRole[]).map((role) => (
             <div
@@ -719,7 +719,7 @@ export default function Team() {
         >
           <div className="card" style={{ width: 400, padding: 24 }}>
             <div className="flex items-center justify-between mb-12">
-              <div className="card-title">Inviter un membre</div>
+              <div className="card-title">{t('team.modalTitle')}</div>
               <button
                 onClick={() => setShowModal(false)}
                 className="btn-ghost"
@@ -731,7 +731,7 @@ export default function Team() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div>
                 <div style={{ fontSize: 11, color: 'var(--text-2)', marginBottom: 6 }}>
-                  Adresse email
+                  {t('team.emailLabel')}
                 </div>
                 <input
                   type="email"
@@ -745,7 +745,7 @@ export default function Team() {
               </div>
               <div>
                 <div style={{ fontSize: 11, color: 'var(--text-2)', marginBottom: 6 }}>
-                  Rôle attribué
+                  {t('team.roleLabel')}
                 </div>
                 <div style={{ display: 'flex', gap: 6 }}>
                   {(['Admin', 'Editor', 'Analyst'] as TeamRole[]).map((r) => (
@@ -779,7 +779,7 @@ export default function Team() {
                   onClick={() => setShowModal(false)}
                   style={{ flex: 1 }}
                 >
-                  Annuler
+                  {t('team.cancelBtn')}
                 </button>
                 <button
                   className="btn-primary"
@@ -787,7 +787,7 @@ export default function Team() {
                   disabled={inviting}
                   style={{ flex: 1 }}
                 >
-                  {inviting ? 'Envoi…' : "Envoyer l'invitation"}
+                  {inviting ? t('team.sending') : t('team.sendInvite')}
                 </button>
               </div>
             </div>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Check, Loader2, FileDown, FileText, Users, MousePointerClick } from 'lucide-react';
 import { contactsApi } from '@/api/contacts';
@@ -58,6 +59,7 @@ function contactsToJson(contacts: Contact[], fields: ExportField[]): string {
 }
 
 export default function ExportModal({ isOpen, onClose, totalContacts, selectedContacts }: Props) {
+  const { t } = useTranslation();
   const [format, setFormat] = useState<ExportFormat>('csv');
   const [fields, setFields] = useState<ExportField[]>(DEFAULT_FIELDS);
   const [scope, setScope] = useState<'all' | 'selected'>(
@@ -206,7 +208,7 @@ export default function ExportModal({ isOpen, onClose, totalContacts, selectedCo
                     lineHeight: 1.3,
                   }}
                 >
-                  Exporter les contacts
+                  {t('exportModal.title')}
                 </div>
                 <div style={{ fontSize: 12, color: 'var(--text-2, #64748b)', marginTop: 2 }}>
                   {scopeCount.toLocaleString()} contact{scopeCount > 1 ? 's' : ''} à exporter
@@ -233,11 +235,11 @@ export default function ExportModal({ isOpen, onClose, totalContacts, selectedCo
           </div>
 
           {/* Content */}
-          <div style={{ padding: '0 24px 8px', maxHeight: '62vh', overflowY: 'auto' }}>
+          <div style={{ padding: '0 16px 8px', maxHeight: '62vh', overflowY: 'auto' }}>
             {/* ── Config ── */}
             {step === 'config' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 20, paddingBottom: 8 }}>
-                {/* Périmètre */}
+                {/* {t('exportModal.scopeLabel')} */}
                 {hasSelected && (
                   <div>
                     <div
@@ -250,19 +252,19 @@ export default function ExportModal({ isOpen, onClose, totalContacts, selectedCo
                         marginBottom: 10,
                       }}
                     >
-                      Périmètre
+                      {t('exportModal.scopeLabel')}
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                       {[
                         {
                           id: 'all' as const,
-                          label: 'Tous les contacts',
+                          label: t('exportModal.allContacts'),
                           count: totalContacts,
                           Icon: Users,
                         },
                         {
                           id: 'selected' as const,
-                          label: 'Sélection uniquement',
+                          label: t('exportModal.selectedOnly'),
                           count: selectedContacts!.length,
                           Icon: MousePointerClick,
                         },
@@ -335,14 +337,17 @@ export default function ExportModal({ isOpen, onClose, totalContacts, selectedCo
                       marginBottom: 10,
                     }}
                   >
-                    Format de fichier
+                    {t('exportModal.formatLabel')}
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  <div
+                    className="export-format-grid"
+                    style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}
+                  >
                     {[
                       {
                         id: 'csv' as const,
                         label: 'CSV',
-                        desc: 'Excel, Google Sheets…',
+                        desc: t('exportModal.csvDesc'),
                         Icon: FileDown,
                         activeColor: '#16a34a',
                         activeBg: '#f0fdf4',
@@ -351,7 +356,7 @@ export default function ExportModal({ isOpen, onClose, totalContacts, selectedCo
                       {
                         id: 'json' as const,
                         label: 'JSON',
-                        desc: 'Développeurs, APIs',
+                        desc: t('exportModal.jsonDesc'),
                         Icon: FileText,
                         activeColor: '#0c5460',
                         activeBg: '#f0fdff',
@@ -438,7 +443,7 @@ export default function ExportModal({ isOpen, onClose, totalContacts, selectedCo
                         letterSpacing: '0.07em',
                       }}
                     >
-                      Champs à inclure
+                      {t('exportModal.fieldsLabel')}
                     </div>
                     <button
                       onClick={toggleAllFields}
@@ -452,10 +457,15 @@ export default function ExportModal({ isOpen, onClose, totalContacts, selectedCo
                         padding: 0,
                       }}
                     >
-                      {fields.every((f) => f.checked) ? 'Tout désélectionner' : 'Tout sélectionner'}
+                      {fields.every((f) => f.checked)
+                        ? t('exportModal.deselectAll')
+                        : t('exportModal.selectAll')}
                     </button>
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                  <div
+                    className="export-fields-grid"
+                    style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}
+                  >
                     {fields.map((field) => (
                       <button
                         key={field.key}
@@ -535,10 +545,10 @@ export default function ExportModal({ isOpen, onClose, totalContacts, selectedCo
                 </div>
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-1, #0f172a)' }}>
-                    Génération en cours…
+                    {t('exportModal.generating')}
                   </div>
                   <div style={{ fontSize: 12, color: 'var(--text-2, #64748b)', marginTop: 4 }}>
-                    Récupération et mise en forme des données
+                    {t('exportModal.fetchingData')}
                   </div>
                 </div>
                 <div style={{ width: '100%' }}>
@@ -550,7 +560,7 @@ export default function ExportModal({ isOpen, onClose, totalContacts, selectedCo
                     }}
                   >
                     <span style={{ fontSize: 12, color: 'var(--text-2, #64748b)' }}>
-                      Progression
+                      {t('exportModal.progress')}
                     </span>
                     <span style={{ fontSize: 12, fontWeight: 700, color: '#0c5460' }}>
                       {progress}%
@@ -606,7 +616,7 @@ export default function ExportModal({ isOpen, onClose, totalContacts, selectedCo
                 </div>
                 <div>
                   <div style={{ fontSize: 16, fontWeight: 800, color: '#166534' }}>
-                    Export réussi !
+                    {t('exportModal.successTitle')}
                   </div>
                   <div style={{ fontSize: 13, color: 'var(--text-2, #64748b)', marginTop: 6 }}>
                     <strong style={{ color: '#0c5460' }}>{exportedCount.toLocaleString()}</strong>{' '}
@@ -628,7 +638,7 @@ export default function ExportModal({ isOpen, onClose, totalContacts, selectedCo
                 >
                   <FileDown style={{ width: 16, height: 16, color: '#16a34a', flexShrink: 0 }} />
                   <span style={{ fontSize: 12, color: '#166534' }}>
-                    Fichier téléchargé dans votre dossier Téléchargements
+                    {t('exportModal.downloaded')}
                   </span>
                 </div>
               </div>
@@ -647,7 +657,7 @@ export default function ExportModal({ isOpen, onClose, totalContacts, selectedCo
             }}
           >
             <button className="btn-outline" onClick={handleClose} style={{ fontSize: 13 }}>
-              {step === 'done' ? 'Fermer' : 'Annuler'}
+              {step === 'done' ? t('exportModal.close') : t('exportModal.cancel')}
             </button>
 
             {step === 'config' && (
@@ -665,7 +675,7 @@ export default function ExportModal({ isOpen, onClose, totalContacts, selectedCo
                 }}
               >
                 <FileDown style={{ width: 15, height: 15 }} />
-                Générer l'export
+                {t('exportModal.generate')}
               </button>
             )}
 
@@ -679,7 +689,7 @@ export default function ExportModal({ isOpen, onClose, totalContacts, selectedCo
                 style={{ fontSize: 13, display: 'flex', alignItems: 'center', gap: 8 }}
               >
                 <FileDown style={{ width: 15, height: 15 }} />
-                Nouvel export
+                {t('exportModal.newExport')}
               </button>
             )}
           </div>

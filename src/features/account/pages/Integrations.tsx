@@ -168,8 +168,8 @@ export default function Integrations() {
     <div className="content">
       {/* Header */}
       <div className="card" style={{ padding: '13px 16px', marginBottom: 20 }}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-12">
+        <div className="integrations-header-row flex items-center justify-between">
+          <div className="flex items-center gap-3">
             <div
               style={{
                 width: 36,
@@ -193,7 +193,10 @@ export default function Integrations() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div
+            className="integrations-header-actions"
+            style={{ display: 'flex', alignItems: 'center', gap: 10 }}
+          >
             {lastChecked && (
               <span style={{ fontSize: 11, color: 'var(--text-2)' }}>
                 Vérifié à{' '}
@@ -229,7 +232,10 @@ export default function Integrations() {
           Chargement du statut des intégrations…
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+        <div
+          className="integrations-providers-grid"
+          style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}
+        >
           <ProviderCard title="Fournisseur Email" icon="✉️" health={data?.providers.email} />
           <ProviderCard title="Fournisseur SMS" icon="📱" health={data?.providers.sms} />
         </div>

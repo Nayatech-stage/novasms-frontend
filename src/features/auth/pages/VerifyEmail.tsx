@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Bolt, Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { authApi, extractAuthError } from '@/api/auth.api';
 
 const verificationRequests = new Map<string, Promise<{ success: boolean; message: string }>>();
@@ -31,6 +32,7 @@ function getVerificationRequest(token: string) {
 }
 
 export default function VerifyEmail() {
+  const { t } = useTranslation();
   // keep auth intact while verifying via email link
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
@@ -97,11 +99,9 @@ export default function VerifyEmail() {
                 <Loader2 className="w-10 h-10 text-primary animate-spin" />
               </div>
               <h1 className="font-headline text-2xl font-bold text-secondary mb-4">
-                Vérification en cours...
+                {t('verifyEmail.verifying')}
               </h1>
-              <p className="text-on-surface-variant">
-                Nous confirmons votre adresse e-mail. Veuillez patienter.
-              </p>
+              <p className="text-on-surface-variant">{t('verifyEmail.verifyingSubtitle')}</p>
             </>
           )}
 
@@ -112,12 +112,10 @@ export default function VerifyEmail() {
                 <CheckCircle className="w-10 h-10 text-primary" />
               </div>
               <h1 className="font-headline text-2xl font-bold text-secondary mb-4">
-                Email vérifié avec succès !
+                {t('verifyEmail.successTitle')}
               </h1>
               <p className="text-on-surface-variant mb-6">{message}</p>
-              <p className="text-sm text-primary font-semibold">
-                Redirection vers la page de confirmation...
-              </p>
+              <p className="text-sm text-primary font-semibold">{t('verifyEmail.redirecting')}</p>
             </>
           )}
 
@@ -128,7 +126,7 @@ export default function VerifyEmail() {
                 <XCircle className="w-10 h-10 text-red-600" />
               </div>
               <h1 className="font-headline text-2xl font-bold text-secondary mb-4">
-                Vérification échouée
+                {t('verifyEmail.errorTitle')}
               </h1>
               <p className="text-on-surface-variant mb-6">{message}</p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -136,13 +134,13 @@ export default function VerifyEmail() {
                   to="/register"
                   className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary text-white font-semibold rounded-xl hover:brightness-110 transition-all"
                 >
-                  Réessayer l'inscription
+                  {t('verifyEmail.retryRegister')}
                 </Link>
                 <Link
                   to="/login"
                   className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-surface text-secondary font-semibold rounded-xl hover:bg-surface-variant transition-all border border-outline-variant"
                 >
-                  Se connecter
+                  {t('verifyEmail.signIn')}
                 </Link>
               </div>
             </>
@@ -155,7 +153,7 @@ export default function VerifyEmail() {
         <p>
           Copyright 2026 NovaSMS —{' '}
           <Link to="/" className="hover:text-primary">
-            Retour au site
+            {t('verifyEmail.backToSite')}
           </Link>
         </p>
       </footer>

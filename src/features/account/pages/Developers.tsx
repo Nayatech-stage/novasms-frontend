@@ -261,7 +261,10 @@ export default function Developers() {
     <div className="content">
       {/* ── En-tête ── */}
       <div className="card" style={{ padding: '18px 20px', marginBottom: 14 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div
+          className="developers-header-row"
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+        >
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <div
               style={{
@@ -432,6 +435,7 @@ export default function Developers() {
                       <PermissionLabel scopes={k.permissions} />
                     </div>
                     <div
+                      className="api-key-row-actions"
                       style={{
                         textAlign: 'right',
                         fontSize: 11,
@@ -510,6 +514,7 @@ export default function Developers() {
                       ) : (
                         <>
                           <div
+                            className="api-key-stats-expanded-grid"
                             style={{
                               display: 'grid',
                               gridTemplateColumns: 'repeat(3, 1fr)',

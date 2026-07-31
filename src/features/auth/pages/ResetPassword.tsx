@@ -1,10 +1,12 @@
 import { Bolt } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { PasswordStrengthIndicator } from '../components/PasswordStrengthIndicator';
 import { authApi, extractAuthError } from '@/api/auth.api';
 
 export default function ResetPassword() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { token } = useParams<{ token: string }>();
   const hasToken = Boolean(token);
@@ -95,11 +97,9 @@ export default function ResetPassword() {
           <span className="font-headline font-bold text-secondary">NovaSMS</span>
         </div>
 
-        <h1 className="text-2xl font-bold text-secondary mb-2">Réinitialiser le mot de passe</h1>
+        <h1 className="text-2xl font-bold text-secondary mb-2">{t('resetPassword.title')}</h1>
         <p className="text-on-surface-variant mb-6 text-sm">
-          {hasToken
-            ? 'Choisissez un nouveau mot de passe pour votre compte.'
-            : 'Entrez votre email pour recevoir un lien de réinitialisation.'}
+          {hasToken ? t('resetPassword.subtitleWithToken') : t('resetPassword.subtitleNoToken')}
         </p>
 
         <form
@@ -110,7 +110,7 @@ export default function ResetPassword() {
             <>
               <div>
                 <label className="block text-sm font-semibold text-on-surface mb-1">
-                  Nouveau mot de passe
+                  {t('resetPassword.newPassword')}
                 </label>
                 <input
                   type="password"
@@ -125,7 +125,7 @@ export default function ResetPassword() {
 
               <div>
                 <label className="block text-sm font-semibold text-on-surface mb-1">
-                  Confirmer le mot de passe
+                  {t('resetPassword.confirmPassword')}
                 </label>
                 <input
                   type="password"
@@ -140,7 +140,7 @@ export default function ResetPassword() {
           ) : (
             <div>
               <label className="block text-sm font-semibold text-on-surface mb-1">
-                Email professionnel
+                {t('resetPassword.professionalEmail')}
               </label>
               <input
                 type="email"
@@ -170,16 +170,16 @@ export default function ResetPassword() {
           >
             {loading
               ? hasToken
-                ? 'Réinitialisation...'
-                : 'Envoi...'
+                ? t('resetPassword.resetting')
+                : t('resetPassword.sending')
               : hasToken
-                ? 'Réinitialiser'
-                : 'Envoyer le lien'}
+                ? t('resetPassword.reset')
+                : t('resetPassword.sendLink')}
           </button>
 
           <div className="pt-2 text-center">
             <Link to="/login" className="text-primary font-semibold hover:underline">
-              Retour à la connexion
+              {t('resetPassword.backToLogin')}
             </Link>
           </div>
         </form>

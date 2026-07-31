@@ -104,7 +104,7 @@ export const TemplatePreviewLibrary: FC<TemplatePreviewLibraryProps> = ({ onUseT
 
   return (
     <div className="space-y-6">
-      <div className="space-y-1 px-8">
+      <div className="space-y-1 px-4 sm:px-8">
         <h2 className="font-headline font-black text-2xl text-on-surface">
           Bibliothèque de modèles ({EMAIL_TEMPLATES.length})
         </h2>
@@ -116,7 +116,7 @@ export const TemplatePreviewLibrary: FC<TemplatePreviewLibraryProps> = ({ onUseT
       </div>
 
       {/* Search */}
-      <div className="px-8">
+      <div className="px-4 sm:px-8">
         <div className="flex items-center gap-3 bg-surface-container-lowest rounded-2xl px-4 py-3 border border-outline-variant/20">
           <span
             className="material-symbols-outlined text-on-surface-variant"
@@ -145,7 +145,7 @@ export const TemplatePreviewLibrary: FC<TemplatePreviewLibraryProps> = ({ onUseT
       </div>
 
       {/* Category tabs */}
-      <div className="px-8 flex gap-2 flex-wrap">
+      <div className="px-4 sm:px-8 flex gap-2 flex-wrap">
         {categories.map((cat) => (
           <button
             key={cat}
@@ -166,7 +166,7 @@ export const TemplatePreviewLibrary: FC<TemplatePreviewLibraryProps> = ({ onUseT
       </div>
 
       {/* Grid + preview */}
-      <div className="px-8 grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 items-start">
+      <div className="px-4 sm:px-8 grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 items-start">
         {/* Cards */}
         <div>
           {filteredTemplates.length === 0 ? (

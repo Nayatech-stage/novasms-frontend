@@ -27,6 +27,14 @@ export const useUiStore = create<UiState>()(
       toggleMobileSidebar: () => set((s) => ({ mobileSidebarOpen: !s.mobileSidebarOpen })),
       setMobileSidebarOpen: (v) => set({ mobileSidebarOpen: v }),
     }),
-    { name: 'novasms-ui' },
+    {
+      name: 'novasms-ui',
+      // Ne pas persister l'état de la sidebar mobile pour éviter
+      // qu'elle reste ouverte entre sessions
+      partialize: (state) => ({
+        activeDashboard: state.activeDashboard,
+        sidebarCollapsed: state.sidebarCollapsed,
+      }),
+    },
   ),
 );

@@ -6,6 +6,7 @@ import { CountrySelect } from './CountrySelect';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { authApi, extractAuthError } from '@/api/auth.api';
 
 const RegisterSchema = z.object({
@@ -26,6 +27,7 @@ const RegisterSchema = z.object({
 type RegisterDto = z.infer<typeof RegisterSchema>;
 
 export default function RegisterForm() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const [showPassword, setShowPassword] = useState(false);
@@ -98,7 +100,9 @@ export default function RegisterForm() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-semibold text-on-surface mb-1">Nom complet</label>
+          <label className="block text-sm font-semibold text-on-surface mb-1">
+            {t('register.fullName')}
+          </label>
           <input
             {...register('nom')}
             className="w-full px-4 py-3 rounded-xl border border-outline-variant bg-surface focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -107,7 +111,9 @@ export default function RegisterForm() {
           {errors.nom && <p className="mt-1 text-xs text-red-600">{errors.nom.message}</p>}
         </div>
         <div>
-          <label className="block text-sm font-semibold text-on-surface mb-1">Pays</label>
+          <label className="block text-sm font-semibold text-on-surface mb-1">
+            {t('register.country')}
+          </label>
           <CountrySelect
             value={selectedCountry}
             onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setValue('pays', e.target.value)}
@@ -118,7 +124,7 @@ export default function RegisterForm() {
 
       <div>
         <label className="block text-sm font-semibold text-on-surface mb-1">
-          Email professionnel
+          {t('register.professionalEmail')}
         </label>
         <input
           {...register('email')}
@@ -131,7 +137,7 @@ export default function RegisterForm() {
 
       <div>
         <label className="block text-sm font-semibold text-on-surface mb-1">
-          Nom de la boutique
+          {t('register.shopName')}
         </label>
         <input
           {...register('nomBoutique')}
@@ -144,7 +150,9 @@ export default function RegisterForm() {
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-on-surface mb-1">Mot de passe</label>
+        <label className="block text-sm font-semibold text-on-surface mb-1">
+          {t('register.password')}
+        </label>
         <div className="relative">
           <input
             {...register('motDePasse')}
@@ -175,13 +183,13 @@ export default function RegisterForm() {
         />
         <div>
           <label htmlFor="cgu" className="text-sm text-on-surface-variant">
-            J'accepte les{' '}
+            {t('register.acceptTerms')}{' '}
             <a href="#" className="text-primary">
-              Conditions
+              {t('register.conditions')}
             </a>{' '}
-            et la{' '}
+            {t('register.and')}{' '}
             <a href="#" className="text-primary">
-              Politique de confidentialité
+              {t('register.privacy')}
             </a>
           </label>
           {errors.acceptCGU && (
@@ -195,7 +203,7 @@ export default function RegisterForm() {
         disabled={isLoading}
         className="w-full bg-primary text-white font-bold py-4 rounded-xl hover:brightness-110 flex items-center justify-center gap-2 disabled:opacity-70"
       >
-        {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Créer mon compte marchand'}
+        {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : t('register.createAccount')}
       </button>
     </form>
   );

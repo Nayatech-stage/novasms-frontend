@@ -707,7 +707,7 @@ export default function CanvasEditor({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 border-b border-outline-variant/30 bg-surface/40 px-5 py-3">
+        <div className="canvas-editor-toolbar flex flex-wrap items-center gap-2 border-b border-outline-variant/30 bg-surface/40 px-5 py-3">
           <button
             onClick={() => addNode('trigger')}
             className="rounded-xl border border-outline-variant/40 bg-white px-3 py-2 text-sm font-semibold text-secondary"
@@ -852,8 +852,8 @@ export default function CanvasEditor({
           </button>
         </div>
 
-        <div className="grid flex-1 grid-cols-[260px_minmax(0,1fr)_300px] overflow-hidden bg-[#F7F9F7]">
-          <aside className="border-r border-outline-variant/30 bg-white p-4">
+        <div className="canvas-editor-grid grid flex-1 grid-cols-[260px_minmax(0,1fr)_300px] overflow-hidden bg-[#F7F9F7]">
+          <aside className="canvas-editor-aside-left border-r border-outline-variant/30 bg-white p-4">
             <div className="mb-4 rounded-2xl border border-outline-variant/30 bg-surface/40 p-3 text-xs text-on-surface-variant">
               <p className="font-semibold text-secondary">Aide rapide</p>
               <p className="mt-1">
@@ -1105,7 +1105,7 @@ export default function CanvasEditor({
             </div>
           </section>
 
-          <aside className="border-l border-outline-variant/30 bg-white p-4">
+          <aside className="canvas-editor-aside-right border-l border-outline-variant/30 bg-white p-4">
             <div className="rounded-3xl border border-outline-variant/30 bg-surface/40 p-4">
               <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-on-surface-variant">
                 Inspecteur

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import QRCode from 'qrcode';
 import { useAuthStore } from '@/stores/authStore';
 import { authApi } from '@/api/auth.api';
@@ -14,6 +15,7 @@ interface TwoFactorState {
 }
 
 export default function Security() {
+  const { t } = useTranslation();
   const { user } = useAuthStore();
   const [twoFactorState, setTwoFactorState] = useState<TwoFactorState>({
     totpEnabled: false,
@@ -216,7 +218,7 @@ export default function Security() {
 
   // ── Disable 2FA ─────────────────────────────────────────────────────────────
   const handleDisable2FA = async () => {
-    if (!window.confirm('Désactiver la double authentification ?')) return;
+    if (!window.confirm(t('security.disableConfirm'))) return;
     setLoading(true);
     setMessage(null);
     try {
@@ -241,7 +243,7 @@ export default function Security() {
   const handleCopyBackupCodes = () => {
     if (twoFactorState.backupCodes) {
       void navigator.clipboard.writeText(twoFactorState.backupCodes.join('\n'));
-      setMessage({ type: 'success', text: 'Codes de secours copiés !' });
+      setMessage({ type: 'success', text: `${t('security.backupCodesTitle')} copiés !` });
     }
   };
 
@@ -266,12 +268,11 @@ export default function Security() {
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-2xl space-y-3">
               <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-on-surface-variant">
-                Sécurité du compte
+                {t('security.title')}
               </p>
-              <h1 className="text-4xl font-black text-on-surface">Double authentification</h1>
+              <h1 className="text-4xl font-black text-on-surface">{t('security.twoFaTitle')}</h1>
               <p className="text-base text-on-surface-variant leading-7">
-                Renforcez la protection de votre compte avec une validation par application
-                d'authentification ou par SMS.
+                {t('security.twoFaSubtitle')}
               </p>
             </div>
             {isEnabled ? (
@@ -280,11 +281,11 @@ export default function Security() {
                 disabled={loading}
                 className="inline-flex items-center justify-center rounded-2xl bg-secondary px-5 py-3 text-sm font-bold text-white transition hover:bg-secondary/90 disabled:opacity-60"
               >
-                Désactiver la 2FA
+                {t('security.disable2fa')}
               </button>
             ) : (
               <div className="rounded-2xl border border-primary/15 bg-white px-4 py-3 text-sm text-on-surface-variant shadow-sm">
-                Protection actuellement inactive
+                {t('security.inactive')}
               </div>
             )}
           </div>
@@ -300,20 +301,26 @@ export default function Security() {
                     2FA
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-on-surface">État de la protection</h3>
+                    <h3 className="text-xl font-bold text-on-surface">
+                      {t('security.statusTitle')}
+                    </h3>
                     <p className="text-sm text-on-surface-variant">
                       {twoFactorState.totpEnabled
-                        ? 'Application Authenticator active.'
+                        ? t('security.totpActive')
                         : twoFactorState.smsEnabled
                           ? `SMS OTP actif${twoFactorState.smsPhone ? ` — ${twoFactorState.smsPhone}` : ''}.`
-                          : 'La double authentification est désactivée.'}
+                          : t('security.twoFaDisabled')}
                     </p>
                   </div>
                 </div>
                 <span
                   className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold ${isEnabled ? 'bg-primary/10 text-primary' : 'bg-surface-container text-on-surface-variant'}`}
                 >
-                  {isEnabled ? (activeMethod === 'totp' ? 'Authenticator' : 'SMS OTP') : 'Inactive'}
+                  {isEnabled
+                    ? activeMethod === 'totp'
+                      ? t('security.authenticator')
+                      : t('security.smsOtp')
+                    : t('security.inactiveChip')}
                 </span>
               </div>
             </section>
@@ -326,10 +333,10 @@ export default function Security() {
                   <div className="flex items-start justify-between gap-4 mb-4">
                     <div>
                       <h4 className="text-lg font-bold text-on-surface">
-                        Application Authenticator
+                        {t('security.totpCardTitle')}
                       </h4>
                       <p className="text-sm text-on-surface-variant mt-1">
-                        Codes temporaires via Google Authenticator, Authy, etc.
+                        {t('security.totpCardDesc')}
                       </p>
                     </div>
                     <span className="rounded-full bg-primary/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-primary">
@@ -342,8 +349,8 @@ export default function Security() {
                     className="inline-flex w-full items-center justify-center rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-on-primary transition hover:brightness-110 disabled:opacity-60"
                   >
                     {loading && twoFactorState.method === 'totp'
-                      ? 'Génération...'
-                      : 'Configurer maintenant'}
+                      ? t('security.generating')
+                      : t('security.configureNow')}
                   </button>
                 </div>
 
@@ -351,7 +358,7 @@ export default function Security() {
                 <div className="rounded-[24px] border border-outline-variant/20 bg-white p-6 shadow-sm">
                   <h4 className="text-lg font-bold text-on-surface mb-1">SMS OTP</h4>
                   <p className="text-sm text-on-surface-variant mb-4">
-                    Recevez un code à usage unique par SMS à chaque connexion.
+                    {t('security.smsCardDesc')}
                   </p>
                   <button
                     onClick={() =>
@@ -362,7 +369,9 @@ export default function Security() {
                     }
                     className="inline-flex w-full items-center justify-center rounded-2xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm font-bold text-primary transition hover:bg-primary/10"
                   >
-                    {twoFactorState.method === 'sms' ? 'Annuler' : 'Configurer par SMS'}
+                    {twoFactorState.method === 'sms'
+                      ? t('security.cancel')
+                      : t('security.configureBySms')}
                   </button>
                 </div>
               </div>
@@ -375,13 +384,13 @@ export default function Security() {
                   <span className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary text-white font-bold">
                     1
                   </span>
-                  Configuration de l'application
+                  {t('security.totpSetupTitle')}
                 </h3>
                 <div className="grid grid-cols-1 gap-12 md:grid-cols-2">
                   <div className="space-y-6">
                     <div>
                       <h5 className="mb-4 text-xs font-bold uppercase tracking-[0.24em] text-on-surface-variant">
-                        Étape 1 · Scanner le code
+                        {t('security.step1')}
                       </h5>
                       <div className="inline-block rounded-2xl border border-outline-variant/20 bg-surface p-4">
                         <canvas ref={qrCanvasRef} width={200} height={200} className="block" />
@@ -389,7 +398,7 @@ export default function Security() {
                     </div>
                     <div className="rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-4">
                       <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-on-surface-variant">
-                        Clé manuelle
+                        {t('security.manualKey')}
                       </p>
                       <div className="flex flex-col gap-2 font-mono font-bold text-secondary sm:flex-row sm:items-center sm:justify-between">
                         <span className="break-all text-xs sm:text-sm tracking-[0.18em]">
@@ -410,10 +419,10 @@ export default function Security() {
                   <div className="flex flex-col justify-center space-y-6">
                     <div>
                       <h5 className="mb-4 text-xs font-bold uppercase tracking-[0.24em] text-on-surface-variant">
-                        Étape 2 · Vérifier le code
+                        {t('security.step2')}
                       </h5>
                       <p className="mb-6 text-sm text-on-surface-variant">
-                        Entrez les 6 chiffres affichés dans votre appli d'authentification.
+                        {t('security.step2Desc')}
                       </p>
                       <div className="flex flex-wrap gap-2 mb-6">
                         {totpInputs.map((val, idx) => (
@@ -433,7 +442,7 @@ export default function Security() {
                         disabled={loading || totpInputs.join('').length !== 6}
                         className="inline-flex w-full items-center justify-center rounded-2xl bg-secondary px-4 py-3 font-bold text-white transition hover:bg-secondary/90 disabled:opacity-60"
                       >
-                        {loading ? 'Vérification...' : 'Activer la 2FA Authenticator'}
+                        {loading ? t('security.verifying') : t('security.enable2faTotp')}
                       </button>
                     </div>
                   </div>
@@ -448,17 +457,15 @@ export default function Security() {
                   <span className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary text-white font-bold">
                     1
                   </span>
-                  Configuration SMS OTP
+                  {t('security.smsSetupTitle')}
                 </h3>
 
                 {!smsCodeSent ? (
                   <div className="max-w-sm space-y-4">
-                    <p className="text-sm text-on-surface-variant">
-                      Entrez votre numéro de téléphone. Un code de vérification sera envoyé par SMS.
-                    </p>
+                    <p className="text-sm text-on-surface-variant">{t('security.smsDesc')}</p>
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-[0.18em] text-on-surface-variant mb-2">
-                        Numéro de téléphone
+                        {t('security.phoneLabel')}
                       </label>
                       <input
                         type="tel"
@@ -473,17 +480,18 @@ export default function Security() {
                       disabled={smsLoading || !smsPhone.trim()}
                       className="inline-flex w-full items-center justify-center rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-on-primary transition hover:brightness-110 disabled:opacity-60"
                     >
-                      {smsLoading ? 'Envoi...' : 'Envoyer le code OTP'}
+                      {smsLoading ? t('security.sending') : t('security.sendOtp')}
                     </button>
                   </div>
                 ) : (
                   <div className="max-w-sm space-y-4">
                     <p className="text-sm text-on-surface-variant">
-                      Code envoyé au <strong>{smsPhone}</strong>. Entrez-le ci-dessous.
+                      {t('security.codeSentTo')} <strong>{smsPhone}</strong>.{' '}
+                      {t('security.enterBelow')}
                     </p>
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-[0.18em] text-on-surface-variant mb-2">
-                        Code OTP reçu par SMS
+                        {t('security.otpCodeLabel')}
                       </label>
                       <input
                         type="text"
@@ -500,7 +508,7 @@ export default function Security() {
                       disabled={smsLoading || smsCode.length < 6}
                       className="inline-flex w-full items-center justify-center rounded-2xl bg-secondary px-4 py-3 font-bold text-white transition hover:bg-secondary/90 disabled:opacity-60"
                     >
-                      {smsLoading ? 'Vérification...' : 'Activer la 2FA SMS'}
+                      {smsLoading ? t('security.verifying') : 'Activer la 2FA SMS'}
                     </button>
                     <button
                       type="button"
@@ -532,10 +540,11 @@ export default function Security() {
             {/* Backup Codes */}
             {isEnabled && twoFactorState.backupCodes && (
               <section className="rounded-[24px] border border-outline-variant/20 bg-white p-6 shadow-sm">
-                <h3 className="mb-4 text-xl font-bold text-on-surface">Codes de secours</h3>
+                <h3 className="mb-4 text-xl font-bold text-on-surface">
+                  {t('security.backupCodesTitle')}
+                </h3>
                 <p className="mb-4 text-sm text-on-surface-variant">
-                  Conservez ces codes en lieu sûr. Ils permettent d'accéder à votre compte si vous
-                  n'avez pas accès à votre 2FA.
+                  {t('security.backupCodesDesc')}
                 </p>
                 <div className="mb-4 max-h-48 space-y-2 overflow-y-auto rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-4 font-mono text-sm">
                   {twoFactorState.backupCodes.map((code, idx) => (
@@ -563,12 +572,12 @@ export default function Security() {
 
             {/* Security Tips */}
             <section className="rounded-[24px] border border-outline-variant/20 bg-brand-light/60 p-6 shadow-sm">
-              <h4 className="mb-3 text-sm font-bold text-secondary">Conseils utiles</h4>
+              <h4 className="mb-3 text-sm font-bold text-secondary">{t('security.tipsTitle')}</h4>
               <ul className="space-y-2 text-xs text-on-surface-variant">
-                <li>• Activez les notifications pour les connexions suspectes</li>
-                <li>• Utilisez un gestionnaire de mots de passe sécurisé</li>
-                <li>• Conservez vos codes de secours dans un endroit sûr</li>
-                <li>• Ne partagez jamais vos codes avec quiconque</li>
+                <li>• {t('security.tip1')}</li>
+                <li>• {t('security.tip2')}</li>
+                <li>• {t('security.tip3')}</li>
+                <li>• {t('security.tip4')}</li>
               </ul>
             </section>
           </aside>

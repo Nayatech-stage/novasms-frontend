@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores/authStore';
 import api from '@/api/axios';
 import { toast } from 'sonner';
@@ -68,6 +69,7 @@ function Avatar({ name, size = 56 }: { name: string; size?: number }) {
 }
 
 export default function Profile() {
+  const { t } = useTranslation();
   const { user: authUser, logout } = useAuthStore();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -176,7 +178,7 @@ export default function Profile() {
             </div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 10.5, color: 'var(--text-3)' }}>Dernière connexion</div>
+            <div style={{ fontSize: 10.5, color: 'var(--text-3)' }}>{t('profile.lastLogin')}</div>
             <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 2 }}>
               {profile?.lastLogin
                 ? new Date(profile.lastLogin).toLocaleDateString('fr-FR', {
@@ -186,10 +188,10 @@ export default function Profile() {
                     hour: '2-digit',
                     minute: '2-digit',
                   })
-                : 'Jamais'}
+                : t('profile.never')}
             </div>
             <div style={{ fontSize: 10.5, color: 'var(--text-3)', marginTop: 8 }}>
-              Solde crédits
+              {t('profile.creditBalance')}
             </div>
             <div
               style={{ fontSize: 14, fontWeight: 700, color: 'var(--brand-primary)', marginTop: 2 }}
@@ -204,7 +206,7 @@ export default function Profile() {
 
       {loading ? (
         <div style={{ textAlign: 'center', padding: 32, color: 'var(--text-2)', fontSize: 13 }}>
-          Chargement…
+          {t('profile.loading')}
         </div>
       ) : (
         <div
@@ -216,24 +218,24 @@ export default function Profile() {
         >
           {/* Infos boutique */}
           <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <div className="card-title">Informations de la boutique</div>
+            <div className="card-title">{t('profile.shopInfoTitle')}</div>
             <div className="divider" />
 
             <div>
               <div style={{ fontSize: 11, color: 'var(--text-2)', marginBottom: 6 }}>
-                Nom de la boutique
+                {t('profile.shopNameLabel')}
               </div>
               <input
                 className="input"
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
-                placeholder="Nom de votre entreprise"
+                placeholder={t('profile.shopNamePlaceholder')}
               />
             </div>
 
             <div>
               <div style={{ fontSize: 11, color: 'var(--text-2)', marginBottom: 6 }}>
-                Email administrateur
+                {t('profile.adminEmailLabel')}
               </div>
               <input
                 className="input"
@@ -248,14 +250,16 @@ export default function Profile() {
             </div>
 
             <div>
-              <div style={{ fontSize: 11, color: 'var(--text-2)', marginBottom: 6 }}>Pays</div>
+              <div style={{ fontSize: 11, color: 'var(--text-2)', marginBottom: 6 }}>
+                {t('profile.countryLabel')}
+              </div>
               <select
                 className="input"
                 value={country}
                 onChange={(e) => setCountry(e.target.value)}
                 style={{ cursor: 'pointer' }}
               >
-                <option value="">Sélectionner un pays</option>
+                <option value="">{t('profile.selectCountry')}</option>
                 {Object.entries(COUNTRY_MAP).map(([code, label]) => (
                   <option key={code} value={code}>
                     {label}
@@ -276,7 +280,7 @@ export default function Profile() {
                 justifyContent: 'center',
               }}
             >
-              {saving ? 'Enregistrement…' : 'Enregistrer les modifications'}
+              {saving ? t('profile.saving') : t('profile.saveChanges')}
             </button>
           </div>
 
@@ -285,13 +289,13 @@ export default function Profile() {
             {/* Changer mot de passe */}
             <div className="card">
               <div className="flex items-center justify-between mb-12">
-                <div className="card-title">Sécurité du compte</div>
+                <div className="card-title">{t('profile.securityTitle')}</div>
                 <button
                   className="btn-sm"
                   onClick={() => setShowPwdForm((v) => !v)}
                   style={{ color: 'var(--brand-teal)' }}
                 >
-                  {showPwdForm ? 'Annuler' : 'Changer le mot de passe'}
+                  {showPwdForm ? t('profile.cancelPasswordChange') : t('profile.changePassword')}
                 </button>
               </div>
 
@@ -310,10 +314,10 @@ export default function Profile() {
                     >
                       <div>
                         <div style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--text-1)' }}>
-                          Mot de passe
+                          {t('profile.passwordLabel')}
                         </div>
                         <div style={{ fontSize: 11, color: 'var(--text-2)', marginTop: 2 }}>
-                          Dernière modification inconnue
+                          {t('profile.lastModified')}
                         </div>
                       </div>
                       <span
@@ -326,7 +330,7 @@ export default function Profile() {
                           fontWeight: 500,
                         }}
                       >
-                        Actif
+                        {t('profile.active')}
                       </span>
                     </div>
                     <div
@@ -341,18 +345,20 @@ export default function Profile() {
                     >
                       <div>
                         <div style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--text-1)' }}>
-                          Double authentification (2FA)
+                          {t('profile.twoFaLabel')}
                         </div>
                         <div style={{ fontSize: 11, color: 'var(--text-2)', marginTop: 2 }}>
                           {profile?.account.twoFactorEnabled
-                            ? 'Activé via application TOTP'
-                            : 'Non activé'}
+                            ? t('profile.twoFaEnabled')
+                            : t('profile.twoFaDisabled')}
                         </div>
                       </div>
                       <span
                         className={profile?.account.twoFactorEnabled ? 'tag green' : 'tag gray'}
                       >
-                        {profile?.account.twoFactorEnabled ? 'Actif' : 'Inactif'}
+                        {profile?.account.twoFactorEnabled
+                          ? t('profile.active')
+                          : t('contacts.inactive')}
                       </span>
                     </div>
                   </div>
@@ -361,7 +367,7 @@ export default function Profile() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   <div>
                     <div style={{ fontSize: 11, color: 'var(--text-2)', marginBottom: 5 }}>
-                      Mot de passe actuel
+                      {t('profile.currentPwdLabel')}
                     </div>
                     <input
                       type="password"
@@ -373,19 +379,19 @@ export default function Profile() {
                   </div>
                   <div>
                     <div style={{ fontSize: 11, color: 'var(--text-2)', marginBottom: 5 }}>
-                      Nouveau mot de passe
+                      {t('profile.newPwdLabel')}
                     </div>
                     <input
                       type="password"
                       className="input"
                       value={newPwd}
                       onChange={(e) => setNewPwd(e.target.value)}
-                      placeholder="8 caractères minimum"
+                      placeholder={t('profile.newPwdPlaceholder')}
                     />
                   </div>
                   <div>
                     <div style={{ fontSize: 11, color: 'var(--text-2)', marginBottom: 5 }}>
-                      Confirmer le nouveau mot de passe
+                      {t('profile.confirmPwdLabel')}
                     </div>
                     <input
                       type="password"
@@ -396,16 +402,14 @@ export default function Profile() {
                     />
                   </div>
                   {newPwd && confirmPwd && newPwd !== confirmPwd && (
-                    <div style={{ fontSize: 11, color: '#dc2626' }}>
-                      Les mots de passe ne correspondent pas
-                    </div>
+                    <div style={{ fontSize: 11, color: '#dc2626' }}>{t('profile.pwdMismatch')}</div>
                   )}
                   <button
                     className="btn-primary"
                     onClick={handleChangePassword}
                     disabled={changingPwd}
                   >
-                    {changingPwd ? 'Modification…' : 'Confirmer le changement'}
+                    {changingPwd ? t('profile.confirming') : t('profile.confirmChange')}
                   </button>
                 </div>
               )}
@@ -414,11 +418,9 @@ export default function Profile() {
             {/* Danger zone */}
             <div className="card" style={{ border: '0.5px solid rgba(220,38,38,0.25)' }}>
               <div className="card-title mb-8" style={{ color: '#dc2626' }}>
-                Zone de danger
+                {t('profile.dangerZone')}
               </div>
-              <div className="card-subtitle mb-12">
-                Ces actions sont irréversibles. Procédez avec précaution.
-              </div>
+              <div className="card-subtitle mb-12">{t('profile.dangerDesc')}</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <button
                   onClick={() => {
@@ -450,7 +452,7 @@ export default function Profile() {
                   >
                     <path d="M5 2H2a1 1 0 00-1 1v8a1 1 0 001 1h3M9 10l3-3-3-3M5 7h8" />
                   </svg>
-                  Se déconnecter de tous les appareils
+                  {t('profile.signOutAll')}
                 </button>
               </div>
             </div>

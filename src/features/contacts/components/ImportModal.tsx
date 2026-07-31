@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Upload, X, Check, AlertCircle, Loader2, FileSpreadsheet } from 'lucide-react';
 import { useCsvParser } from '../hooks/useCsvParser';
@@ -21,6 +22,7 @@ type ParsedImportData = {
 const EXCEL_EXTENSIONS = ['xls', 'xlsx'];
 
 export default function ImportModal({ isOpen, onClose, onImportComplete }: ImportModalProps) {
+  const { t } = useTranslation();
   const { accessToken } = useAuthStore();
   const { parseFile } = useCsvParser();
 
@@ -346,10 +348,10 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
   if (!isOpen) return null;
 
   const STEPS = [
-    { id: 'upload', label: 'Fichier', num: 1 },
-    { id: 'mapping', label: 'Mapping', num: 2 },
-    { id: 'progress', label: 'Import', num: 3 },
-    { id: 'report', label: 'Résultat', num: 4 },
+    { id: 'upload', label: t('importModal.stepFile'), num: 1 },
+    { id: 'mapping', label: t('importModal.stepMapping'), num: 2 },
+    { id: 'progress', label: t('importModal.stepImport'), num: 3 },
+    { id: 'report', label: t('importModal.stepResult'), num: 4 },
   ] as const;
 
   const stepIndex = ['upload', 'mapping', 'preview', 'progress', 'report'].indexOf(step);
@@ -382,7 +384,7 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
           />
 
           {/* ── Header ── */}
-          <div className="flex items-center justify-between px-7 pt-5 pb-4">
+          <div className="flex items-center justify-between px-4 sm:px-7 pt-4 sm:pt-5 pb-3 sm:pb-4">
             <div className="flex items-center gap-3">
               <div
                 style={{
@@ -399,11 +401,9 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
               </div>
               <div>
                 <h3 className="font-bold text-on-surface" style={{ fontSize: 15 }}>
-                  Importer des contacts
+                  {t('importModal.title')}
                 </h3>
-                <p className="text-xs text-on-surface-variant">
-                  CSV · XLS · XLSX — max 50 000 lignes
-                </p>
+                <p className="text-xs text-on-surface-variant">{t('importModal.subtitle')}</p>
               </div>
             </div>
             <button
@@ -416,7 +416,7 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
 
           {/* ── Step indicator ── */}
           {step !== 'progress' && step !== 'report' && (
-            <div className="px-7 pb-4">
+            <div className="px-4 sm:px-7 pb-3 sm:pb-4">
               <div className="flex items-center gap-0">
                 {STEPS.slice(0, 3).map((s, i) => {
                   const done = displayIndex > i;
@@ -494,7 +494,10 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
           )}
 
           {/* ── Content ── */}
-          <div className="px-7 pb-2" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+          <div
+            className="import-modal-content-px px-4 sm:px-7 pb-2"
+            style={{ maxHeight: '60vh', overflowY: 'auto' }}
+          >
             {/* STEP 1 — Upload */}
             {step === 'upload' && (
               <div className="space-y-4 pb-2">
@@ -538,7 +541,7 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
                             {file.name}
                           </p>
                           <p className="text-xs text-on-surface-variant mt-1">
-                            {(file.size / 1024).toFixed(0)} Ko · Lecture en cours…
+                            {(file.size / 1024).toFixed(0)} Ko · {t('importModal.readingFile')}
                           </p>
                         </div>
                       </div>
@@ -560,10 +563,10 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
                         </div>
                         <div>
                           <p className="font-bold text-on-surface" style={{ fontSize: 14 }}>
-                            Glissez-déposez votre fichier
+                            {t('importModal.dragDrop')}
                           </p>
                           <p className="text-sm text-on-surface-variant mt-1">
-                            ou cliquez pour parcourir
+                            {t('importModal.browse')}
                           </p>
                         </div>
                         <div className="flex justify-center gap-2 pt-1">
@@ -601,9 +604,9 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
                   }}
                 >
                   {[
-                    { icon: '📋', label: 'Formats', value: 'CSV, XLS, XLSX' },
-                    { icon: '📊', label: 'Max lignes', value: '50 000' },
-                    { icon: '💾', label: 'Max taille', value: '50 Mo' },
+                    { icon: '📋', label: t('importModal.formats'), value: 'CSV, XLS, XLSX' },
+                    { icon: '📊', label: t('importModal.maxRows'), value: '50 000' },
+                    { icon: '💾', label: t('importModal.maxSize'), value: '50 Mo' },
                   ].map((info) => (
                     <div key={info.label} className="flex-1 text-center">
                       <div style={{ fontSize: 16 }}>{info.icon}</div>
@@ -696,7 +699,7 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
                       marginBottom: 12,
                     }}
                   >
-                    Correspondance des colonnes
+                    {t('importModal.mappingTitle')}
                   </p>
                   <div className="space-y-2">
                     {targetFields.map((field) => {
@@ -749,7 +752,7 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
                               outline: 'none',
                             }}
                           >
-                            <option value="">— Ignorer —</option>
+                            <option value="">{t('importModal.ignore')}</option>
                             {parsedData.headers.map((header) => (
                               <option key={header} value={header}>
                                 {header}
@@ -777,7 +780,7 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
                       marginBottom: 10,
                     }}
                   >
-                    Aperçu — 5 premières lignes
+                    {t('importModal.previewTitle')}
                   </p>
                   <div
                     style={{
@@ -873,14 +876,19 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
                     <Loader2 className="w-8 h-8 animate-spin" style={{ color: '#0c5460' }} />
                   </div>
                   <p style={{ fontSize: 15, fontWeight: 700, color: '#1e293b' }}>
-                    {processingJob ? 'Traitement en arrière-plan…' : 'Envoi des données…'}
+                    {processingJob
+                      ? t('importModal.processingBackground')
+                      : t('importModal.sending')}
                   </p>
                   <p style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>
                     {processingJob
-                      ? 'Les contacts sont insérés dans votre base'
+                      ? t('importModal.insertingContacts')
                       : totalChunks > 1
-                        ? `Chunk ${currentChunk} / ${totalChunks}`
-                        : "Fichier en cours d'envoi"}
+                        ? t('importModal.chunkProgress', {
+                            current: currentChunk,
+                            total: totalChunks,
+                          })
+                        : t('importModal.sendingFile')}
                   </p>
                 </div>
 
@@ -894,7 +902,7 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
                     }}
                   >
                     <span style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>
-                      Progression
+                      {t('importModal.progress')}
                     </span>
                     <span style={{ fontSize: 12, fontWeight: 700, color: '#0c5460' }}>
                       {uploadProgress}%
@@ -931,31 +939,34 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
 
                 {/* Live stats */}
                 {liveStats && processingJob && (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10 }}>
+                  <div
+                    className="import-live-stats-grid"
+                    style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10 }}
+                  >
                     {[
                       {
-                        label: 'Importés',
+                        label: t('importModal.importedStat'),
                         value: liveStats.success,
                         color: '#22c55e',
                         bg: '#f0fdf4',
                         border: '#bbf7d0',
                       },
                       {
-                        label: 'Doublons',
+                        label: t('importModal.duplicatesStat'),
                         value: liveStats.duplicates,
                         color: '#f59e0b',
                         bg: '#fffbeb',
                         border: '#fde68a',
                       },
                       {
-                        label: 'Erreurs',
+                        label: t('importModal.errorsStat'),
                         value: liveStats.errors,
                         color: '#ef4444',
                         bg: '#fef2f2',
                         border: '#fecaca',
                       },
                       {
-                        label: 'N° invalides',
+                        label: t('importModal.invalidPhonesStat'),
                         value: liveStats.invalidPhones,
                         color: '#94a3b8',
                         bg: '#f8fafc',
@@ -994,7 +1005,7 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
 
                 {processingJob && !liveStats && (
                   <p style={{ fontSize: 12, color: '#94a3b8', textAlign: 'center' }}>
-                    Les statistiques s'afficheront après le premier batch traité…
+                    {t('importModal.statsWillAppear')}
                   </p>
                 )}
               </div>
@@ -1027,38 +1038,43 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
                   >
                     <Check className="w-7 h-7 text-white" />
                   </div>
-                  <p style={{ fontSize: 16, fontWeight: 800, color: '#166534' }}>Import terminé</p>
+                  <p style={{ fontSize: 16, fontWeight: 800, color: '#166534' }}>
+                    {t('importModal.importDone')}
+                  </p>
                   <p style={{ fontSize: 12, color: '#4ade80', marginTop: 4 }}>
-                    Fermeture automatique dans 3 secondes…
+                    {t('importModal.autoClose')}
                   </p>
                 </div>
 
                 {/* Stats grid */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10 }}>
+                <div
+                  className="import-report-stats-grid"
+                  style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10 }}
+                >
                   {[
                     {
-                      label: 'Total traité',
+                      label: t('importModal.totalProcessed'),
                       value: report.totalRecords,
                       color: '#0c5460',
                       bg: '#f0fdff',
                       border: '#bae6fd',
                     },
                     {
-                      label: 'Créés',
+                      label: t('importModal.created'),
                       value: report.successCount,
                       color: '#16a34a',
                       bg: '#f0fdf4',
                       border: '#bbf7d0',
                     },
                     {
-                      label: 'Doublons',
+                      label: t('importModal.duplicatesStat'),
                       value: report.duplicateCount,
                       color: '#d97706',
                       bg: '#fffbeb',
                       border: '#fde68a',
                     },
                     {
-                      label: 'Erreurs',
+                      label: t('importModal.errorsStat'),
                       value: report.errorCount,
                       color: '#dc2626',
                       bg: '#fef2f2',
@@ -1127,7 +1143,7 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
                     report.duplicateCount > 0 &&
                     report.errorCount === 0 && (
                       <p style={{ fontSize: 12, color: '#64748b' }}>
-                        Tous les contacts de ce fichier existent déjà dans votre base.
+                        {t('importModal.allDuplicates')}
                       </p>
                     )}
                 </div>
@@ -1141,7 +1157,9 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              padding: '14px 28px 18px',
+              flexWrap: 'wrap',
+              gap: '8px',
+              padding: '12px 16px 16px',
               borderTop: '1px solid #f1f5f9',
               background: '#fafafa',
             }}
@@ -1159,7 +1177,7 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
                 cursor: 'pointer',
               }}
             >
-              {step === 'report' ? 'Fermer' : 'Annuler'}
+              {step === 'report' ? t('importModal.close') : t('importModal.cancel')}
             </button>
 
             <div style={{ display: 'flex', gap: 10 }}>
@@ -1180,7 +1198,7 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
                   }}
                 >
                   <Upload className="w-4 h-4" />
-                  Sélectionner un fichier
+                  {t('importModal.selectFile')}
                 </label>
               )}
 
@@ -1207,7 +1225,7 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
                   ) : (
                     <Upload className="w-4 h-4" />
                   )}
-                  Lancer l'import
+                  {t('importModal.launchImport')}
                 </button>
               )}
 
@@ -1232,7 +1250,7 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
                   }}
                 >
                   <Check className="w-4 h-4" />
-                  Terminer
+                  {t('importModal.finish')}
                 </button>
               )}
             </div>

@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import api from '@/api/axios';
 
 interface AuditUser {
@@ -71,6 +72,7 @@ function formatDate(iso: string): string {
 }
 
 export default function AuditLogs() {
+  const { t } = useTranslation();
   const [entries, setEntries] = useState<AuditEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -115,7 +117,7 @@ export default function AuditLogs() {
       <div
         style={{
           display: 'flex',
-          alignItems: 'center',
+          alignItems: 'flex-start',
           justifyContent: 'space-between',
           marginBottom: 24,
           flexWrap: 'wrap',
@@ -124,20 +126,20 @@ export default function AuditLogs() {
       >
         <div>
           <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-1)', margin: 0 }}>
-            Journal d'audit
+            {t('auditLogs.title')}
           </h1>
           <p style={{ fontSize: 13, color: 'var(--text-2)', margin: '4px 0 0' }}>
-            {total.toLocaleString('fr-FR')} événements enregistrés
+            {t('auditLogs.totalEvents', { total: total.toLocaleString('fr-FR') })}
           </p>
         </div>
 
         {/* Filtre par action */}
-        <form onSubmit={handleSearch} style={{ display: 'flex', gap: 8 }}>
+        <form onSubmit={handleSearch} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <input
             type="text"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Filtrer par action…"
+            placeholder={t('auditLogs.filterPlaceholder')}
             style={{
               padding: '8px 12px',
               borderRadius: 8,
@@ -146,7 +148,8 @@ export default function AuditLogs() {
               fontSize: 13,
               color: 'var(--text-1)',
               outline: 'none',
-              width: 220,
+              width: 'min(220px, 100%)',
+              minWidth: 140,
             }}
           />
           <button
@@ -162,7 +165,7 @@ export default function AuditLogs() {
               cursor: 'pointer',
             }}
           >
-            Filtrer
+            {t('auditLogs.filter')}
           </button>
           {search && (
             <button
@@ -190,6 +193,7 @@ export default function AuditLogs() {
 
       {/* Table */}
       <div
+        className="audit-logs-table-wrapper"
         style={{
           background: 'var(--surface)',
           borderRadius: 12,
@@ -199,20 +203,26 @@ export default function AuditLogs() {
       >
         {isLoading ? (
           <div style={{ padding: 48, textAlign: 'center', color: 'var(--text-2)', fontSize: 14 }}>
-            Chargement…
+            {t('auditLogs.loading')}
           </div>
         ) : entries.length === 0 ? (
           <div style={{ padding: 48, textAlign: 'center' }}>
             <div style={{ fontSize: 36, marginBottom: 12 }}>🔍</div>
             <div style={{ fontSize: 14, color: 'var(--text-2)' }}>
-              {search ? 'Aucun événement pour ce filtre.' : "Aucun événement d'audit enregistré."}
+              {search ? t('auditLogs.noResults') : t('auditLogs.noEvents')}
             </div>
           </div>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 640 }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--muted)' }}>
-                {['Date', 'Action', 'Utilisateur', 'IP', 'Détails'].map((h) => (
+                {[
+                  t('auditLogs.dateCol'),
+                  t('auditLogs.actionCol'),
+                  t('auditLogs.userCol'),
+                  t('auditLogs.ipCol'),
+                  t('auditLogs.detailsCol'),
+                ].map((h) => (
                   <th
                     key={h}
                     style={{
@@ -280,7 +290,7 @@ export default function AuditLogs() {
                         `${entry.user.firstName ?? ''} ${entry.user.lastName ?? ''}`.trim() ||
                         entry.user.email
                       ) : (
-                        <span style={{ color: 'var(--text-3)' }}>Compte principal</span>
+                        <span style={{ color: 'var(--text-3)' }}>{t('auditLogs.mainAccount')}</span>
                       )}
                     </td>
                     <td
@@ -294,7 +304,7 @@ export default function AuditLogs() {
                       {entry.ipAddress ?? '—'}
                     </td>
                     <td style={{ padding: '12px 16px', fontSize: 12.5, color: 'var(--text-3)' }}>
-                      {entry.details ? '▼ voir' : '—'}
+                      {entry.details ? t('auditLogs.seeDetails') : '—'}
                     </td>
                   </tr>
                   {expanded === entry.id && (
@@ -319,7 +329,7 @@ export default function AuditLogs() {
                                   letterSpacing: '0.06em',
                                 }}
                               >
-                                Détails
+                                {t('auditLogs.detailsLabel')}
                               </span>
                               <pre
                                 style={{
@@ -374,10 +384,10 @@ export default function AuditLogs() {
               fontSize: 13,
             }}
           >
-            ← Précédent
+            {t('auditLogs.prevPage')}
           </button>
           <span style={{ fontSize: 13, color: 'var(--text-2)' }}>
-            Page {page} / {totalPages}
+            {t('auditLogs.pageOf', { page, total: totalPages })}
           </span>
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
@@ -392,7 +402,7 @@ export default function AuditLogs() {
               fontSize: 13,
             }}
           >
-            Suivant →
+            {t('auditLogs.nextPage')}
           </button>
         </div>
       )}

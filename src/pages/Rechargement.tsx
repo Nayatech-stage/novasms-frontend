@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import api from '@/api/axios';
 import { toast } from 'sonner';
@@ -68,6 +69,7 @@ const OPERATORS: {
 const AMOUNTS = [5_000, 10_000, 25_000, 50_000];
 
 export default function Rechargement() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [tab, setTab] = useState<PayTab>('mobile');
   const [operator, setOperator] = useState<Operator>('NOVASEND');
@@ -377,7 +379,10 @@ export default function Rechargement() {
         }}
       >
         <div style={{ width: '100%', maxWidth: 480 }}>
-          <div className="card" style={{ padding: 36, textAlign: 'center' }}>
+          <div
+            className="card rechargement-centered-card"
+            style={{ padding: 36, textAlign: 'center' }}
+          >
             {/* ── Bouton lien de paiement (Wave / NovaSend) — affiché EN PREMIER ── */}
             {wavePaymentUrl && (
               <div style={{ marginBottom: 28 }}>
@@ -416,10 +421,10 @@ export default function Rechargement() {
                     <polyline points="15 3 21 3 21 9" />
                     <line x1="10" y1="14" x2="21" y2="3" />
                   </svg>
-                  Ouvrir {waitInfo?.label ?? 'le lien de paiement'} pour confirmer
+                  {t('rechargement.openPaymentLink', { label: waitInfo?.label ?? '' })}
                 </a>
                 <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 10 }}>
-                  ↑ Cliquez ce bouton — une nouvelle page s'ouvre pour finaliser le paiement
+                  {t('rechargement.clickToOpen')}
                 </div>
                 <div
                   style={{
@@ -462,11 +467,11 @@ export default function Rechargement() {
             </div>
 
             <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-1)', marginBottom: 6 }}>
-              En attente de confirmation…
+              {t('rechargement.waitingTitle')}
             </div>
             {!wavePaymentUrl && (
               <div style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 16 }}>
-                {waitInfo?.instruction ?? 'Validation en cours…'}
+                {waitInfo?.instruction ?? t('rechargement.waitingValidation')}
               </div>
             )}
 
@@ -501,7 +506,9 @@ export default function Rechargement() {
                 marginBottom: 28,
               }}
             >
-              <span style={{ fontSize: 12, color: 'var(--text-2)' }}>Montant :</span>
+              <span style={{ fontSize: 12, color: 'var(--text-2)' }}>
+                {t('rechargement.amountLabel2')}
+              </span>
               <strong style={{ fontSize: 15, color: '#0c5460' }}>
                 {pendingAmount.toLocaleString('fr-FR')} FCFA
               </strong>
@@ -516,7 +523,7 @@ export default function Rechargement() {
                 }}
                 style={{ fontSize: 12 }}
               >
-                Annuler et revenir
+                {t('rechargement.cancelBack')}
               </button>
             </div>
           </div>
@@ -539,7 +546,10 @@ export default function Rechargement() {
         }}
       >
         <div style={{ width: '100%', maxWidth: 480 }}>
-          <div className="card" style={{ padding: 48, textAlign: 'center' }}>
+          <div
+            className="card rechargement-centered-card"
+            style={{ padding: 48, textAlign: 'center' }}
+          >
             <div
               style={{
                 width: 72,
@@ -566,16 +576,19 @@ export default function Rechargement() {
               </svg>
             </div>
             <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-1)', marginBottom: 8 }}>
-              Paiement confirmé !
+              {t('rechargement.successTitle')}
             </div>
             <div style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 28 }}>
-              Vos crédits ont été ajoutés instantanément.
+              {t('rechargement.successSubtitle')}
             </div>
-            <div style={{ fontSize: 42, fontWeight: 900, color: '#0c5460', lineHeight: 1.1 }}>
+            <div
+              className="rechargement-success-amount"
+              style={{ fontSize: 42, fontWeight: 900, color: '#0c5460', lineHeight: 1.1 }}
+            >
               {paidAmount.toLocaleString('fr-FR')} FCFA
             </div>
             <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 4, marginBottom: 36 }}>
-              rechargés avec succès
+              {t('rechargement.successSuffix')}
             </div>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
               {transactionId && (
@@ -599,7 +612,9 @@ export default function Rechargement() {
                     <polyline points="7 10 12 15 17 10" />
                     <line x1="12" y1="15" x2="12" y2="3" />
                   </svg>
-                  {downloadLoading ? 'Génération…' : 'Télécharger le reçu'}
+                  {downloadLoading
+                    ? t('rechargement.generatingReceipt')
+                    : t('rechargement.downloadReceipt')}
                 </button>
               )}
               <button
@@ -607,7 +622,7 @@ export default function Rechargement() {
                 onClick={() => navigate('/dashboard')}
                 style={{ fontSize: 13 }}
               >
-                Retour au dashboard →
+                {t('rechargement.backToDashboard')}
               </button>
             </div>
             {transactionId && (
@@ -621,7 +636,7 @@ export default function Rechargement() {
                   color: 'var(--text-2)',
                 }}
               >
-                Référence :{' '}
+                {t('rechargement.reference')}{' '}
                 <span style={{ fontWeight: 600, color: 'var(--text-1)', fontFamily: 'monospace' }}>
                   {transactionId}
                 </span>
@@ -648,10 +663,10 @@ export default function Rechargement() {
         <div className="card" style={{ padding: 24 }}>
           <div style={{ textAlign: 'center', marginBottom: 20 }}>
             <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-1)' }}>
-              Recharger votre compte
+              {t('rechargement.title')}
             </div>
             <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 4 }}>
-              Paiement sécurisé · Créditage instantané
+              {t('rechargement.subtitle')}
             </div>
           </div>
 
@@ -697,7 +712,7 @@ export default function Rechargement() {
                 <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
                 <line x1="12" y1="18" x2="12.01" y2="18" />
               </svg>
-              Mobile Money
+              {t('rechargement.tabMobile')}
             </button>
             <button
               onClick={() => setTab('visa')}
@@ -729,7 +744,7 @@ export default function Rechargement() {
                 <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
                 <line x1="1" y1="10" x2="23" y2="10" />
               </svg>
-              Carte Visa
+              {t('rechargement.tabVisa')}
             </button>
           </div>
 
@@ -745,7 +760,7 @@ export default function Rechargement() {
                     marginBottom: 10,
                   }}
                 >
-                  Opérateur Mobile Money
+                  {t('rechargement.operatorLabel')}
                 </div>
                 <div
                   style={{
@@ -799,7 +814,7 @@ export default function Rechargement() {
                         <div
                           style={{ fontSize: 8, color: '#16a34a', marginTop: 4, fontWeight: 700 }}
                         >
-                          ✓ Sélectionné
+                          {t('rechargement.selected')}
                         </div>
                       )}
                     </button>
@@ -818,7 +833,7 @@ export default function Rechargement() {
                     marginBottom: 8,
                   }}
                 >
-                  Numéro de téléphone
+                  {t('rechargement.phoneLabel')}
                 </label>
                 <div style={{ position: 'relative' }}>
                   <div
@@ -868,7 +883,7 @@ export default function Rechargement() {
                     marginBottom: 8,
                   }}
                 >
-                  Montant à recharger
+                  {t('rechargement.amountLabel')}
                 </label>
                 <div
                   style={{
@@ -909,7 +924,7 @@ export default function Rechargement() {
                       setAmount(0);
                     }}
                     style={{ paddingRight: 52 }}
-                    placeholder="Autre montant"
+                    placeholder={t('rechargement.otherAmount')}
                   />
                   <div
                     style={{
@@ -952,7 +967,7 @@ export default function Rechargement() {
                     }}
                   >
                     <span style={{ fontSize: 11, color: '#0c5460' }}>
-                      Crédits reçus après paiement
+                      {t('rechargement.creditsAfterPayment')}
                     </span>
                     <strong style={{ color: '#0c5460', fontSize: 15 }}>
                       {finalAmount.toLocaleString('fr-FR')} FCFA
@@ -973,7 +988,7 @@ export default function Rechargement() {
                       marginBottom: 8,
                     }}
                   >
-                    Code OTP Orange Money
+                    {t('rechargement.otpLabel')}
                   </label>
                   <input
                     className="form-input"
@@ -1015,8 +1030,10 @@ export default function Rechargement() {
                 }}
               >
                 {loading
-                  ? 'Traitement…'
-                  : `Confirmer le paiement de ${finalAmount.toLocaleString('fr-FR')} FCFA →`}
+                  ? t('rechargement.processing')
+                  : t('rechargement.confirmPayment', {
+                      amount: finalAmount.toLocaleString('fr-FR'),
+                    })}
               </button>
             </div>
           ) : (
@@ -1054,7 +1071,7 @@ export default function Rechargement() {
                     marginBottom: 8,
                   }}
                 >
-                  Numéro de carte
+                  {t('rechargement.visaCardNumber')}
                 </label>
                 <input
                   className="form-input"
@@ -1074,7 +1091,7 @@ export default function Rechargement() {
                     marginBottom: 8,
                   }}
                 >
-                  Titulaire de la carte
+                  {t('rechargement.visaHolder')}
                 </label>
                 <input
                   className="form-input"
@@ -1100,7 +1117,7 @@ export default function Rechargement() {
                       marginBottom: 8,
                     }}
                   >
-                    Expiration
+                    {t('rechargement.visaExpiry')}
                   </label>
                   <input
                     className="form-input"
@@ -1120,7 +1137,7 @@ export default function Rechargement() {
                       marginBottom: 8,
                     }}
                   >
-                    CVV
+                    {t('rechargement.visaCvv')}
                   </label>
                   <input
                     className="form-input"
@@ -1142,7 +1159,7 @@ export default function Rechargement() {
                     marginBottom: 8,
                   }}
                 >
-                  Montant (FCFA)
+                  {t('rechargement.visaAmountLabel')}
                 </label>
                 <div style={{ position: 'relative' }}>
                   <input
@@ -1174,8 +1191,10 @@ export default function Rechargement() {
                 style={{ width: '100%', padding: 13, fontSize: 14, fontWeight: 700 }}
               >
                 {loading
-                  ? 'Traitement…'
-                  : `Payer ${(Number(customAmount) || finalAmount).toLocaleString('fr-FR')} FCFA →`}
+                  ? t('rechargement.processing')
+                  : t('rechargement.visaPayButton', {
+                      amount: (Number(customAmount) || finalAmount).toLocaleString('fr-FR'),
+                    })}
               </button>
             </div>
           )}
@@ -1192,10 +1211,10 @@ export default function Rechargement() {
           }}
         >
           {[
-            'Paiement sécurisé TLS 1.3',
-            'Créditage instantané',
-            'Reçu PDF disponible',
-            'Conformité PCI-DSS',
+            t('rechargement.badgeTls'),
+            t('rechargement.badgeInstant'),
+            t('rechargement.badgePdf'),
+            t('rechargement.badgePci'),
           ].map((label) => (
             <div
               key={label}

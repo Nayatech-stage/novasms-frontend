@@ -920,3 +920,365 @@ body {
   }
   /* Stats grid Solutions: rester en 1 col sur très petit écran (hérité du 767px) */
 }
+
+/* ─── contact-row / contact-avatar (Analytics recent opens) ──────────────── */
+.contact-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.contact-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--brand-teal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: #aaee22;
+  flex-shrink: 0;
+}
+
+/* ─── App pages responsive fixes ─────────────────────────────────────────── */
+
+/* ── Analytics top5 table: wrapper scroll ──────────────────────────────────── */
+.analytics-top5-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Settings tabs: scroll horizontal sur mobile ──────────────────────────── */
+.settings-tabs-bar {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  flex-wrap: nowrap !important;
+}
+.settings-tabs-bar::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── CampaignListDashboard: padding mobile ─────────────────────────────────── */
+.campaigns-page-wrapper {
+  padding: 24px;
+}
+
+/* ── Automations layout mobile ────────────────────────────────────────────── */
+.automations-header-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (max-width: 767px) {
+  /* Analytics: charts-row 1 colonne (renforcé pour styles inline) */
+  .charts-row,
+  .charts-row[style] {
+    grid-template-columns: 1fr !important;
+    display: grid !important;
+  }
+
+  /* Settings tabs: scroll horizontal */
+  .settings-tabs-bar {
+    overflow-x: auto;
+    flex-wrap: nowrap !important;
+  }
+  .settings-tabs-bar button {
+    flex-shrink: 0;
+    padding: 10px 12px !important;
+    font-size: 12px !important;
+  }
+
+  /* Settings: balance pill en dessous du titre sur mobile */
+  .settings-header-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+
+  /* Settings API: stats keys 3-col → 1-col */
+  .api-key-stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Campaigns page: padding réduit */
+  .campaigns-page-wrapper {
+    padding: 12px !important;
+  }
+
+  /* Campaigns: header row stack vertical */
+  .campaigns-header-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+
+  /* Campaigns: boutons actions row — scroll */
+  .campaign-action-btns {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  /* Automations: header buttons wrap */
+  .automations-header-btns {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  /* Automations: layout 3 cols → 1 col (géré par tailwind lg: prefix mais overridé ici) */
+  .automations-canvas-section {
+    padding: 16px !important;
+  }
+
+  /* Dashboard success/waiting: card padding réduit */
+  .rechargement-centered-card {
+    padding: 20px !important;
+  }
+
+  /* Success amount: réduire fontSize sur mobile */
+  .rechargement-success-amount {
+    font-size: 28px !important;
+  }
+
+  /* Contact table toolbar: wrap */
+  .contact-toolbar {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  /* Analytics header: wrap actions */
+  .analytics-header-actions {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  /* Analytics header card: stack vertical */
+  .analytics-header-inner {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Dashboard opérationnel: grille 5 colonnes → 1 col */
+  #tour-kpi-grid-alt,
+  #tour-kpi-grid-alt[style] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Settings API stats: déjà 1-col via 767px */
+
+  /* Rechargement: success padding réduit */
+  .rechargement-centered-card {
+    padding: 16px !important;
+  }
+
+  /* Campaigns header h1: taille réduite */
+  .campaigns-h1 {
+    font-size: 1.25rem !important;
+  }
+
+  /* Automations: réduire padding section */
+  .automations-canvas-section {
+    padding: 10px !important;
+  }
+}
+
+/* ─── Correctifs responsivité modules Contacts / Campagnes / Automations ─── */
+
+/* ImportModal: grille live-stats 4 cols → 2 cols sur mobile */
+@media (max-width: 540px) {
+  .import-live-stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .import-report-stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* AuditLogs table: scroll horizontal sur mobile */
+.audit-logs-table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Segments page: padding réduit sur mobile */
+@media (max-width: 767px) {
+  .segments-container {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+    padding-top: 24px !important;
+  }
+
+  /* FilterRow dans Segments: wrap les champs */
+  .segment-filter-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* Automations: grille 3 cols → 1 col en dessous de lg */
+  .automations-main-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ImportModal: modal plein écran sur mobile */
+  .import-modal-box {
+    border-radius: 16px !important;
+  }
+
+  /* ExportModal: modal adapté mobile */
+  .export-modal-box {
+    border-radius: 16px !important;
+  }
+
+  /* CampaignReport: KPI grid 5 cols → 2 cols */
+  .campaign-report-kpi-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Segments page: padding minimal */
+  .segments-container {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  /* ImportModal: padding réduit */
+  .import-modal-content-px {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  /* ExportModal: grille format → 1 col */
+  .export-format-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ExportModal: grille champs → 1 col */
+  .export-fields-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ContactTable bulk bar: plus compact */
+  .contact-bulk-bar {
+    flex-wrap: wrap;
+    gap: 6px;
+    max-width: calc(100vw - 32px);
+  }
+}
+
+/* ─── CanvasEditor (Automations) mobile ──────────────────────────────────── */
+/* Le canvas éditeur est une overlay fixe : on adapte la grille 3-cols */
+@media (max-width: 900px) {
+  /* Cacher les side panels pour laisser le canvas respirer */
+  .canvas-editor-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .canvas-editor-aside-left,
+  .canvas-editor-aside-right {
+    display: none !important;
+  }
+  /* Toolbar : autoriser le wrap */
+  .canvas-editor-toolbar {
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 8px 12px !important;
+  }
+  .canvas-editor-toolbar button,
+  .canvas-editor-toolbar span {
+    font-size: 11px !important;
+    padding: 5px 8px !important;
+  }
+}
+
+/* ─── CampaignWizard header mobile ───────────────────────────────────────── */
+@media (max-width: 767px) {
+  .campaign-wizard-header {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+    height: auto !important;
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+    flex-wrap: wrap;
+    gap: 8px !important;
+  }
+  .campaign-wizard-header h1 {
+    font-size: 1.1rem !important;
+  }
+  .campaign-wizard-header-actions {
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: flex-end;
+  }
+  .campaign-wizard-step-bar {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+  /* Separator bar hidden on mobile */
+  .campaign-wizard-header .w-\[1px\] {
+    display: none;
+  }
+}
+
+/* ─── Developers page mobile ─────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  /* Header card: empiler icon+titre et bouton */
+  .developers-header-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+  }
+  /* Stats grid dans key expanded: 3-col → 1-col */
+  .api-key-stats-expanded-grid {
+    grid-template-columns: 1fr !important;
+  }
+  /* API key actions: wrap */
+  .api-key-row-actions {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+}
+
+/* ─── Integrations page mobile ───────────────────────────────────────────── */
+@media (max-width: 767px) {
+  /* Header: empiler */
+  .integrations-header-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+  }
+  /* Grille providers: 2 cols → 1 col */
+  .integrations-providers-grid {
+    grid-template-columns: 1fr !important;
+  }
+  /* Dernier-check + badge: wrap */
+  .integrations-header-actions {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+}
+
+/* ─── CampaignWizard step indicator: scrollable sur mobile ───────────────── */
+@media (max-width: 640px) {
+  .campaign-step-bar-inner {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+  }
+  .campaign-step-bar-inner .w-20 {
+    width: 8px !important;
+    min-width: 8px;
+  }
+  .campaign-step-bar-inner span.w-10 {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 11px !important;
+  }
+}

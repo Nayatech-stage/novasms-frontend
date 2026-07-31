@@ -75,7 +75,7 @@ export const SMSEditor: FC = () => {
   const isTooLong = totalMessageLength > 160;
 
   return (
-    <div className="max-w-6xl mx-auto px-8 py-12 grid grid-cols-1 lg:grid-cols-7 gap-12">
+    <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8 sm:py-12 grid grid-cols-1 lg:grid-cols-7 gap-6 sm:gap-12">
       {/* Left: Editor */}
       <div className="lg:col-span-5 space-y-8">
         {/* Sender Name */}

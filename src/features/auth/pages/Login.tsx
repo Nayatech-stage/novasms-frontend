@@ -2,9 +2,11 @@ import { motion } from 'framer-motion';
 import { Bolt, Eye, EyeOff } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores/authStore';
 
 export default function Login() {
+  const { t } = useTranslation();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -90,11 +92,9 @@ export default function Login() {
         >
           <div className="text-center mb-8">
             <h1 className="font-headline text-2xl font-bold text-secondary">
-              Bon retour parmi vous
+              {t('login.welcomeBack')}
             </h1>
-            <p className="text-on-surface-variant mt-2">
-              Connectez-vous pour accéder à votre espace marchand
-            </p>
+            <p className="text-on-surface-variant mt-2">{t('login.subtitle')}</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5" aria-label="Formulaire de connexion">
@@ -103,7 +103,7 @@ export default function Login() {
                 htmlFor="login-email"
                 className="block text-sm font-semibold text-on-surface mb-1"
               >
-                Email professionnel
+                {t('login.professionalEmail')}
               </label>
               <input
                 id="login-email"
@@ -123,7 +123,7 @@ export default function Login() {
                 htmlFor="login-password"
                 className="block text-sm font-semibold text-on-surface mb-1"
               >
-                Mot de passe
+                {t('login.passwordLabel')}
               </label>
               <div className="relative">
                 <input
@@ -139,7 +139,7 @@ export default function Login() {
                 />
                 <button
                   type="button"
-                  aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                  aria-label={showPassword ? t('login.hidePassword') : t('login.showPassword')}
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-primary"
                 >
@@ -151,7 +151,7 @@ export default function Login() {
             {requiresTwoFactor && (
               <div>
                 <label className="block text-sm font-semibold text-on-surface mb-1">
-                  Code d'authentification
+                  {t('login.twoFactorCode')}
                 </label>
                 <input
                   type="text"
@@ -164,8 +164,7 @@ export default function Login() {
                   required
                 />
                 <p className="mt-2 text-xs text-on-surface-variant">
-                  {twoFactorMessage ||
-                    'Saisissez le code de votre appli Authenticator ou un code de secours.'}
+                  {twoFactorMessage || t('login.twoFactorHint')}
                 </p>
               </div>
             )}
@@ -184,10 +183,10 @@ export default function Login() {
                   onChange={(e) => setRememberMe(e.target.checked)}
                   className="w-4 h-4 accent-primary rounded border-outline-variant"
                 />
-                Se souvenir de moi
+                {t('login.rememberMe')}
               </label>
               <Link to="/reset-password" className="text-primary font-semibold hover:underline">
-                Mot de passe oublié ?
+                {t('auth.forgotPassword')}
               </Link>
             </div>
 
@@ -197,17 +196,17 @@ export default function Login() {
               className="w-full bg-primary text-white font-bold py-4 rounded-xl hover:brightness-110 transition-all shadow-lg shadow-primary/20 disabled:opacity-50"
             >
               {isLoading
-                ? 'Connexion en cours...'
+                ? t('login.signingIn')
                 : requiresTwoFactor
-                  ? 'Vérifier le code'
-                  : 'Se connecter'}
+                  ? t('login.verifyCode')
+                  : t('login.signIn')}
             </button>
           </form>
 
           <div className="mt-6 text-center text-sm text-on-surface-variant">
-            Pas encore de compte ?{' '}
+            {t('login.noAccount')}{' '}
             <Link to="/register" className="text-primary font-semibold hover:underline">
-              Créer un compte marchand
+              {t('login.createMerchant')}
             </Link>
           </div>
         </motion.div>
@@ -217,7 +216,7 @@ export default function Login() {
       <footer className="py-6 text-center text-xs text-secondary/40 border-t border-outline-variant/20 bg-white">
         Copyright 2026 NovaSMS —{' '}
         <Link to="/" className="hover:text-primary">
-          Retour au site
+          {t('login.backToSite')}
         </Link>
       </footer>
     </div>

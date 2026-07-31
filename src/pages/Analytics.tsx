@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '@/api/axios';
 
 interface OverviewData {
@@ -133,6 +134,7 @@ function EvolutionChart({
 }
 
 export default function Analytics() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [period, setPeriod] = useState<7 | 30 | 90>(30);
   const [data, setData] = useState<OverviewData | null>(null);
@@ -169,8 +171,8 @@ export default function Analytics() {
     <div id="tour-analytics-header" className="content">
       {/* Header card with period selector */}
       <div className="card" style={{ padding: '13px 16px' }}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-12">
+        <div className="analytics-header-inner flex items-center justify-between">
+          <div className="flex items-center gap-3 sm:gap-12">
             <div
               style={{
                 width: 36,
@@ -199,14 +201,14 @@ export default function Analytics() {
             </div>
             <div>
               <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-1)' }}>
-                Rapport Analytics
+                {t('analyticsPage.report')}
               </div>
               <div style={{ fontSize: 10.5, color: 'var(--text-2)', marginTop: 2 }}>
-                Données agrégées · {period} derniers jours
+                {t('analyticsPage.aggregated', { period })}
               </div>
             </div>
           </div>
-          <div className="flex gap-8">
+          <div className="analytics-header-actions flex gap-2 sm:gap-8 flex-wrap">
             <div className="flex gap-3">
               {([7, 30, 90] as const).map((p) => (
                 <button
@@ -244,7 +246,7 @@ export default function Analytics() {
                 <path d="M6 1v7M2 5l4 4 4-4" />
                 <path d="M1 10v1h10v-1" />
               </svg>
-              Exporter CSV
+              {t('analyticsPage.exportCsv')}
             </button>
           </div>
         </div>
@@ -253,7 +255,7 @@ export default function Analytics() {
       {/* KPI Stats — 5 colonnes style analytics-stat */}
       {loading ? (
         <div style={{ textAlign: 'center', padding: 32, color: 'var(--text-2)', fontSize: 12 }}>
-          Chargement…
+          {t('analyticsPage.loading')}
         </div>
       ) : (
         <div
@@ -265,35 +267,35 @@ export default function Analytics() {
         >
           {[
             {
-              label: 'Envoyés',
+              label: t('analyticsPage.sent'),
               value: data?.messagesSent?.toLocaleString('fr-FR') ?? '—',
               color: '#0c5460',
               pct: 100,
               bg: '#0c5460',
             },
             {
-              label: 'Taux ouverture',
+              label: t('analyticsPage.openRate'),
               value: data?.openRate != null ? `${data.openRate.toFixed(1)}%` : '—',
               color: '#2ec80a',
               pct: data?.openRate ?? 0,
               bg: 'var(--brand-gradient)',
             },
             {
-              label: 'Taux de clic',
+              label: t('analyticsPage.clickRate'),
               value: data?.clickRate != null ? `${data.clickRate.toFixed(1)}%` : '—',
               color: '#aaee22',
               pct: data?.clickRate ?? 0,
               bg: '#aaee22',
             },
             {
-              label: 'Rebonds',
+              label: t('analyticsPage.bounces'),
               value: data?.bounceRate != null ? `${data.bounceRate.toFixed(1)}%` : '—',
               color: '#ef4444',
               pct: data?.bounceRate ?? 0,
               bg: '#ef4444',
             },
             {
-              label: 'Désabonnements',
+              label: t('analyticsPage.unsubscribes'),
               value: data?.unsubscribeRate != null ? `${data.unsubscribeRate.toFixed(1)}%` : '—',
               color: 'var(--text-2)',
               pct: data?.unsubscribeRate ?? 0,
@@ -329,17 +331,17 @@ export default function Analytics() {
         {/* Courbe des ouvertures */}
         <div className="card">
           <div className="flex items-center justify-between mb-12">
-            <div className="card-title">Évolution des performances</div>
+            <div className="card-title">{t('analyticsPage.evolution')}</div>
             <span className="text-xs text-muted">
               {data?.messagesSent != null && data?.openRate != null
-                ? `${Math.round(data.messagesSent * (data.openRate / 100)).toLocaleString('fr-FR')} ouvertures uniques`
+                ? `${Math.round(data.messagesSent * (data.openRate / 100)).toLocaleString('fr-FR')} ${t('analyticsPage.uniqueOpens')}`
                 : ''}
             </span>
           </div>
           <EvolutionChart data={data?.evolution ?? []} period={period} />
           {data && (
-            <div className="flex gap-16" style={{ marginTop: 10 }}>
-              <div className="flex items-center gap-8 text-xs text-muted">
+            <div className="flex flex-wrap gap-4 sm:gap-8" style={{ marginTop: 10 }}>
+              <div className="flex items-center gap-2 text-xs text-muted">
                 <span
                   style={{
                     width: 18,
@@ -347,25 +349,27 @@ export default function Analytics() {
                     background: 'var(--brand-primary)',
                     display: 'inline-block',
                     borderRadius: 1,
+                    flexShrink: 0,
                   }}
                 />
-                Envois
+                {t('analyticsPage.sends')}
               </div>
-              <div className="flex items-center gap-8 text-xs text-muted">
+              <div className="flex items-center gap-2 text-xs text-muted">
                 <span
                   style={{
                     width: 18,
                     borderTop: '2px dashed var(--brand-teal)',
                     display: 'inline-block',
+                    flexShrink: 0,
                   }}
                 />
-                Ouvertures
+                {t('analyticsPage.opens')}
               </div>
               <div
                 className="text-xs"
                 style={{ color: '#16a34a', fontWeight: 600, marginLeft: 'auto' }}
               >
-                Taux moyen : {data.openRate.toFixed(1)}%
+                {t('analyticsPage.avgRate', { rate: data.openRate.toFixed(1) })}
               </div>
             </div>
           )}
@@ -375,7 +379,7 @@ export default function Analytics() {
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {/* Top campagnes */}
           <div>
-            <div className="card-title mb-8">Top campagnes</div>
+            <div className="card-title mb-8">{t('analyticsPage.topCampaigns')}</div>
             {!data?.top5 || data.top5.length === 0 ? (
               <div
                 style={{
@@ -385,7 +389,7 @@ export default function Analytics() {
                   fontSize: 12,
                 }}
               >
-                Aucune donnée.{' '}
+                {t('analyticsPage.noData')}{' '}
                 <button
                   onClick={() => navigate('/campaigns/new')}
                   style={{
@@ -396,7 +400,7 @@ export default function Analytics() {
                     cursor: 'pointer',
                   }}
                 >
-                  Créer →
+                  {t('analyticsPage.createNow')}
                 </button>
               </div>
             ) : (
@@ -452,7 +456,7 @@ export default function Analytics() {
 
           {/* Derniers contacts ayant ouvert / cliqué */}
           <div>
-            <div className="card-title mb-8">Derniers contacts ayant ouvert</div>
+            <div className="card-title mb-8">{t('analyticsPage.recentOpens')}</div>
             {!data?.recentOpens?.length ? (
               <div
                 style={{
@@ -462,7 +466,7 @@ export default function Analytics() {
                   padding: '10px 0',
                 }}
               >
-                Aucune ouverture récente
+                {t('analyticsPage.noRecentOpens')}
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
@@ -482,10 +486,10 @@ export default function Analytics() {
                     const elapsed = Math.round((now - new Date(r.createdAt).getTime()) / 60000);
                     const timeLabel =
                       elapsed < 60
-                        ? `Il y a ${elapsed}min`
+                        ? t('analyticsPage.timeAgoMin', { n: elapsed })
                         : elapsed < 1440
-                          ? `Il y a ${Math.round(elapsed / 60)}h`
-                          : `Il y a ${Math.round(elapsed / 1440)}j`;
+                          ? t('analyticsPage.timeAgoH', { n: Math.round(elapsed / 60) })
+                          : t('analyticsPage.timeAgoD', { n: Math.round(elapsed / 1440) });
                     return (
                       <div
                         key={i}
@@ -547,7 +551,7 @@ export default function Analytics() {
                             color: isClick ? 'var(--brand-teal)' : 'var(--text-2)',
                           }}
                         >
-                          {isClick ? 'Cliqué' : 'Ouvert'}
+                          {isClick ? t('analyticsPage.clicked') : t('analyticsPage.opened')}
                         </span>
                       </div>
                     );
@@ -563,45 +567,49 @@ export default function Analytics() {
       {data?.top5 && data.top5.length > 0 && (
         <div className="card">
           <div className="flex items-center justify-between mb-12">
-            <div className="card-title">Top 5 campagnes — {period} derniers jours</div>
+            <div className="card-title">{t('analyticsPage.top5Title', { period })}</div>
             <button onClick={() => navigate('/campaigns')} className="btn-ghost">
-              Voir tout →
+              {t('analyticsPage.viewAll')}
             </button>
           </div>
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Campagne</th>
-                <th>Envois</th>
-                <th>Ouvertures</th>
-                <th>Clics</th>
-                <th>Taux clic</th>
-                <th>Taux ouverture</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.top5.map((c) => (
-                <tr
-                  key={c.id}
-                  style={{ cursor: 'pointer' }}
-                  onClick={() => navigate(`/campaigns/${c.id}`)}
-                >
-                  <td style={{ fontWeight: 500, color: 'var(--text-1)' }}>{c.name}</td>
-                  <td>{c.sentCount.toLocaleString('fr-FR')}</td>
-                  <td>{c.openedCount.toLocaleString('fr-FR')}</td>
-                  <td>{c.clickedCount.toLocaleString('fr-FR')}</td>
-                  <td style={{ color: '#2ec80a', fontWeight: 600 }}>
-                    {c.sentCount > 0
-                      ? `${((c.clickedCount / c.sentCount) * 100).toFixed(1)}%`
-                      : '—'}
-                  </td>
-                  <td style={{ color: '#0c5460', fontWeight: 600 }}>
-                    {c.sentCount > 0 ? `${((c.openedCount / c.sentCount) * 100).toFixed(1)}%` : '—'}
-                  </td>
+          <div className="analytics-top5-wrapper">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>{t('analyticsPage.campaign')}</th>
+                  <th>{t('analyticsPage.sends2')}</th>
+                  <th>{t('analyticsPage.opens2')}</th>
+                  <th>{t('analyticsPage.clicks')}</th>
+                  <th>{t('analyticsPage.clickRate2')}</th>
+                  <th>{t('analyticsPage.openRate2')}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {data.top5.map((c) => (
+                  <tr
+                    key={c.id}
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => navigate(`/campaigns/${c.id}`)}
+                  >
+                    <td style={{ fontWeight: 500, color: 'var(--text-1)' }}>{c.name}</td>
+                    <td>{c.sentCount.toLocaleString('fr-FR')}</td>
+                    <td>{c.openedCount.toLocaleString('fr-FR')}</td>
+                    <td>{c.clickedCount.toLocaleString('fr-FR')}</td>
+                    <td style={{ color: '#2ec80a', fontWeight: 600 }}>
+                      {c.sentCount > 0
+                        ? `${((c.clickedCount / c.sentCount) * 100).toFixed(1)}%`
+                        : '—'}
+                    </td>
+                    <td style={{ color: '#0c5460', fontWeight: 600 }}>
+                      {c.sentCount > 0
+                        ? `${((c.openedCount / c.sentCount) * 100).toFixed(1)}%`
+                        : '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

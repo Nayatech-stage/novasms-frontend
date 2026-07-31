@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAppMetrics } from '@/hooks/useAppMetrics';
 import { useCampaignStore } from '@/store/campaign.store';
 import { Link, useNavigate } from 'react-router-dom';
@@ -211,6 +212,7 @@ function heatColor(v: number, max: number) {
 }
 
 export default function Dashboard() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const activeDashboard = useUiStore((state) => state.activeDashboard);
   const { contactsTotal } = useAppMetrics();
@@ -319,10 +321,10 @@ export default function Dashboard() {
   const heatMax = Math.max(...heatmap.map((h) => h.openCount), 1);
 
   const onboardingSteps = [
-    { label: 'Profil complété', done: true },
-    { label: 'Importer des contacts', done: contactsTotal > 0 },
-    { label: 'Créer une campagne', done: campaigns.length > 0 },
-    { label: 'Lancer votre 1ère campagne', done: campaigns.some((c) => c.status === 'sent') },
+    { label: t('dashboard.stepProfileDone'), done: true },
+    { label: t('dashboard.stepImportContacts'), done: contactsTotal > 0 },
+    { label: t('dashboard.stepCreateCampaign'), done: campaigns.length > 0 },
+    { label: t('dashboard.stepLaunchCampaign'), done: campaigns.some((c) => c.status === 'sent') },
   ];
   const stepsCompleted = onboardingSteps.filter((s) => s.done).length;
   const allDone = stepsCompleted === onboardingSteps.length;
@@ -353,46 +355,50 @@ export default function Dashboard() {
             style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: 12 }}
           >
             <div className="card">
-              <div className="card-title mb-8">Campagnes récentes</div>
+              <div className="card-title mb-8">{t('dashboard.recentCampaigns')}</div>
               <div className="kpi-value">{recentCampaigns.length}</div>
-              <div className="text-xs text-muted">5 dernières campagnes</div>
+              <div className="text-xs text-muted">{t('dashboard.last5Campaigns')}</div>
             </div>
             <div className="card">
-              <div className="card-title mb-8">Automations actives</div>
+              <div className="card-title mb-8">{t('dashboard.activeAutomations')}</div>
               <div className="kpi-value">{activeAutomations.length}</div>
               <div className="text-xs text-muted">
-                {automationSendCount.toLocaleString('fr-FR')} envois automatiques
+                {t('dashboard.automaticSends', {
+                  count: automationSendCount.toLocaleString('fr-FR'),
+                })}
               </div>
             </div>
             <div className="card">
-              <div className="card-title mb-8">Contacts ajoutés aujourd'hui</div>
+              <div className="card-title mb-8">{t('dashboard.contactsToday')}</div>
               <div className="kpi-value">{contactsAddedToday.toLocaleString('fr-FR')}</div>
-              <div className="text-xs text-muted">Nouveaux contacts du jour</div>
+              <div className="text-xs text-muted">{t('dashboard.contactsTodayLabel')}</div>
             </div>
             <div className="card">
-              <div className="card-title mb-8">Logs récents</div>
+              <div className="card-title mb-8">{t('dashboard.recentLogs')}</div>
               <div className="kpi-value">{auditLogs.length}</div>
-              <div className="text-xs text-muted">5 derniers événements</div>
+              <div className="text-xs text-muted">{t('dashboard.lastEvents')}</div>
             </div>
             <div className="card">
-              <div className="card-title mb-8">Solde crédits</div>
+              <div className="card-title mb-8">{t('dashboard.creditsBalance')}</div>
               <div className="kpi-value">
                 {creditBalance == null ? '—' : creditBalance.toLocaleString('fr-FR')}
               </div>
               <div className="text-xs text-muted">
-                Seuil: {creditThreshold == null ? '—' : creditThreshold.toLocaleString('fr-FR')}
+                {t('dashboard.threshold', {
+                  amount: creditThreshold == null ? '—' : creditThreshold.toLocaleString('fr-FR'),
+                })}
               </div>
             </div>
           </div>
 
           <div className="card" style={{ display: 'grid', gap: 10 }}>
             <div className="flex items-center justify-between">
-              <div className="card-title">Crédits disponibles</div>
+              <div className="card-title">{t('dashboard.creditsAvailable')}</div>
               <Link
                 to="/rechargement"
                 style={{ fontSize: 11, color: 'var(--brand-primary)', fontWeight: 700 }}
               >
-                Recharger
+                {t('nav.recharge')}
               </Link>
             </div>
             <div className="flex items-center gap-8">
@@ -425,26 +431,27 @@ export default function Dashboard() {
             </div>
             {creditThreshold != null && (
               <div className="text-xs text-muted">
-                Alerte sous {creditThreshold.toLocaleString('fr-FR')} FCFA
+                {t('dashboard.alertBelow', { amount: creditThreshold.toLocaleString('fr-FR') })}
               </div>
             )}
           </div>
 
           <div
+            className="charts-row"
             style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: 12 }}
           >
             <div className="card">
               <div className="flex items-center justify-between mb-12">
-                <div className="card-title">Dernières campagnes</div>
+                <div className="card-title">{t('dashboard.lastCampaigns')}</div>
                 <Link
                   to="/campaigns"
                   style={{ fontSize: 11, color: 'var(--brand-primary)', fontWeight: 700 }}
                 >
-                  Toutes
+                  {t('campaigns.viewAll')}
                 </Link>
               </div>
               {recentCampaigns.length === 0 ? (
-                <div className="text-sm text-muted">Aucune campagne pour le moment.</div>
+                <div className="text-sm text-muted">{t('campaigns.noData')}</div>
               ) : (
                 <div style={{ display: 'grid', gap: 10 }}>
                   {recentCampaigns.map((campaign) => (
@@ -482,9 +489,9 @@ export default function Dashboard() {
             </div>
 
             <div className="card" style={{ display: 'grid', gap: 12 }}>
-              <div className="card-title">Derniers événements d'audit</div>
+              <div className="card-title">{t('dashboard.lastAuditEvents')}</div>
               {auditLogs.length === 0 ? (
-                <div className="text-sm text-muted">Aucun événement journalisé.</div>
+                <div className="text-sm text-muted">{t('dashboard.noAuditEvents')}</div>
               ) : (
                 <div style={{ display: 'grid', gap: 8 }}>
                   {auditLogs.map((log) => (
@@ -524,9 +531,8 @@ export default function Dashboard() {
         <div className="card" style={{ padding: '12px 16px' }}>
           <div className="flex items-center justify-between mb-8">
             <span className="card-title">
-              Démarrage rapide — {onboardingSteps.length - stepsCompleted} étape
-              {onboardingSteps.length - stepsCompleted > 1 ? 's' : ''} restante
-              {onboardingSteps.length - stepsCompleted > 1 ? 's' : ''}
+              {t('dashboard.quickStart')} —{' '}
+              {t('dashboard.stepsRemaining', { count: onboardingSteps.length - stepsCompleted })}
             </span>
           </div>
           <div className="flex gap-16 items-center">
@@ -598,41 +604,41 @@ export default function Dashboard() {
       {/* KPIs */}
       <div id="tour-kpi-grid" className="kpi-grid">
         <div className="kpi">
-          <div className="kpi-label">Messages envoyés</div>
+          <div className="kpi-label">{t('dashboard.kpiMessagesSent')}</div>
           <div className="kpi-value">
             {loadingOverview ? '—' : totalSent.toLocaleString('fr-FR')}
           </div>
           <div className={`kpi-delta ${deltaSent != null && deltaSent >= 0 ? 'up' : 'down'}`}>
             {deltaSent != null
-              ? `${deltaSent >= 0 ? '↑ +' : '↓ '}${deltaSent.toFixed(1)}% vs période préc.`
-              : 'Aucune donnée préc.'}
+              ? `${deltaSent >= 0 ? '↑ +' : '↓ '}${deltaSent.toFixed(1)}% ${t('dashboard.vsLastPeriod')}`
+              : t('dashboard.noPrevData')}
           </div>
         </div>
         <div className="kpi">
-          <div className="kpi-label">Taux d'ouverture</div>
+          <div className="kpi-label">{t('dashboard.kpiOpenRate')}</div>
           <div className="kpi-value">{overview ? `${overview.openRate.toFixed(1)}%` : '—'}</div>
           <div className={`kpi-delta ${deltaOpen != null && deltaOpen >= 0 ? 'up' : 'down'}`}>
             {deltaOpen != null
-              ? `${deltaOpen >= 0 ? '↑ +' : '↓ '}${Math.abs(deltaOpen).toFixed(1)} pt vs période préc.`
+              ? `${deltaOpen >= 0 ? '↑ +' : '↓ '}${Math.abs(deltaOpen).toFixed(1)} pt ${t('dashboard.vsLastPeriod')}`
               : ''}
           </div>
         </div>
         <div className="kpi">
-          <div className="kpi-label">Taux de clic</div>
+          <div className="kpi-label">{t('dashboard.kpiClickRate')}</div>
           <div className="kpi-value">{overview ? `${overview.clickRate.toFixed(1)}%` : '—'}</div>
           <div className={`kpi-delta ${deltaClick != null && deltaClick >= 0 ? 'up' : 'down'}`}>
             {deltaClick != null
-              ? `${deltaClick >= 0 ? '↑ +' : '↓ '}${Math.abs(deltaClick).toFixed(1)} pt vs période préc.`
+              ? `${deltaClick >= 0 ? '↑ +' : '↓ '}${Math.abs(deltaClick).toFixed(1)} pt ${t('dashboard.vsLastPeriod')}`
               : ''}
           </div>
         </div>
         <div className="kpi">
-          <div className="kpi-label">Désabonnements</div>
+          <div className="kpi-label">{t('dashboard.kpiUnsub')}</div>
           <div className="kpi-value">
             {overview ? `${overview.unsubscribeRate.toFixed(2)}%` : '—'}
           </div>
           <div className="kpi-delta" style={{ color: 'var(--text-3)' }}>
-            Période courante
+            {t('dashboard.kpiCurrentPeriod')}
           </div>
         </div>
       </div>
@@ -651,7 +657,7 @@ export default function Dashboard() {
         <div className="card">
           <div className="flex items-center justify-between mb-12">
             <div>
-              <div className="card-title">Évolution des performances</div>
+              <div className="card-title">{t('dashboard.evolutionTitle')}</div>
               <div className="flex gap-12" style={{ marginTop: 5 }}>
                 <div className="flex items-center gap-8 text-xs text-muted">
                   <span
@@ -663,7 +669,7 @@ export default function Dashboard() {
                       borderRadius: 1,
                     }}
                   />
-                  Envois
+                  {t('dashboard.legendSent')}
                 </div>
                 <div className="flex items-center gap-8 text-xs text-muted">
                   <span
@@ -673,7 +679,7 @@ export default function Dashboard() {
                       display: 'inline-block',
                     }}
                   />
-                  Ouverture %
+                  {t('dashboard.legendOpen')}
                 </div>
               </div>
             </div>
@@ -704,14 +710,14 @@ export default function Dashboard() {
 
         {/* Donut canal */}
         <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
-          <div className="card-title mb-12">Répartition par canal</div>
+          <div className="card-title mb-12">{t('dashboard.donutTitle')}</div>
           <div style={{ marginBottom: 14 }}>
             <DonutChart byChannel={byChannel} total={totalSent} />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
             {byChannel.length === 0 ? (
               <span className="text-xs text-muted" style={{ textAlign: 'center' }}>
-                Aucun envoi
+                {t('dashboard.noSends')}
               </span>
             ) : (
               byChannel.map(({ channel, count }) => (
@@ -741,7 +747,7 @@ export default function Dashboard() {
             )}
             <div className="divider" />
             <div className="flex items-center justify-between text-sm font-medium">
-              <span className="text-muted">Total</span>
+              <span className="text-muted">{t('dashboard.total')}</span>
               <span>{totalSent.toLocaleString('fr-FR')}</span>
             </div>
           </div>
@@ -751,25 +757,25 @@ export default function Dashboard() {
       {/* Top 5 campagnes */}
       <div className="card">
         <div className="flex items-center justify-between mb-12">
-          <div className="card-title">Top 5 campagnes — {period} derniers jours</div>
+          <div className="card-title">{t('dashboard.top5Title', { period })}</div>
           <Link
             to="/campaigns"
             style={{ fontSize: 11, color: 'var(--brand-primary)', fontWeight: 600 }}
           >
-            Voir tout →
+            {t('campaigns.viewAll')}
           </Link>
         </div>
         {campaignsLoading ? (
           <div
             style={{ textAlign: 'center', padding: '16px 0', color: 'var(--text-2)', fontSize: 12 }}
           >
-            Chargement…
+            {t('common.loading')}
           </div>
         ) : top5.length === 0 ? (
           <div
             style={{ textAlign: 'center', padding: '20px 0', color: 'var(--text-2)', fontSize: 12 }}
           >
-            Aucune campagne.{' '}
+            {t('campaigns.noData')}{' '}
             <button
               onClick={async () => {
                 await createNewCampaign();
@@ -783,7 +789,7 @@ export default function Dashboard() {
                 cursor: 'pointer',
               }}
             >
-              Créer maintenant →
+              {t('campaigns.createNow')}
             </button>
           </div>
         ) : (
@@ -791,12 +797,12 @@ export default function Dashboard() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Nom</th>
-                  <th>Envois</th>
-                  <th>Ouvertures</th>
-                  <th>Clics</th>
-                  <th>Taux clic</th>
-                  <th>Statut</th>
+                  <th>{t('campaigns.name')}</th>
+                  <th>{t('campaigns.sends')}</th>
+                  <th>{t('campaigns.opens')}</th>
+                  <th>{t('campaigns.clicks')}</th>
+                  <th>{t('campaigns.clickRate')}</th>
+                  <th>{t('campaigns.status')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -816,7 +822,7 @@ export default function Dashboard() {
                         : '—'}
                     </td>
                     <td>
-                      <span className="tag green">Actif</span>
+                      <span className="tag green">{t('campaigns.active')}</span>
                     </td>
                   </tr>
                 ))}
@@ -828,9 +834,7 @@ export default function Dashboard() {
 
       {/* Heatmap engagement 7×24 */}
       <div className="card">
-        <div className="card-title mb-12">
-          Carte de chaleur d'engagement — {period} derniers jours
-        </div>
+        <div className="card-title mb-12">{t('dashboard.heatmapTitle', { period })}</div>
         <div className="heatmap-wrapper">
           <div
             style={{
@@ -870,11 +874,11 @@ export default function Dashboard() {
           className="flex items-center gap-8"
           style={{ marginTop: 10, justifyContent: 'flex-end' }}
         >
-          <span className="text-xs text-muted">Faible</span>
+          <span className="text-xs text-muted">{t('dashboard.heatLow')}</span>
           {HEAT_COLORS.map((c, i) => (
             <div key={i} style={{ width: 12, height: 12, borderRadius: 2, background: c }} />
           ))}
-          <span className="text-xs text-muted">Élevé</span>
+          <span className="text-xs text-muted">{t('dashboard.heatHigh')}</span>
         </div>
       </div>
     </div>

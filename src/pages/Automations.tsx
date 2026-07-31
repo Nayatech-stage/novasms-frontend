@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import { CheckCircle2, Clock3, Loader2, Plus, RefreshCcw } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import {
   automationsApi,
@@ -405,6 +406,7 @@ function PreviewNode({
 }
 
 export default function Automations() {
+  const { t } = useTranslation();
   const [items, setItems] = useState<AutomationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -716,54 +718,54 @@ export default function Automations() {
         <div className="flex flex-wrap items-center gap-3 border-b border-outline-variant/30 px-5 py-4">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-on-surface-variant">
-              Orchestration automatisée
+              {t('automations.orchestration')}
             </p>
             <h1 className="text-base font-semibold text-secondary">
-              {selectedAutomation ? selectedAutomation.name : 'Automatisations'}
+              {selectedAutomation ? selectedAutomation.name : t('nav.automations')}
             </h1>
             <p className="text-xs text-on-surface-variant">
               {selectedAutomation
                 ? `${triggerLabel(selectedAutomation.trigger)} · ${selectedAutomation.channel} · ${formatDelay(selectedAutomation.delaySeconds)}`
-                : 'Créez, testez et activez vos workflows visuels'}
+                : t('automations.subtitle')}
             </p>
           </div>
 
           <div className="hidden xl:flex items-center gap-3 rounded-full border border-outline-variant/30 bg-surface px-3 py-2">
             <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
-              Actifs
+              {t('automations.active')}
             </span>
             <strong className="text-sm text-secondary">{activeWorkflows}</strong>
             <span className="h-4 w-px bg-outline-variant/40" />
             <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
-              Brouillons
+              {t('automations.drafts')}
             </span>
             <strong className="text-sm text-secondary">{draftWorkflows}</strong>
             <span className="h-4 w-px bg-outline-variant/40" />
             <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
-              Inactifs
+              {t('automations.inactive')}
             </span>
             <strong className="text-sm text-secondary">{inactiveWorkflows}</strong>
           </div>
 
-          <div className="ml-auto flex items-center gap-2">
+          <div className="automations-header-btns ml-auto flex items-center gap-2">
             <button
               type="button"
               onClick={() => void handleQuickTest()}
               className="rounded-lg border border-outline-variant/40 bg-white px-3 py-2 text-xs font-semibold text-secondary transition hover:border-primary/50 hover:text-primary"
             >
-              Tester
+              {t('automations.test')}
             </button>
             <button
               type="button"
               disabled={!selectedAutomation}
               onClick={() => {
                 if (!selectedAutomation) return;
-                if (!window.confirm('Supprimer ce workflow ?')) return;
+                if (!window.confirm(t('automations.deleteConfirm'))) return;
                 void handleDelete(selectedAutomation.id);
               }}
               className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Supprimer
+              {t('automations.delete')}
             </button>
             <button
               type="button"
@@ -775,16 +777,18 @@ export default function Automations() {
               className="rounded-lg bg-primary px-3 py-2 text-xs font-bold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {selectedAutomation?.status === 'Active'
-                ? 'Désactiver le workflow'
-                : 'Activer le workflow'}
+                ? t('automations.deactivate')
+                : t('automations.activate')}
             </button>
           </div>
         </div>
 
-        <div className="grid min-h-[760px] grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)_320px]">
-          <aside className="border-r border-outline-variant/30 bg-white p-4">
+        <div className="grid min-h-0 lg:min-h-[760px] grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)_320px]">
+          <aside className="border-b lg:border-b-0 lg:border-r border-outline-variant/30 bg-white p-4">
             <div className="mb-4 flex items-center justify-between">
-              <span className="text-sm font-semibold text-secondary">Workflows</span>
+              <span className="text-sm font-semibold text-secondary">
+                {t('automations.workflows')}
+              </span>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
@@ -799,7 +803,7 @@ export default function Automations() {
                   className="rounded-md border border-outline-variant/40 bg-white px-2 py-1 text-xs font-semibold text-secondary transition hover:border-primary/40 hover:text-primary"
                 >
                   <span className="inline-flex items-center gap-1">
-                    <Plus className="h-3.5 w-3.5" /> Créer
+                    <Plus className="h-3.5 w-3.5" /> {t('automations.create')}
                   </span>
                 </button>
                 <button
@@ -815,11 +819,11 @@ export default function Automations() {
 
             {loading ? (
               <div className="rounded-xl border border-dashed border-outline-variant/40 bg-surface/40 p-4 text-sm text-on-surface-variant">
-                Chargement des workflows...
+                {t('automations.loadingWorkflows')}
               </div>
             ) : items.length === 0 ? (
               <div className="rounded-xl border border-dashed border-outline-variant/40 bg-surface/40 p-4 text-sm text-on-surface-variant">
-                Aucun workflow pour le moment.
+                {t('automations.noWorkflows')}
               </div>
             ) : (
               <div className="space-y-2">
@@ -852,7 +856,9 @@ export default function Automations() {
 
                       <div className="mt-3 flex items-center justify-between text-xs text-on-surface-variant">
                         <span>{formatDelay(automation.delaySeconds)}</span>
-                        <span>{automation.sendCount} envois</span>
+                        <span>
+                          {automation.sendCount} {t('automations.sends')}
+                        </span>
                       </div>
                     </button>
                   );
@@ -862,51 +868,51 @@ export default function Automations() {
 
             <div className="mt-5 border-t border-outline-variant/30 pt-4">
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">
-                Stats workflow sélectionné
+                {t('automations.statsTitle')}
               </p>
               <div className="mt-3 space-y-2 text-sm">
                 <p className="flex items-center justify-between">
-                  <span className="text-on-surface-variant">Entrées totales</span>
+                  <span className="text-on-surface-variant">{t('automations.totalEntries')}</span>
                   <strong>{selectedMetrics.entries}</strong>
                 </p>
                 <p className="flex items-center justify-between">
-                  <span className="text-on-surface-variant">En cours</span>
+                  <span className="text-on-surface-variant">{t('automations.inProgress')}</span>
                   <strong className="text-secondary">{selectedMetrics.inProgress}</strong>
                 </p>
                 <p className="flex items-center justify-between">
-                  <span className="text-on-surface-variant">Convertis</span>
+                  <span className="text-on-surface-variant">{t('automations.converted')}</span>
                   <strong className="text-success">{selectedMetrics.sent}</strong>
                 </p>
                 <p className="flex items-center justify-between">
-                  <span className="text-on-surface-variant">Taux conversion</span>
+                  <span className="text-on-surface-variant">{t('automations.conversionRate')}</span>
                   <strong className="text-primary">{selectedMetrics.conversion.toFixed(1)}%</strong>
                 </p>
               </div>
 
               <div className="mt-5 rounded-xl border border-outline-variant/30 bg-surface p-3">
                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">
-                  Volume global
+                  {t('automations.globalVolume')}
                 </p>
                 <p className="mt-2 text-2xl font-bold text-secondary">
                   {totalSent.toLocaleString('fr-FR')}
                 </p>
                 <p className="mt-1 text-xs text-on-surface-variant">
-                  Envois cumulés sur tous les workflows
+                  {t('automations.cumulativeSends')}
                 </p>
               </div>
             </div>
           </aside>
 
-          <section className="relative overflow-hidden bg-[#f7f9f7] p-8">
+          <section className="automations-canvas-section relative overflow-hidden bg-[#f7f9f7] p-8">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle,rgba(12,84,96,0.12)_1px,transparent_1px)] [background-size:24px_24px]" />
 
             <div className="relative mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-outline-variant/30 bg-white/85 px-4 py-3 shadow-sm backdrop-blur">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">
-                  Palette workflow
+                  {t('automations.palette')}
                 </p>
                 <p className="text-sm font-semibold text-secondary">
-                  Déclencheur · Attente · Action · Condition · Tag · Fin
+                  {t('automations.paletteSubtitle')}
                 </p>
               </div>
               <div className="ml-auto flex flex-wrap items-center gap-2 text-[11px] text-on-surface-variant">
@@ -940,16 +946,16 @@ export default function Automations() {
                       }
                       subtitle={
                         node.type === 'trigger'
-                          ? 'Déclencheur'
+                          ? t('automations.nodeTypeLabel.trigger')
                           : node.type === 'wait'
-                            ? 'Attente'
+                            ? t('automations.nodeTypeLabel.wait')
                             : node.type === 'action'
-                              ? 'Action'
+                              ? t('automations.nodeTypeLabel.action')
                               : node.type === 'condition'
-                                ? 'Condition'
+                                ? t('automations.nodeTypeLabel.condition')
                                 : node.type === 'tag'
                                   ? 'Tag'
-                                  : 'Fin'
+                                  : t('automations.nodeTypeLabel.end')
                       }
                       title={node.label}
                     />
@@ -1014,7 +1020,7 @@ export default function Automations() {
                 }}
                 className="rounded-lg border border-outline-variant/40 bg-white px-4 py-2 text-sm font-semibold text-secondary transition hover:border-primary/40 hover:text-primary"
               >
-                Ouvrir l'éditeur visuel
+                {t('automations.openEditor')}
               </button>
               <button
                 type="button"
@@ -1026,15 +1032,15 @@ export default function Automations() {
                 }}
                 className="ml-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/10"
               >
-                Démarrer un modèle
+                {t('automations.startTemplate')}
               </button>
             </div>
           </section>
 
-          <aside className="border-l border-outline-variant/30 bg-white p-4">
-            <h2 className="text-sm font-semibold text-secondary">Nouveau workflow</h2>
+          <aside className="border-t lg:border-t-0 lg:border-l border-outline-variant/30 bg-white p-4">
+            <h2 className="text-sm font-semibold text-secondary">{t('automations.newWorkflow')}</h2>
             <p className="mt-1 text-xs text-on-surface-variant">
-              Configurez le déclencheur, le délai et le canal pour créer un workflow conforme.
+              {t('automations.configSubtitle')}
             </p>
 
             <div className="mt-3 flex gap-2">
@@ -1044,7 +1050,7 @@ export default function Automations() {
                 onClick={loadSelectedForEdition}
                 className="rounded-lg border border-outline-variant/40 bg-white px-3 py-2 text-xs font-semibold text-secondary transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Charger la sélection
+                {t('automations.loadSelection')}
               </button>
               {editingId && (
                 <button
@@ -1056,7 +1062,7 @@ export default function Automations() {
                   }}
                   className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800 transition hover:bg-amber-100"
                 >
-                  Annuler l'édition
+                  {t('automations.cancelEdit')}
                 </button>
               )}
             </div>
@@ -1064,7 +1070,7 @@ export default function Automations() {
             <form className="mt-4 space-y-3" onSubmit={(event) => void handleCreate(event)}>
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-secondary" htmlFor="automation-name">
-                  Nom
+                  {t('automations.nameLabel')}
                 </label>
                 <input
                   id="automation-name"
@@ -1083,7 +1089,7 @@ export default function Automations() {
                   className="text-xs font-semibold text-secondary"
                   htmlFor="automation-trigger"
                 >
-                  Déclencheur
+                  {t('automations.triggerLabel')}
                 </label>
                 <select
                   id="automation-trigger"
@@ -1096,14 +1102,14 @@ export default function Automations() {
                     }))
                   }
                 >
-                  <option value="contact_added">Nouveau contact</option>
-                  <option value="api">Événement externe (site, CRM, Zapier)</option>
-                  <option value="segment_joined">Entrée dans un segment</option>
-                  <option value="tag_added">Tag ajouté au contact</option>
-                  <option value="campaign_opened">Ouverture de campagne</option>
-                  <option value="link_clicked">Clic sur un lien</option>
-                  <option value="birthday">Anniversaire du contact</option>
-                  <option value="date_based">Date planifiée (ponctuelle)</option>
+                  <option value="contact_added">{t('automations.triggerNewContact')}</option>
+                  <option value="api">{t('automations.triggerApi')}</option>
+                  <option value="segment_joined">{t('automations.triggerSegment')}</option>
+                  <option value="tag_added">{t('automations.triggerTag')}</option>
+                  <option value="campaign_opened">{t('automations.triggerCampaignOpened')}</option>
+                  <option value="link_clicked">{t('automations.triggerLinkClicked')}</option>
+                  <option value="birthday">{t('automations.triggerBirthday')}</option>
+                  <option value="date_based">{t('automations.triggerDateBased')}</option>
                 </select>
               </div>
 

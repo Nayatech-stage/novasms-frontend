@@ -320,21 +320,21 @@ export const CampaignWizard: FC = () => {
   return (
     <div className="min-h-screen bg-surface">
       {/* Header */}
-      <header className="flex justify-between items-center w-full px-8 h-16 bg-surface border-b border-outline-variant/10 sticky top-0 z-40">
-        <div className="flex items-center gap-4">
-          <h1 className="font-headline text-2xl font-bold text-primary">NovaSMS</h1>
-          <div className="h-6 w-[1px] bg-outline-variant/30" />
-          <span className="text-sm text-on-surface-variant">
+      <header className="campaign-wizard-header flex justify-between items-center w-full px-8 h-16 bg-surface border-b border-outline-variant/10 sticky top-0 z-40">
+        <div className="flex items-center gap-4 min-w-0 flex-1">
+          <h1 className="font-headline text-2xl font-bold text-primary shrink-0">NovaSMS</h1>
+          <div className="h-6 w-[1px] bg-outline-variant/30 shrink-0" />
+          <span className="text-sm text-on-surface-variant truncate">
             {draft.name ? `Brouillon: ${draft.name}` : 'Nouvelle campagne'}
           </span>
           {campaignId && lastUpdatedAt && (
-            <span className="text-xs text-on-surface-variant">
+            <span className="text-xs text-on-surface-variant hidden sm:inline truncate">
               {formatRelativeLastUpdate(lastUpdatedAt)}
             </span>
           )}
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="campaign-wizard-header-actions flex items-center gap-4 shrink-0">
           {error && <div className="text-red-600 text-sm font-medium">{error}</div>}
           {draftSaved && (
             <div className="flex items-center gap-2 text-green-600 text-sm font-medium">
