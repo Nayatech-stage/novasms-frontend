@@ -487,6 +487,19 @@ export default function CanvasEditor({
     return () => window.removeEventListener('keydown', onKey);
   }, [undo, redo, deleteSelected, cancelConnect]);
 
+  // Wheel zoom avec { passive: false } pour éviter l'erreur passive event listener
+  useEffect(() => {
+    const el = canvasRef.current;
+    if (!el) return;
+    const handleWheel = (event: WheelEvent) => {
+      if (!event.ctrlKey && !event.metaKey) return;
+      event.preventDefault();
+      changeZoom(zoom + (event.deltaY > 0 ? -0.08 : 0.08));
+    };
+    el.addEventListener('wheel', handleWheel, { passive: false });
+    return () => el.removeEventListener('wheel', handleWheel);
+  }, [zoom, changeZoom]);
+
   // Center canvas helper
   const centerCanvas = useCallback(() => {
     if (!canvasRef.current || nodes.length === 0) return;
@@ -680,8 +693,24 @@ export default function CanvasEditor({
   }, [nodes]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-4 backdrop-blur-sm">
-      <div className="flex h-[92vh] w-[min(1280px,100%)] flex-col overflow-hidden rounded-[28px] bg-white shadow-[0_30px_90px_rgba(12,84,96,0.22)]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-2 py-2 sm:px-4 sm:py-4 backdrop-blur-sm">
+      {/* Avertissement mobile */}
+      <div className="pointer-events-none absolute top-3 left-1/2 -translate-x-1/2 z-60 flex sm:hidden items-center gap-2 rounded-full bg-amber-500/90 px-4 py-1.5 text-xs font-semibold text-white shadow-lg">
+        <svg
+          width="13"
+          height="13"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+        >
+          <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+          <line x1="12" y1="9" x2="12" y2="13" />
+          <line x1="12" y1="17" x2="12.01" y2="17" />
+        </svg>
+        Éditeur optimisé pour ordinateur
+      </div>
+      <div className="flex h-[92vh] w-[min(1280px,100%)] flex-col overflow-hidden rounded-[20px] sm:rounded-[28px] bg-white shadow-[0_30px_90px_rgba(12,84,96,0.22)]">
         <style>{`\n          .connection-line { stroke: #6d7b65; stroke-width: 2; fill: none; stroke-dasharray: 4; }\n          .connection-line.selected { stroke: #2EC80A; stroke-width: 3; }\n          @keyframes dash { to { stroke-dashoffset: -1000; } }\n          .connection-line { animation: dash 30s linear infinite; }\n          .node-handle { width: 10px; height: 10px; background: white; border: 2px solid #6d7b65; border-radius: 50%; }\n          .node-handle-left { position: absolute; left: -6px; top: 50%; transform: translateY(-50%); }\n          .node-handle-right { position: absolute; right: -6px; top: 50%; transform: translateY(-50%); }\n          .minimap-preview { position: fixed; bottom: 24px; right: 24px; width: 200px; height: 120px; background: rgba(255,255,255,0.95); border: 1px solid rgba(109,123,101,0.12); border-radius: 12px; box-shadow: 0 10px 30px rgba(12,84,96,0.12); z-index:60; }\n        `}</style>
         <div className="flex items-center justify-between border-b border-outline-variant/40 px-5 py-4">
           <div>
@@ -934,11 +963,6 @@ export default function CanvasEditor({
             ref={canvasRef}
             className="relative overflow-hidden p-8 cursor-grab active:cursor-grabbing"
             onPointerDown={onPointerDownCanvas}
-            onWheel={(event) => {
-              if (!event.ctrlKey && !event.metaKey) return;
-              event.preventDefault();
-              changeZoom(zoom + (event.deltaY > 0 ? -0.08 : 0.08));
-            }}
             onClick={() => {
               if (connectFrom || linkMode) cancelConnect();
               setSelectedNodeId(null);

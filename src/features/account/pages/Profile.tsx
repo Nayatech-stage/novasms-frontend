@@ -156,7 +156,7 @@ export default function Profile() {
     <div className="content">
       {/* Hero profil */}
       <div className="card" style={{ padding: '20px 24px' }}>
-        <div className="flex items-center gap-16">
+        <div className="flex flex-wrap items-center gap-4 sm:gap-8">
           <Avatar name={displayName} size={64} />
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-1)' }}>
