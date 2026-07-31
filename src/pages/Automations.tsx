@@ -25,7 +25,9 @@ type DraftAutomation = {
     | 'campaign_opened'
     | 'link_clicked'
     | 'date_based'
-    | 'birthday';
+    | 'birthday'
+    | 'inactivity_window'
+    | 'recurring_schedule';
   delaySeconds: string;
   delayPreset: '0' | '300' | '1800' | '3600' | '86400' | 'custom';
   channel: 'Email' | 'SMS' | 'WhatsApp';
@@ -277,6 +279,8 @@ function triggerLabel(trigger: DraftAutomation['trigger']) {
     link_clicked: 'Clic sur un lien',
     date_based: 'Date planifiée',
     birthday: 'Anniversaire du contact',
+    inactivity_window: 'Inactivité',
+    recurring_schedule: 'Planification récurrente',
   };
 
   return labels[trigger] ?? trigger;
