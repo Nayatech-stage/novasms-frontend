@@ -161,12 +161,13 @@ export default function ExportModal({ isOpen, onClose, totalContacts, selectedCo
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.94, opacity: 0, y: 18 }}
           transition={{ type: 'spring', stiffness: 320, damping: 28 }}
-          className="w-full max-w-lg overflow-hidden"
+          className="export-modal-box w-full max-w-lg overflow-y-auto"
           style={{
             background: 'var(--surface, #ffffff)',
             borderRadius: 24,
             boxShadow: '0 24px 60px rgba(0,0,0,0.18)',
             border: '1px solid var(--border, #e5e7eb)',
+            maxHeight: 'calc(100vh - 32px)',
           }}
           onClick={(e) => e.stopPropagation()}
         >

@@ -774,14 +774,16 @@ export default function Settings() {
                       }}
                     >
                       <div
+                        className="api-key-row-inner"
                         style={{
                           display: 'flex',
                           alignItems: 'center',
                           gap: 12,
                           padding: '14px 16px',
+                          flexWrap: 'wrap',
                         }}
                       >
-                        <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ flex: 1, minWidth: 180 }}>
                           <div
                             style={{
                               display: 'flex',

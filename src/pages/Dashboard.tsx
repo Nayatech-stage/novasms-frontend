@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAppMetrics } from '@/hooks/useAppMetrics';
 import { useCampaignStore } from '@/store/campaign.store';
@@ -839,9 +839,10 @@ export default function Dashboard() {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: '28px repeat(24, 1fr)',
+              gridTemplateColumns: '28px repeat(24, minmax(14px, 1fr))',
               gap: 2,
               alignItems: 'center',
+              minWidth: 460,
             }}
           >
             <div />
@@ -851,10 +852,8 @@ export default function Dashboard() {
               </div>
             ))}
             {DAYS_FR.map((day, di) => (
-              <>
-                <div key={`d${di}`} style={{ fontSize: 9, color: 'var(--text-2)' }}>
-                  {day}
-                </div>
+              <Fragment key={`d${di}`}>
+                <div style={{ fontSize: 9, color: 'var(--text-2)' }}>{day}</div>
                 {Array.from({ length: 24 }, (_, h) => {
                   const row = heatmap.find((r) => r.hour === h);
                   const v = row ? Math.round(row.openCount * (0.7 + di * 0.05)) : 0;
@@ -866,7 +865,7 @@ export default function Dashboard() {
                     />
                   );
                 })}
-              </>
+              </Fragment>
             ))}
           </div>
         </div>

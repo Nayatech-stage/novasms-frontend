@@ -320,77 +320,79 @@ export default function Team() {
             {t('team.noMembers')}
           </div>
         ) : (
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>{t('team.memberCol')}</th>
-                <th>{t('team.roleCol')}</th>
-                <th>{t('team.lastLoginCol')}</th>
-                <th>{t('team.actionsCol')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {members.map((m) => (
-                <tr key={m.id}>
-                  <td>
-                    <div className="flex items-center gap-8">
-                      <Avatar email={m.email} />
-                      <div>
-                        <div style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--text-1)' }}>
-                          {m.email}
-                        </div>
-                        {m.id === currentUser?.id && (
-                          <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 1 }}>
-                            {t('team.you')}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <span
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        padding: '2px 8px',
-                        borderRadius: 20,
-                        fontSize: 11,
-                        fontWeight: 500,
-                        ...ROLE_COLORS[m.role],
-                      }}
-                    >
-                      {ROLE_LABELS[m.role]}
-                    </span>
-                  </td>
-                  <td style={{ color: 'var(--text-2)', fontSize: 12 }}>
-                    {m.lastLogin ? (
-                      new Date(m.lastLogin).toLocaleDateString('fr-FR', {
-                        day: '2-digit',
-                        month: 'short',
-                        year: 'numeric',
-                      })
-                    ) : (
-                      <span style={{ color: 'var(--text-3)' }}>{t('team.neverLoggedIn')}</span>
-                    )}
-                  </td>
-                  <td>
-                    {m.id !== currentUser?.id ? (
-                      <button
-                        onClick={() => handleRevoke(m.id)}
-                        disabled={revoking === m.id}
-                        className="btn-sm btn-danger"
-                        style={{ fontSize: 11 }}
-                      >
-                        {revoking === m.id ? t('team.revoking') : t('team.revoke')}
-                      </button>
-                    ) : (
-                      <span style={{ fontSize: 11, color: 'var(--text-3)' }}>—</span>
-                    )}
-                  </td>
+          <div className="data-table-wrapper">
+            <table className="data-table" style={{ minWidth: 480 }}>
+              <thead>
+                <tr>
+                  <th>{t('team.memberCol')}</th>
+                  <th>{t('team.roleCol')}</th>
+                  <th>{t('team.lastLoginCol')}</th>
+                  <th>{t('team.actionsCol')}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {members.map((m) => (
+                  <tr key={m.id}>
+                    <td>
+                      <div className="flex items-center gap-8">
+                        <Avatar email={m.email} />
+                        <div>
+                          <div style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--text-1)' }}>
+                            {m.email}
+                          </div>
+                          {m.id === currentUser?.id && (
+                            <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 1 }}>
+                              {t('team.you')}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          padding: '2px 8px',
+                          borderRadius: 20,
+                          fontSize: 11,
+                          fontWeight: 500,
+                          ...ROLE_COLORS[m.role],
+                        }}
+                      >
+                        {ROLE_LABELS[m.role]}
+                      </span>
+                    </td>
+                    <td style={{ color: 'var(--text-2)', fontSize: 12 }}>
+                      {m.lastLogin ? (
+                        new Date(m.lastLogin).toLocaleDateString('fr-FR', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric',
+                        })
+                      ) : (
+                        <span style={{ color: 'var(--text-3)' }}>{t('team.neverLoggedIn')}</span>
+                      )}
+                    </td>
+                    <td>
+                      {m.id !== currentUser?.id ? (
+                        <button
+                          onClick={() => handleRevoke(m.id)}
+                          disabled={revoking === m.id}
+                          className="btn-sm btn-danger"
+                          style={{ fontSize: 11 }}
+                        >
+                          {revoking === m.id ? t('team.revoking') : t('team.revoke')}
+                        </button>
+                      ) : (
+                        <span style={{ fontSize: 11, color: 'var(--text-3)' }}>—</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
@@ -653,7 +655,13 @@ export default function Team() {
       {/* Carte rôles & permissions */}
       <div className="card">
         <div className="card-title mb-12">{t('team.rolesTitle')}</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 10 }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+            gap: 10,
+          }}
+        >
           {(['Admin', 'Editor', 'Analyst'] as TeamRole[]).map((role) => (
             <div
               key={role}
@@ -715,9 +723,10 @@ export default function Team() {
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 1000,
+            padding: 16,
           }}
         >
-          <div className="card" style={{ width: 400, padding: 24 }}>
+          <div className="card" style={{ width: '100%', maxWidth: 400, padding: 24 }}>
             <div className="flex items-center justify-between mb-12">
               <div className="card-title">{t('team.modalTitle')}</div>
               <button

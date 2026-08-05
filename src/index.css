@@ -1246,6 +1246,15 @@ body {
   }
 }
 
+/* ─── Settings API key row: wrap actions under name on mobile ────────────── */
+@media (max-width: 540px) {
+  .api-key-row-inner > div:last-child {
+    align-items: flex-start !important;
+    text-align: left !important;
+    width: 100%;
+  }
+}
+
 /* ─── Integrations page mobile ───────────────────────────────────────────── */
 @media (max-width: 767px) {
   /* Header: empiler */

@@ -130,8 +130,8 @@ export default function ContactsPage() {
   };
 
   return (
-    <div className="p-6">
-      <h1 className="mb-4 text-2xl font-semibold">{t('contacts.title')}</h1>
+    <div className="p-3 sm:p-6">
+      <h1 className="mb-4 text-xl sm:text-2xl font-semibold">{t('contacts.title')}</h1>
       <ContactTable
         key={refreshKey}
         onImportClick={handleImportClick}
