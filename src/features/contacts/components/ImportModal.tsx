@@ -171,12 +171,12 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
     setError(null);
 
     try {
-      // Si gros fichier, utiliser upload par chunks (évite OOM / large payloads)
-      const CHUNK_THRESHOLD = 5000; // lignes au-dessus desquelles on chunk
-      const CHUNK_SIZE = 500; // 500 lignes × ~300 octets ≈ 150 Ko < limite 10 Mo
+      // Si gros fichier, utiliser upload par chunks parallèles (objectif < 60s pour 50k lignes)
+      const CHUNK_THRESHOLD = 5000;
+      const CHUNK_SIZE = 2000; // 2000 lignes × ~300 octets ≈ 600 Ko, bien sous 10 Mo
+      const PARALLEL = 5; // 5 chunks en parallèle → 50k lignes = 25 chunks = 5 vagues
 
       if (parsedData.rows.length > CHUNK_THRESHOLD) {
-        // Calculer le nombre de chunks
         const numChunks = Math.ceil(parsedData.rows.length / CHUNK_SIZE);
         setTotalChunks(numChunks);
         setStep('progress');
@@ -189,22 +189,33 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
         );
         const fileId = startRes.data.fileId;
 
-        // 2) Envoyer les chunks séquentiellement avec mapping appliqué
+        // 2) Préparer tous les chunks avec mapping appliqué
+        const allChunks: Record<string, unknown>[][] = [];
         for (let i = 0; i < parsedData.rows.length; i += CHUNK_SIZE) {
-          const chunk = parsedData.rows
-            .slice(i, i + CHUNK_SIZE)
-            .map(applyMapping)
-            .filter((r) => r.email || r.phone);
-          await api.post(
-            '/contacts/import/chunk',
-            { fileId, rows: chunk },
-            { headers: { Authorization: `Bearer ${accessToken}` } },
+          allChunks.push(
+            parsedData.rows
+              .slice(i, i + CHUNK_SIZE)
+              .map(applyMapping)
+              .filter((r) => r.email || r.phone),
           );
+        }
 
-          // Mettre à jour la progression
-          const chunkNum = Math.floor(i / CHUNK_SIZE) + 1;
-          setCurrentChunk(chunkNum);
-          setUploadProgress(Math.round((chunkNum / numChunks) * 100));
+        // 3) Envoyer en vagues parallèles (PARALLEL chunks simultanés)
+        let sent = 0;
+        for (let wave = 0; wave < allChunks.length; wave += PARALLEL) {
+          const batch = allChunks.slice(wave, wave + PARALLEL);
+          await Promise.all(
+            batch.map((chunk) =>
+              api.post(
+                '/contacts/import/chunk',
+                { fileId, rows: chunk },
+                { headers: { Authorization: `Bearer ${accessToken}` } },
+              ),
+            ),
+          );
+          sent += batch.length;
+          setCurrentChunk(sent);
+          setUploadProgress(Math.round((sent / numChunks) * 90));
         }
 
         // 3) Déclencher le job BullMQ (retour immédiat avec jobId)
