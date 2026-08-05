@@ -216,11 +216,11 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
         );
         const jobId: string = completeRes.data.jobId;
 
-        // 4) Polling du statut jusqu'à completion (toutes les 2s, timeout 5min)
+        // 4) Polling du statut jusqu'à completion (toutes les 3s, timeout 20min)
         setProcessingJob(true);
         await new Promise<void>((resolve, reject) => {
-          const POLL_INTERVAL = 2000;
-          const TIMEOUT_MS = 5 * 60 * 1000;
+          const POLL_INTERVAL = 3000;
+          const TIMEOUT_MS = 20 * 60 * 1000;
           let elapsed = 0;
 
           const interval = setInterval(() => {
