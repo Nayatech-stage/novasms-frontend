@@ -4,12 +4,14 @@ import { useTranslation } from 'react-i18next';
 import {
   ArrowLeft,
   Download,
+  FileText,
   Mail,
   MousePointerClick,
   AlertTriangle,
   UserMinus,
   Users,
 } from 'lucide-react';
+import { jsPDF } from 'jspdf';
 import api from '@/api/axios';
 
 interface ReportData {
@@ -111,6 +113,221 @@ export default function CampaignReport() {
     a.click();
   };
 
+  const handleExportPdf = () => {
+    if (!data) return;
+    const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+    const pageW = 210;
+    const margin = 15;
+    const contentW = pageW - margin * 2;
+    let y = 0;
+
+    // En-tête
+    doc.setFillColor('#0c5460');
+    doc.rect(0, 0, pageW, 24, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(17);
+    doc.setTextColor(255, 255, 255);
+    doc.text('NovaSMS', margin, 15);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    const campaignTitle =
+      data.campaign.name.length > 40 ? data.campaign.name.slice(0, 38) + '...' : data.campaign.name;
+    doc.text(`Rapport de campagne — ${campaignTitle}`, margin + 42, 15);
+    doc.text(
+      new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }),
+      pageW - margin,
+      15,
+      { align: 'right' },
+    );
+    y = 32;
+
+    // KPI blocks
+    const kpiBlocks = [
+      { label: 'Envoyes', value: data.totalSent.toLocaleString('fr-FR'), hex: '#0c5460' },
+      {
+        label: 'Ouvertures',
+        value: `${data.opened.toLocaleString('fr-FR')} (${data.totalSent > 0 ? ((data.opened / data.totalSent) * 100).toFixed(1) : '0'}%)`,
+        hex: '#2ec80a',
+      },
+      {
+        label: 'Clics',
+        value: `${data.clicked.toLocaleString('fr-FR')} (${data.totalSent > 0 ? ((data.clicked / data.totalSent) * 100).toFixed(1) : '0'}%)`,
+        hex: '#0c5460',
+      },
+      {
+        label: 'Rebonds',
+        value: `${data.bounced.toLocaleString('fr-FR')} (${data.totalSent > 0 ? ((data.bounced / data.totalSent) * 100).toFixed(1) : '0'}%)`,
+        hex: '#ef4444',
+      },
+      {
+        label: 'Desinscrits',
+        value: `${data.unsubscribed.toLocaleString('fr-FR')} (${data.totalSent > 0 ? ((data.unsubscribed / data.totalSent) * 100).toFixed(1) : '0'}%)`,
+        hex: '#6b7280',
+      },
+    ];
+    const cardW = (contentW - 8) / 5;
+    kpiBlocks.forEach((kpi, i) => {
+      const x = margin + i * (cardW + 2);
+      doc.setFillColor('#f7f9f7');
+      doc.roundedRect(x, y, cardW, 22, 2, 2, 'F');
+      doc.setFillColor(kpi.hex);
+      doc.rect(x, y, 2.5, 22, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(kpi.value.length > 12 ? 8 : 11);
+      doc.setTextColor(kpi.hex);
+      doc.text(kpi.value, x + 5, y + 10);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(6.5);
+      doc.setTextColor(100, 100, 100);
+      doc.text(kpi.label, x + 5, y + 17);
+    });
+    y += 28;
+
+    // Barres de répartition visuelle
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor('#0c5460');
+    doc.text('Repartition des interactions', margin, y);
+    y += 5;
+
+    const total = data.totalSent || 1;
+    const bars = [
+      { label: 'Ouvertures', count: data.opened, hex: '#2ec80a' },
+      { label: 'Clics', count: data.clicked, hex: '#0c5460' },
+      { label: 'Rebonds', count: data.bounced, hex: '#ef4444' },
+      { label: 'Desinscrits', count: data.unsubscribed, hex: '#6b7280' },
+    ];
+    bars.forEach((bar) => {
+      const pct = (bar.count / total) * 100;
+      const fillW = (pct / 100) * (contentW - 40);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.5);
+      doc.setTextColor(60, 60, 60);
+      doc.text(bar.label, margin, y + 3.5);
+      doc.setFillColor('#ebebeb');
+      doc.rect(margin + 28, y, contentW - 55, 5, 'F');
+      if (fillW > 0) {
+        doc.setFillColor(bar.hex);
+        doc.rect(margin + 28, y, (fillW * (contentW - 55)) / (contentW - 40), 5, 'F');
+      }
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.5);
+      doc.setTextColor(bar.hex);
+      doc.text(`${pct.toFixed(1)}%`, margin + contentW - 26, y + 3.5, { align: 'right' });
+      y += 10;
+    });
+    y += 4;
+
+    // Zones de clic (click heat)
+    if (data.clickHeat?.length) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.setTextColor('#0c5460');
+      doc.text('Zones de clic', margin, y);
+      y += 5;
+
+      const maxClicks = Math.max(...data.clickHeat.map((z) => z.clickCount), 1);
+      data.clickHeat.slice(0, 6).forEach((zone, i) => {
+        const fillW = (zone.clickCount / maxClicks) * (contentW - 50);
+        doc.setFillColor(i % 2 === 0 ? '#f7f9f7' : '#ffffff');
+        doc.rect(margin, y, contentW, 7, 'F');
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7.5);
+        doc.setTextColor(60, 60, 60);
+        const zoneName = zone.zone.length > 30 ? zone.zone.slice(0, 28) + '...' : zone.zone;
+        doc.text(zoneName, margin + 1.5, y + 4.8);
+        doc.setFillColor('#0c5460');
+        if (fillW > 0) doc.rect(margin + contentW - 48, y + 1.5, fillW * 0.26, 4, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.setTextColor('#0c5460');
+        doc.text(String(zone.clickCount), margin + contentW - 1, y + 4.8, { align: 'right' });
+        y += 7;
+      });
+      y += 4;
+    }
+
+    // Tableau contacts ayant ouvert
+    const printContactTable = (
+      title: string,
+      contacts: ReportData['contactsOpened'],
+      accentHex: string,
+    ) => {
+      if (!contacts.length) return;
+      if (y > 240) {
+        doc.addPage();
+        y = 15;
+      }
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.setTextColor(accentHex);
+      doc.text(title, margin, y);
+      y += 5;
+
+      doc.setFillColor(accentHex);
+      doc.rect(margin, y, contentW, 7, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.5);
+      doc.setTextColor(255, 255, 255);
+      doc.text('Contact', margin + 1.5, y + 4.8);
+      doc.text('Email', margin + 55, y + 4.8);
+      doc.text('Date', margin + contentW - 1, y + 4.8, { align: 'right' });
+      y += 7;
+
+      contacts.slice(0, 20).forEach((c, i) => {
+        if (y > 270) {
+          doc.addPage();
+          y = 15;
+        }
+        doc.setFillColor(i % 2 === 0 ? '#f7f9f7' : '#ffffff');
+        doc.rect(margin, y, contentW, 6.5, 'F');
+        const name =
+          `${c.contact.firstName ?? ''} ${c.contact.lastName ?? ''}`.trim() ||
+          c.contact.email.split('@')[0];
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7.5);
+        doc.setTextColor(40, 40, 40);
+        doc.text(name.length > 22 ? name.slice(0, 20) + '...' : name, margin + 1.5, y + 4.3);
+        doc.text(
+          c.contact.email.length > 32 ? c.contact.email.slice(0, 30) + '...' : c.contact.email,
+          margin + 55,
+          y + 4.3,
+        );
+        doc.text(
+          new Date(c.createdAt).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }),
+          margin + contentW - 1,
+          y + 4.3,
+          { align: 'right' },
+        );
+        y += 6.5;
+      });
+      y += 6;
+    };
+
+    printContactTable('Contacts ayant ouvert', data.contactsOpened, '#2ec80a');
+    printContactTable('Contacts ayant clique', data.contactsClicked, '#0c5460');
+
+    // Pied de page
+    const lastPage = (doc as any).internal.getCurrentPageInfo().pageNumber;
+    for (let p = 1; p <= lastPage; p++) {
+      doc.setPage(p);
+      doc.setFillColor('#f0f2f0');
+      doc.rect(0, 280, pageW, 17, 'F');
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.5);
+      doc.setTextColor(150, 150, 150);
+      doc.text('NovaSMS — Plateforme de messagerie multi-canal', margin, 289);
+      doc.text(
+        `Rapport — ${new Date().toLocaleDateString('fr-FR')} — Page ${p}/${lastPage}`,
+        pageW - margin,
+        289,
+        { align: 'right' },
+      );
+    }
+
+    doc.save(`rapport-campagne-${id}-${new Date().toISOString().slice(0, 10)}.pdf`);
+  };
+
   return (
     <div className="min-h-screen bg-[#f7f9f7] p-3 sm:p-6">
       <div className="mx-auto w-full max-w-6xl space-y-6">
@@ -134,12 +351,21 @@ export default function CampaignReport() {
               </h1>
             </div>
           </div>
-          <button
-            onClick={handleExport}
-            className="inline-flex items-center gap-2 rounded-xl border border-outline-variant/30 bg-white px-4 py-2 text-sm font-semibold text-secondary hover:border-primary/40 hover:text-primary transition"
-          >
-            <Download className="h-4 w-4" /> {t('campaignReport.exportCsv')}
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={handleExport}
+              className="inline-flex items-center gap-2 rounded-xl border border-outline-variant/30 bg-white px-4 py-2 text-sm font-semibold text-secondary hover:border-primary/40 hover:text-primary transition"
+            >
+              <Download className="h-4 w-4" /> {t('campaignReport.exportCsv')}
+            </button>
+            <button
+              onClick={handleExportPdf}
+              disabled={!data}
+              className="inline-flex items-center gap-2 rounded-xl border border-secondary/30 bg-secondary px-4 py-2 text-sm font-semibold text-white hover:bg-secondary/90 transition disabled:opacity-50"
+            >
+              <FileText className="h-4 w-4" /> PDF
+            </button>
+          </div>
         </div>
 
         {error && (

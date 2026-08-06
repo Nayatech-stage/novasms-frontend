@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { PieChart, Pie, Cell, Tooltip as RechartsTip, ResponsiveContainer } from 'recharts';
+import { jsPDF } from 'jspdf';
 import api from '@/api/axios';
 
 interface OverviewData {
@@ -133,6 +135,162 @@ function EvolutionChart({
   );
 }
 
+// ─── Donut Engagement (Recharts) ──────────────────────────────────────────
+const DONUT_COLORS = ['#2ec80a', '#0c5460', '#ef4444', '#6b7280'];
+const DONUT_LABELS = ['Ouvertures', 'Clics', 'Rebonds', 'Désinscrits'];
+
+function EngagementDonut({ overview }: { overview: OverviewData }) {
+  const pieData = [
+    overview.openRate,
+    overview.clickRate,
+    overview.bounceRate,
+    overview.unsubscribeRate,
+  ]
+    .map((v, i) => ({ name: DONUT_LABELS[i], value: Math.max(0, parseFloat(v.toFixed(1))) }))
+    .filter((d) => d.value > 0);
+
+  if (!pieData.length)
+    return (
+      <div
+        style={{
+          height: 140,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: 12,
+          color: 'var(--text-3)',
+        }}
+      >
+        Aucune donnée sur la période
+      </div>
+    );
+
+  return (
+    <div style={{ height: 140, display: 'flex', alignItems: 'center' }}>
+      <div style={{ flex: '0 0 120px', height: 140 }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={pieData}
+              cx="50%"
+              cy="50%"
+              innerRadius={38}
+              outerRadius={56}
+              paddingAngle={2}
+              dataKey="value"
+              startAngle={90}
+              endAngle={-270}
+            >
+              {pieData.map((_, i) => (
+                <Cell key={i} fill={DONUT_COLORS[i % DONUT_COLORS.length]} strokeWidth={0} />
+              ))}
+            </Pie>
+            <RechartsTip
+              formatter={(v, name) => [`${Number(v).toFixed(1)}%`, String(name)]}
+              contentStyle={{ fontSize: 11, borderRadius: 6 }}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8, paddingLeft: 8 }}>
+        {pieData.map((d, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: 2,
+                background: DONUT_COLORS[i % DONUT_COLORS.length],
+                flexShrink: 0,
+              }}
+            />
+            <span style={{ fontSize: 11, color: 'var(--text-2)', flex: 1 }}>{d.name}</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-1)' }}>
+              {d.value.toFixed(1)}%
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Heatmap 24h ──────────────────────────────────────────────────────────
+function HeatmapGrid({
+  data,
+}: {
+  data: { hour: number; openCount: number; clickCount: number }[];
+}) {
+  const maxVal = Math.max(...data.map((d) => d.openCount + d.clickCount), 1);
+  return (
+    <div>
+      <div
+        style={{ display: 'grid', gridTemplateColumns: 'repeat(24, 1fr)', gap: 3, marginBottom: 4 }}
+      >
+        {Array.from({ length: 24 }, (_, h) => {
+          const point = data.find((d) => d.hour === h);
+          const count = point ? point.openCount + point.clickCount : 0;
+          const intensity = count / maxVal;
+          return (
+            <div
+              key={h}
+              title={`${h}h00 — ${count} interaction${count > 1 ? 's' : ''}`}
+              style={{
+                height: 32,
+                borderRadius: 4,
+                background:
+                  intensity < 0.02
+                    ? 'var(--muted)'
+                    : `rgba(12,84,96,${(0.1 + intensity * 0.9).toFixed(2)})`,
+              }}
+            />
+          );
+        })}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(24, 1fr)', gap: 3 }}>
+        {Array.from({ length: 24 }, (_, h) => (
+          <div
+            key={h}
+            style={{
+              fontSize: 8,
+              color: 'var(--text-3)',
+              textAlign: 'center',
+              visibility: h % 6 === 0 ? 'visible' : 'hidden',
+            }}
+          >
+            {h}h
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Helper PDF : dessin d'un secteur de camembert ────────────────────────
+function drawPieSlice(
+  doc: jsPDF,
+  cx: number,
+  cy: number,
+  r: number,
+  startRad: number,
+  endRad: number,
+  hexColor: string,
+) {
+  const sliceAngle = endRad - startRad;
+  const numPts = Math.max(4, Math.ceil(Math.abs(sliceAngle) * r * 1.5));
+  const allPts: number[][] = [[cx, cy]];
+  for (let j = 0; j <= numPts; j++) {
+    const a = startRad + (sliceAngle * j) / numPts;
+    allPts.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]);
+  }
+  const moves: number[][] = [];
+  for (let k = 1; k < allPts.length; k++) {
+    moves.push([allPts[k][0] - allPts[k - 1][0], allPts[k][1] - allPts[k - 1][1]]);
+  }
+  doc.setFillColor(hexColor);
+  doc.lines(moves, cx, cy, [1, 1], 'F', true);
+}
+
 export default function Analytics() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -167,9 +325,248 @@ export default function Analytics() {
     URL.revokeObjectURL(url);
   };
 
+  const handleExportPdf = () => {
+    if (!data) return;
+
+    const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+    const pageW = 210;
+    const margin = 15;
+    const contentW = pageW - margin * 2;
+    let y = 0;
+
+    // ── En-tête ──────────────────────────────────────────────
+    doc.setFillColor('#0c5460');
+    doc.rect(0, 0, pageW, 24, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(17);
+    doc.setTextColor(255, 255, 255);
+    doc.text('NovaSMS', margin, 15);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.text(`Rapport Analytics — ${period} derniers jours`, margin + 42, 15);
+    doc.text(
+      new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }),
+      pageW - margin,
+      15,
+      { align: 'right' },
+    );
+    y = 32;
+
+    // ── KPI ──────────────────────────────────────────────────
+    const kpis = [
+      {
+        label: 'Messages envoyes',
+        value: data.messagesSent.toLocaleString('fr-FR'),
+        hex: '#0c5460',
+      },
+      { label: "Taux d'ouverture", value: `${data.openRate.toFixed(1)}%`, hex: '#2ec80a' },
+      { label: 'Taux de clic', value: `${data.clickRate.toFixed(1)}%`, hex: '#aaee22' },
+      { label: 'Rebonds', value: `${data.bounceRate.toFixed(1)}%`, hex: '#ef4444' },
+      { label: 'Desinscrits', value: `${data.unsubscribeRate.toFixed(1)}%`, hex: '#6b7280' },
+    ];
+    const cardW = (contentW - 8) / 5;
+    kpis.forEach((kpi, i) => {
+      const x = margin + i * (cardW + 2);
+      doc.setFillColor('#f7f9f7');
+      doc.roundedRect(x, y, cardW, 22, 2, 2, 'F');
+      doc.setFillColor(kpi.hex);
+      doc.rect(x, y, 2.5, 22, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.setTextColor(kpi.hex);
+      doc.text(kpi.value, x + 5, y + 10);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(6.5);
+      doc.setTextColor(100, 100, 100);
+      doc.text(kpi.label, x + 5, y + 17);
+    });
+    y += 28;
+
+    // ── Diagramme circulaire ──────────────────────────────────
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor('#0c5460');
+    doc.text("Repartition de l'engagement", margin, y);
+    y += 5;
+
+    const pieSegments = [
+      { label: 'Ouvertures', value: data.openRate, hex: '#2ec80a' },
+      { label: 'Clics', value: data.clickRate, hex: '#0c5460' },
+      { label: 'Rebonds', value: data.bounceRate, hex: '#ef4444' },
+      { label: 'Desinscrits', value: data.unsubscribeRate, hex: '#6b7280' },
+    ].filter((d) => d.value > 0);
+
+    const pieCx = margin + 28;
+    const pieCy = y + 26;
+    const pieR = 22;
+    const donutR = 10;
+    const totalPct = pieSegments.reduce((s, d) => s + d.value, 0) || 100;
+
+    if (pieSegments.length > 0) {
+      let startAngle = -Math.PI / 2;
+      pieSegments.forEach((seg) => {
+        const sliceAngle = (seg.value / totalPct) * 2 * Math.PI;
+        drawPieSlice(doc, pieCx, pieCy, pieR, startAngle, startAngle + sliceAngle, seg.hex);
+        startAngle += sliceAngle;
+      });
+      doc.setFillColor('#ffffff');
+      doc.circle(pieCx, pieCy, donutR, 'F');
+    } else {
+      doc.setFillColor('#e5e7eb');
+      doc.circle(pieCx, pieCy, pieR, 'F');
+    }
+
+    // Légende donut
+    let legY = y + 8;
+    pieSegments.forEach((seg) => {
+      doc.setFillColor(seg.hex);
+      doc.roundedRect(margin + 58, legY, 3, 3, 0.5, 0.5, 'F');
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(60, 60, 60);
+      doc.text(`${seg.label} : ${seg.value.toFixed(1)}%`, margin + 63, legY + 2.5);
+      legY += 9;
+    });
+
+    // ── Top campagnes (barres) ────────────────────────────────
+    const barX = margin + 100;
+    const barY = y;
+    const barW = contentW - 102;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor('#0c5460');
+    doc.text('Top campagnes', barX, barY);
+
+    if (data.top5?.length) {
+      const maxSent = Math.max(...data.top5.map((c) => c.sentCount), 1);
+      const barColors = ['#0c5460', '#2ec80a', '#aaee22', '#6b7280', '#ef4444'];
+      const slotH = 54 / Math.min(data.top5.length, 5);
+
+      data.top5.slice(0, 5).forEach((c, i) => {
+        const rowY = barY + 5 + i * slotH;
+        const fillW = (c.sentCount / maxSent) * (barW - 18);
+        const shortName = c.name.length > 20 ? c.name.slice(0, 18) + '...' : c.name;
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7);
+        doc.setTextColor(80, 80, 80);
+        doc.text(shortName, barX, rowY + slotH * 0.32);
+
+        doc.setFillColor('#ebebeb');
+        doc.rect(barX, rowY + slotH * 0.5, barW - 18, 3.5, 'F');
+        doc.setFillColor(barColors[i % barColors.length]);
+        if (fillW > 0) doc.rect(barX, rowY + slotH * 0.5, fillW, 3.5, 'F');
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7);
+        doc.setTextColor(barColors[i % barColors.length]);
+        doc.text(c.sentCount.toLocaleString('fr-FR'), barX + barW - 17, rowY + slotH * 0.5 + 3, {
+          align: 'right',
+        });
+      });
+    }
+
+    y += 62;
+
+    // ── Heatmap 24h ──────────────────────────────────────────
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor('#0c5460');
+    doc.text('Heatmap engagement horaire (24h)', margin, y);
+    y += 5;
+
+    if (data.heatmap?.length) {
+      const maxH = Math.max(...data.heatmap.map((h) => h.openCount + h.clickCount), 1);
+      const cellW = contentW / 24;
+      const cellH = 10;
+      for (let h = 0; h < 24; h++) {
+        const point = data.heatmap.find((d) => d.hour === h);
+        const count = point ? point.openCount + point.clickCount : 0;
+        const intensity = count / maxH;
+        // Light teal → dark teal gradient
+        const r = Math.round(220 - intensity * 160);
+        const g = Math.round(235 - intensity * 135);
+        const b = Math.round(240 - intensity * 192);
+        doc.setFillColor(r, g, b);
+        doc.rect(margin + h * cellW, y, cellW - 0.5, cellH, 'F');
+        if (h % 6 === 0) {
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(6);
+          doc.setTextColor(130, 130, 130);
+          doc.text(`${h}h`, margin + h * cellW, y + cellH + 3.5);
+        }
+      }
+      y += cellH + 8;
+    }
+
+    // ── Tableau Top 5 ────────────────────────────────────────
+    if (data.top5?.length) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.setTextColor('#0c5460');
+      doc.text(`Classement des campagnes — ${period} derniers jours`, margin, y);
+      y += 5;
+
+      const cols: { label: string; x: number; w: number; align: 'left' | 'right' }[] = [
+        { label: 'Campagne', x: margin, w: 65, align: 'left' },
+        { label: 'Envois', x: margin + 65, w: 26, align: 'right' },
+        { label: 'Ouvertures', x: margin + 91, w: 26, align: 'right' },
+        { label: 'Clics', x: margin + 117, w: 22, align: 'right' },
+        { label: 'Tx clic', x: margin + 139, w: 23, align: 'right' },
+        { label: 'Tx ouv.', x: margin + 162, w: contentW - 147, align: 'right' },
+      ];
+
+      doc.setFillColor('#0c5460');
+      doc.rect(margin, y, contentW, 7, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.5);
+      doc.setTextColor(255, 255, 255);
+      cols.forEach((col) => {
+        const tx = col.align === 'right' ? col.x + col.w - 1 : col.x + 1.5;
+        doc.text(col.label, tx, y + 4.8, { align: col.align });
+      });
+      y += 7;
+
+      data.top5.forEach((c, i) => {
+        doc.setFillColor(i % 2 === 0 ? '#f7f9f7' : '#ffffff');
+        doc.rect(margin, y, contentW, 6.5, 'F');
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7.5);
+        doc.setTextColor(40, 40, 40);
+        doc.text(c.name.length > 33 ? c.name.slice(0, 31) + '...' : c.name, margin + 1.5, y + 4.3);
+        doc.text(c.sentCount.toLocaleString('fr-FR'), margin + 90, y + 4.3, { align: 'right' });
+        doc.text(c.openedCount.toLocaleString('fr-FR'), margin + 116, y + 4.3, { align: 'right' });
+        doc.text(c.clickedCount.toLocaleString('fr-FR'), margin + 138, y + 4.3, { align: 'right' });
+        const cRate =
+          c.sentCount > 0 ? `${((c.clickedCount / c.sentCount) * 100).toFixed(1)}%` : '--';
+        const oRate =
+          c.sentCount > 0 ? `${((c.openedCount / c.sentCount) * 100).toFixed(1)}%` : '--';
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor('#2ec80a');
+        doc.text(cRate, margin + 161, y + 4.3, { align: 'right' });
+        doc.setTextColor('#0c5460');
+        doc.text(oRate, margin + contentW - 0.5, y + 4.3, { align: 'right' });
+        y += 6.5;
+      });
+    }
+
+    // ── Pied de page ─────────────────────────────────────────
+    doc.setFillColor('#f0f2f0');
+    doc.rect(0, 280, pageW, 17, 'F');
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(150, 150, 150);
+    doc.text('NovaSMS — Plateforme de messagerie multi-canal', margin, 289);
+    doc.text(`Genere le ${new Date().toLocaleDateString('fr-FR')}`, pageW - margin, 289, {
+      align: 'right',
+    });
+
+    doc.save(`analytics-novasms-${period}j-${new Date().toISOString().slice(0, 10)}.pdf`);
+  };
+
   return (
     <div id="tour-analytics-header" className="content">
-      {/* Header card with period selector */}
+      {/* Header card */}
       <div className="card" style={{ padding: '13px 16px' }}>
         <div className="analytics-header-inner flex items-center justify-between">
           <div className="flex items-center gap-3 sm:gap-12">
@@ -230,29 +627,62 @@ export default function Analytics() {
                 </button>
               ))}
             </div>
-            <button
-              className="btn-sm"
-              style={{ display: 'flex', alignItems: 'center', gap: 6 }}
-              onClick={handleExportCsv}
-            >
-              <svg
-                width="12"
-                height="12"
-                viewBox="0 0 12 12"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.3"
+            <div className="flex gap-2">
+              <button
+                className="btn-sm"
+                style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+                onClick={handleExportCsv}
+                disabled={!data?.top5?.length}
               >
-                <path d="M6 1v7M2 5l4 4 4-4" />
-                <path d="M1 10v1h10v-1" />
-              </svg>
-              {t('analyticsPage.exportCsv')}
-            </button>
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 12 12"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.3"
+                >
+                  <path d="M6 1v7M2 5l4 4 4-4" />
+                  <path d="M1 10v1h10v-1" />
+                </svg>
+                {t('analyticsPage.exportCsv')}
+              </button>
+              <button
+                className="btn-sm"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  ...(data
+                    ? {
+                        background: 'var(--brand-teal)',
+                        color: '#fff',
+                        borderColor: 'var(--brand-teal)',
+                      }
+                    : {}),
+                }}
+                onClick={handleExportPdf}
+                disabled={!data}
+              >
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 12 12"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.3"
+                >
+                  <path d="M9 1H3a1 1 0 00-1 1v8a1 1 0 001 1h6a1 1 0 001-1V2a1 1 0 00-1-1z" />
+                  <path d="M4 5h4M4 7h2" />
+                </svg>
+                PDF
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* KPI Stats — 5 colonnes style analytics-stat */}
+      {/* KPI Stats */}
       {loading ? (
         <div style={{ textAlign: 'center', padding: 32, color: 'var(--text-2)', fontSize: 12 }}>
           {t('analyticsPage.loading')}
@@ -318,17 +748,16 @@ export default function Analytics() {
         </div>
       )}
 
-      {/* Charts row: evolution + top campagnes + heatmap compact */}
+      {/* Charts row: évolution + donut */}
       <div
         className="charts-row"
         style={{
           display: 'grid',
           gridTemplateColumns: 'minmax(0,1.4fr) minmax(0,1fr)',
           gap: 12,
-          flex: 1,
         }}
       >
-        {/* Courbe des ouvertures */}
+        {/* Courbe évolution */}
         <div className="card">
           <div className="flex items-center justify-between mb-12">
             <div className="card-title">{t('analyticsPage.evolution')}</div>
@@ -375,86 +804,19 @@ export default function Analytics() {
           )}
         </div>
 
-        {/* Top campagnes + heatmap compact */}
+        {/* Donut + derniers contacts */}
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {/* Top campagnes */}
           <div>
-            <div className="card-title mb-8">{t('analyticsPage.topCampaigns')}</div>
-            {!data?.top5 || data.top5.length === 0 ? (
-              <div
-                style={{
-                  textAlign: 'center',
-                  padding: '12px 0',
-                  color: 'var(--text-2)',
-                  fontSize: 12,
-                }}
-              >
-                {t('analyticsPage.noData')}{' '}
-                <button
-                  onClick={() => navigate('/campaigns/new')}
-                  style={{
-                    color: '#2ec80a',
-                    background: 'none',
-                    border: 'none',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
-                >
-                  {t('analyticsPage.createNow')}
-                </button>
-              </div>
+            <div className="card-title mb-8">Répartition de l'engagement</div>
+            {data ? (
+              <EngagementDonut overview={data} />
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {data.top5.slice(0, 3).map((c, i) => {
-                  const maxSent = data.top5[0]?.sentCount || 1;
-                  const pct = Math.round((c.sentCount / maxSent) * 100);
-                  const colors = ['var(--brand-gradient)', '#0c5460', '#aaee22'];
-                  return (
-                    <div
-                      key={c.id}
-                      style={{
-                        background: 'var(--muted)',
-                        borderRadius: 6,
-                        padding: '7px 10px',
-                        cursor: 'pointer',
-                      }}
-                      onClick={() => navigate(`/campaigns/${c.id}`)}
-                    >
-                      <div
-                        className="flex items-center justify-between text-xs mb-8"
-                        style={{ marginBottom: 4 }}
-                      >
-                        <span
-                          className="text-muted"
-                          style={{
-                            maxWidth: 150,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          {c.name}
-                        </span>
-                        <strong style={{ color: '#2ec80a' }}>
-                          {c.sentCount.toLocaleString('fr-FR')}
-                        </strong>
-                      </div>
-                      <div className="progress-track">
-                        <div
-                          className="progress-fill"
-                          style={{ width: `${pct}%`, background: colors[i] || '#2ec80a' }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+              <div style={{ height: 140, background: 'var(--muted)', borderRadius: 8 }} />
             )}
           </div>
 
           <div className="divider" />
 
-          {/* Derniers contacts ayant ouvert / cliqué */}
           <div>
             <div className="card-title mb-8">{t('analyticsPage.recentOpens')}</div>
             {!data?.recentOpens?.length ? (
@@ -471,7 +833,6 @@ export default function Analytics() {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                 {(() => {
-                  // eslint-disable-next-line react-hooks/purity
                   const now = Date.now();
                   return data.recentOpens.map((r, i) => {
                     const initials =
@@ -563,7 +924,18 @@ export default function Analytics() {
         </div>
       </div>
 
-      {/* Top 5 table complète */}
+      {/* Heatmap 24h */}
+      {data?.heatmap && data.heatmap.length > 0 && (
+        <div className="card">
+          <div className="flex items-center justify-between mb-12">
+            <div className="card-title">Heatmap d'engagement horaire</div>
+            <span className="text-xs text-muted">Ouvertures + clics cumulés par heure</span>
+          </div>
+          <HeatmapGrid data={data.heatmap} />
+        </div>
+      )}
+
+      {/* Top 5 table */}
       {data?.top5 && data.top5.length > 0 && (
         <div className="card">
           <div className="flex items-center justify-between mb-12">
