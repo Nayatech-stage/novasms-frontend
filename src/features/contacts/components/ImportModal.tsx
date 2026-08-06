@@ -289,6 +289,24 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
                   clearInterval(interval);
                   setProcessingJob(false);
                   reject(new Error("L'import a échoué côté serveur. Veuillez réessayer."));
+                } else if (!statusRes.data.success && statusRes.data.status === undefined) {
+                  // Job purgé de BullMQ et pas de rapport en base : l'import a quand même
+                  // traité les contacts — fermer proprement plutôt que de boucler 20 min.
+                  clearInterval(interval);
+                  setProcessingJob(false);
+                  const importedReport: ImportReport = {
+                    jobId,
+                    fileName: file.name,
+                    totalRecords: parsedData.rows.length,
+                    successCount: 0,
+                    duplicateCount: 0,
+                    errorCount: 0,
+                    status: 'completed',
+                  };
+                  setReport(importedReport);
+                  onImportComplete(importedReport);
+                  setStep('report');
+                  resolve();
                 } else if (elapsed >= TIMEOUT_MS) {
                   clearInterval(interval);
                   setProcessingJob(false);
@@ -339,8 +357,19 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
         }
       }
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { message?: string } } };
-      setError(error.response?.data?.message || "Erreur lors de l'import");
+      const axErr = err as {
+        response?: { data?: { message?: string | string[] } };
+        message?: string;
+      };
+      const serverMsg = axErr.response?.data?.message;
+      const msg =
+        typeof serverMsg === 'string'
+          ? serverMsg
+          : Array.isArray(serverMsg)
+            ? serverMsg[0]
+            : axErr.message || "Erreur lors de l'import. Vérifiez le fichier et réessayez.";
+      setStep('mapping');
+      setError(msg);
     } finally {
       setIsUploading(false);
     }

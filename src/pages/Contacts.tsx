@@ -122,8 +122,24 @@ export default function ContactsPage() {
       closeAddModal();
     } catch (error) {
       console.error(error);
-      setAddError('Impossible de créer le contact. Vérifiez les champs puis réessayez.');
-      toast.error('La création du contact a échoué');
+      const axErr = error as {
+        response?: { data?: { message?: string | string[]; error?: string }; status?: number };
+      };
+      const serverMsg = axErr.response?.data?.message;
+      const status = axErr.response?.status;
+      let errMsg =
+        typeof serverMsg === 'string'
+          ? serverMsg
+          : Array.isArray(serverMsg)
+            ? serverMsg[0]
+            : axErr.response?.data?.error || null;
+      if (!errMsg) {
+        errMsg =
+          status === 403
+            ? "Vous n'avez pas les droits pour créer un contact."
+            : 'Impossible de créer le contact. Vérifiez les champs puis réessayez.';
+      }
+      setAddError(errMsg);
     } finally {
       setIsCreating(false);
     }
