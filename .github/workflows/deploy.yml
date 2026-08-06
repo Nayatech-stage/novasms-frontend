@@ -17,21 +17,44 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
+          cache: npm
 
-      - name: Pack source
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm install --no-audit --no-fund
+          else
+            npm install --no-audit --no-fund
+          fi
+
+      - name: Build frontend
+        env:
+          VITE_API_BASE_URL: /api
+          VITE_API_URL: /api
+          VITE_APP_NAME: NovaSMS
+          VITE_APP_ENV: production
+          VITE_IS_STAGING: 'true'
+        run: npm run build
+
+      - name: Pack source (prebuilt dist)
         run: |
           COPYFILE_DISABLE=1 tar \
             --exclude='./.git' \
             --exclude='./node_modules' \
-            --exclude='./dist' \
             --exclude='./.vite' \
             --exclude='./test-results' \
             --exclude='./playwright-report' \
             --exclude='./.github' \
-            -cf ./deploy.tar .
+            --exclude='./src' \
+            -cf ./deploy.tar \
+            Dockerfile \
+            captain-definition \
+            nginx.conf.template \
+            dist \
+            package.json \
+            index.html
 
-      # caprover/deploy-from-github@v1.1.2 casse (ERR_REQUIRE_ESM sur update-notifier)
       - name: Install CapRover CLI
         run: npm i -g caprover@2.3.1
 

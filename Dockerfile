@@ -1,35 +1,10 @@
-FROM node:22-bookworm-slim AS build
+FROM nginx:1.27-alpine
 
-WORKDIR /app
-
-# Alpine/musl casse lightningcss (Vite 8) : binding linux-x64-musl manquant.
-COPY package*.json ./
-RUN npm install --no-audit --no-fund \
-  --fetch-retries=5 \
-  --fetch-retry-mintimeout=20000 \
-  --fetch-retry-maxtimeout=120000
-
-COPY . .
-
-ARG VITE_API_BASE_URL=/api
-ARG VITE_API_URL
-ARG VITE_APP_NAME=NovaSMS
-ARG VITE_APP_ENV=production
-ARG VITE_IS_STAGING=false
-
-RUN VITE_API_BASE_URL="$VITE_API_BASE_URL" \
-  VITE_API_URL="${VITE_API_URL:-$VITE_API_BASE_URL}" \
-  VITE_APP_NAME="$VITE_APP_NAME" \
-  VITE_APP_ENV="$VITE_APP_ENV" \
-  VITE_IS_STAGING="$VITE_IS_STAGING" \
-  npm run build
-
-FROM nginx:1.27-alpine AS runtime
-
+# Le build Vite se fait dans GitHub Actions (évite lightningcss + crash CapRover).
 ENV API_UPSTREAM=http://srv-captain--nova-sms-backend:3000
 
 COPY nginx.conf.template /etc/nginx/templates/default.conf.template
-COPY --from=build /app/dist /usr/share/nginx/html
+COPY dist /usr/share/nginx/html
 
 EXPOSE 80
 

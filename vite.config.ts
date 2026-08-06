@@ -6,6 +6,12 @@ import { fileURLToPath, URL } from 'node:url';
 export default defineConfig({
   plugins: [react()],
 
+  // Vite 8 / lightningcss native bindings cassent souvent (Docker/CI).
+  // Désactive la minification CSS native pour un build portable.
+  build: {
+    cssMinify: false,
+  },
+
   server: {
     allowedHosts: true,
     proxy: {
