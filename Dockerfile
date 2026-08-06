@@ -1,9 +1,9 @@
-FROM node:22-alpine AS build
+FROM node:22-bookworm-slim AS build
 
 WORKDIR /app
 
+# Alpine/musl casse lightningcss (Vite 8) : binding linux-x64-musl manquant.
 COPY package*.json ./
-# npm ci casse souvent sur ce lock (peers ESLint/ajv) ; npm install reste fiable en staging.
 RUN npm install --no-audit --no-fund \
   --fetch-retries=5 \
   --fetch-retry-mintimeout=20000 \
