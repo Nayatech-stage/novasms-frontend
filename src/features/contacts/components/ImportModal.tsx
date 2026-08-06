@@ -357,17 +357,14 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
         }
       }
     } catch (err: unknown) {
-      const axErr = err as {
-        response?: { data?: { message?: string | string[] } };
-        message?: string;
-      };
-      const serverMsg = axErr.response?.data?.message;
+      console.error(err);
+      const status = (err as { response?: { status?: number } }).response?.status;
       const msg =
-        typeof serverMsg === 'string'
-          ? serverMsg
-          : Array.isArray(serverMsg)
-            ? serverMsg[0]
-            : axErr.message || "Erreur lors de l'import. Vérifiez le fichier et réessayez.";
+        status === 413
+          ? 'Fichier trop volumineux. Réduisez la taille ou découpez-le.'
+          : status === 403
+            ? "Vous n'avez pas les droits pour importer des contacts."
+            : "L'import a échoué. Vérifiez votre fichier et réessayez.";
       setStep('mapping');
       setError(msg);
     } finally {
