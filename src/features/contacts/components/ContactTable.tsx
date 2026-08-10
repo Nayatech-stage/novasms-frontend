@@ -203,6 +203,7 @@ export default function ContactTable({
   const [selectedSegmentId, setSelectedSegmentId] = useState<string>('');
   const [editingSegmentId, setEditingSegmentId] = useState<string | null>(null);
   const [selectedContactIds, setSelectedContactIds] = useState<Set<string>>(new Set());
+  const [selectAllMode, setSelectAllMode] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [showExportModal, setShowExportModal] = useState(false);
@@ -424,8 +425,10 @@ export default function ContactTable({
   const toggleSelectAll = () => {
     if (selectedContactIds.size === contacts.length && contacts.length > 0) {
       setSelectedContactIds(new Set());
+      setSelectAllMode(false);
     } else {
       setSelectedContactIds(new Set(contacts.map((c) => c.id)));
+      setSelectAllMode(false);
     }
   };
 
@@ -435,14 +438,19 @@ export default function ContactTable({
     try {
       setIsDeleting(true);
       await contactsApi.delete(id);
-      setContacts((prev) => prev.filter((c) => c.id !== id));
-      setTotal((prev) => Math.max(0, prev - 1));
+      const remaining = contacts.filter((c) => c.id !== id);
+      const newTotal = Math.max(0, total - 1);
+      setContacts(remaining);
+      setTotal(newTotal);
       setSelectedContactIds((prev) => {
         const newSet = new Set(prev);
         newSet.delete(id);
         return newSet;
       });
       setOpenMenuId(null);
+      if (remaining.length === 0 && newTotal > 0) {
+        await fetchContacts(null, true);
+      }
     } catch (error) {
       console.error('Failed to delete contact:', error);
       toast.error('Erreur lors de la suppression du contact');
@@ -452,21 +460,37 @@ export default function ContactTable({
   };
 
   const deleteSelectedContacts = async () => {
-    if (selectedContactIds.size === 0) return;
-    if (
-      !confirm(
-        `Supprimer ${selectedContactIds.size} contact${selectedContactIds.size > 1 ? 's' : ''} définitivement ?`,
-      )
-    )
-      return;
+    if (selectedContactIds.size === 0 && !selectAllMode) return;
+    const confirmMsg = selectAllMode
+      ? `Supprimer TOUS les ${total.toLocaleString('fr-FR')} contacts définitivement ? Cette action est irréversible.`
+      : `Supprimer ${selectedContactIds.size} contact${selectedContactIds.size > 1 ? 's' : ''} définitivement ?`;
+    if (!confirm(confirmMsg)) return;
 
     try {
       setIsDeleting(true);
-      const count = selectedContactIds.size;
-      await contactsApi.bulkDelete([...selectedContactIds]);
-      setContacts((prev) => prev.filter((c) => !selectedContactIds.has(c.id)));
-      setTotal((prev) => Math.max(0, prev - count));
-      setSelectedContactIds(new Set());
+      if (selectAllMode) {
+        const activeFilters: { search?: string; tag?: string; location?: string } = {};
+        if (debouncedSearch && searchType === 'all') activeFilters.search = debouncedSearch;
+        if (debouncedSearch && searchType === 'tag') activeFilters.tag = debouncedSearch;
+        if (debouncedSearch && searchType === 'location') activeFilters.location = debouncedSearch;
+        await contactsApi.bulkDeleteAll(activeFilters);
+        setContacts([]);
+        setTotal(0);
+        setSelectedContactIds(new Set());
+        setSelectAllMode(false);
+      } else {
+        const ids = [...selectedContactIds];
+        const count = ids.length;
+        await contactsApi.bulkDelete(ids);
+        const remaining = contacts.filter((c) => !selectedContactIds.has(c.id));
+        const newTotal = Math.max(0, total - count);
+        setContacts(remaining);
+        setTotal(newTotal);
+        setSelectedContactIds(new Set());
+        if (remaining.length === 0 && newTotal > 0) {
+          await fetchContacts(null, true);
+        }
+      }
     } catch (error) {
       console.error('Failed to delete contacts:', error);
       toast.error('Erreur lors de la suppression des contacts');
@@ -981,6 +1005,43 @@ export default function ContactTable({
         )}
       </AnimatePresence>
 
+      {/* Bannière select-all cross-pages (pattern Gmail) */}
+      {selectedContactIds.size === contacts.length &&
+        contacts.length > 0 &&
+        total > contacts.length &&
+        !selectAllMode && (
+          <div className="flex items-center justify-center gap-2 px-4 py-2.5 bg-primary/5 border border-primary/20 rounded-xl text-sm">
+            <span className="text-on-surface">
+              Les <span className="font-semibold">{contacts.length}</span> contacts de cette page
+              sont sélectionnés.
+            </span>
+            <button
+              type="button"
+              onClick={() => setSelectAllMode(true)}
+              className="font-semibold text-primary hover:underline"
+            >
+              Sélectionner les {total.toLocaleString('fr-FR')} contacts au total
+            </button>
+          </div>
+        )}
+      {selectAllMode && (
+        <div className="flex items-center justify-center gap-3 px-4 py-2.5 bg-primary/10 border border-primary/30 rounded-xl text-sm">
+          <span className="font-semibold text-primary">
+            Tous les {total.toLocaleString('fr-FR')} contacts sont sélectionnés.
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              setSelectAllMode(false);
+              setSelectedContactIds(new Set());
+            }}
+            className="text-on-surface-variant hover:text-on-surface underline"
+          >
+            Annuler la sélection
+          </button>
+        </div>
+      )}
+
       {/* Table - Conforme maquette contacts.html */}
       <div
         ref={tableContainerRef}
@@ -1289,7 +1350,7 @@ export default function ContactTable({
 
       {/* Barre d'actions bulk — apparaît quand des contacts sont sélectionnés */}
       <AnimatePresence>
-        {selectedContactIds.size > 0 && (
+        {(selectedContactIds.size > 0 || selectAllMode) && (
           <motion.div
             initial={{ y: 80, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -1298,20 +1359,23 @@ export default function ContactTable({
             className="contact-bulk-bar fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 sm:gap-3 px-3 sm:px-5 py-2.5 sm:py-3 bg-surface border border-outline-variant rounded-2xl shadow-xl"
           >
             <span className="text-sm font-semibold text-on-surface">
-              {selectedContactIds.size} contact{selectedContactIds.size > 1 ? 's' : ''} sélectionné
-              {selectedContactIds.size > 1 ? 's' : ''}
+              {selectAllMode
+                ? `${total.toLocaleString('fr-FR')} contacts sélectionnés (tous)`
+                : `${selectedContactIds.size} contact${selectedContactIds.size > 1 ? 's' : ''} sélectionné${selectedContactIds.size > 1 ? 's' : ''}`}
             </span>
             <div className="w-px h-5 bg-outline-variant" />
+            {!selectAllMode && (
+              <button
+                onClick={toggleSelectAll}
+                className="text-sm text-on-surface-variant hover:text-on-surface transition-colors"
+              >
+                {selectedContactIds.size === contacts.length
+                  ? t('contactTable.deselectAll')
+                  : t('contactTable.selectAll')}
+              </button>
+            )}
             <button
-              onClick={toggleSelectAll}
-              className="text-sm text-on-surface-variant hover:text-on-surface transition-colors"
-            >
-              {selectedContactIds.size === contacts.length
-                ? t('contactTable.deselectAll')
-                : t('contactTable.selectAll')}
-            </button>
-            <button
-              onClick={deleteSelectedContacts}
+              onClick={() => void deleteSelectedContacts()}
               disabled={isDeleting}
               className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -1323,7 +1387,10 @@ export default function ContactTable({
               Supprimer
             </button>
             <button
-              onClick={() => setSelectedContactIds(new Set())}
+              onClick={() => {
+                setSelectedContactIds(new Set());
+                setSelectAllMode(false);
+              }}
               className="p-1.5 rounded-lg hover:bg-surface-container transition-colors text-on-surface-variant"
               aria-label="Annuler la sélection"
             >

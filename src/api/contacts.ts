@@ -102,6 +102,13 @@ export const contactsApi = {
     return response.data;
   },
 
+  bulkDeleteAll: async (filters?: { search?: string; tag?: string; location?: string }) => {
+    const response = await api.delete<{ success: boolean; deleted: number }>('/contacts/bulk/all', {
+      data: filters ?? {},
+    });
+    return response.data;
+  },
+
   /**
    * Valider un numéro de téléphone (libphonenumber-js, 245 pays)
    * GET /api/contacts/validate-phone?phone=xxx

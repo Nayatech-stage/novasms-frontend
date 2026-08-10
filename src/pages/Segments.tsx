@@ -10,11 +10,11 @@ import {
 
 const FIELD_LABELS: Record<string, string> = {
   tags: 'Tags',
-  country: 'Pays',
-  city: 'Ville',
+  location: 'Localisation',
+  email: 'Email',
+  firstName: 'Prénom',
+  lastName: 'Nom',
   createdAt: "Date d'ajout",
-  lastPurchase: 'Dernier achat',
-  openRate: "Taux d'ouverture",
 };
 
 const OP_LABELS: Record<string, string> = {
@@ -139,7 +139,7 @@ export default function SegmentsPage() {
   const addFilter = () => {
     setCriteria((prev) => ({
       ...prev,
-      filters: [...prev.filters, { field: 'tags', op: 'contains', value: '' }],
+      filters: [...prev.filters, { field: 'tags' as const, op: 'contains' as const, value: '' }],
     }));
   };
 

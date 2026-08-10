@@ -1,7 +1,7 @@
 import api from './axios';
 
 export interface SegmentFilter {
-  field: 'tags' | 'country' | 'createdAt' | 'lastPurchase' | 'openRate' | 'city';
+  field: 'tags' | 'location' | 'email' | 'firstName' | 'lastName' | 'createdAt';
   op: 'contains' | 'eq' | 'neq' | 'gte' | 'lte' | 'in';
   value: string | string[];
 }
