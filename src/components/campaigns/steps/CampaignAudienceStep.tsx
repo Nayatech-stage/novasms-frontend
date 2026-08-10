@@ -400,7 +400,13 @@ puis revenez ici avec "Rafraîchir".
                         <div className="animate-pulse h-7 w-24 bg-primary/10 rounded" />
                       ) : (
                         <p className="font-headline font-bold text-primary">
-                          {formatCost(count * 0.08)}
+                          {formatCost(
+                            computeCampaignCost(
+                              draft.channel || 'EMAIL',
+                              count,
+                              draft.smsContent?.message || '',
+                            ),
+                          )}
                         </p>
                       )}
                     </div>
@@ -444,7 +450,13 @@ puis revenez ici avec "Rafraîchir".
                 <div className="animate-pulse h-7 w-24 bg-primary/10 rounded" />
               ) : (
                 <p className="font-headline font-bold text-xl text-primary">
-                  {formatCost(selectedContactCount * 0.08)}
+                  {formatCost(
+                    computeCampaignCost(
+                      draft.channel || 'EMAIL',
+                      selectedContactCount,
+                      draft.smsContent?.message || '',
+                    ),
+                  )}
                 </p>
               )}
             </div>
