@@ -14,6 +14,24 @@ import {
 import { jsPDF } from 'jspdf';
 import api from '@/api/axios';
 
+interface ABVariantStats {
+  sent: number;
+  opened: number;
+  clicked: number;
+  openRate: number;
+  clickRate: number;
+}
+
+interface ABReportData {
+  enabled: boolean;
+  winner: 'A' | 'B' | null;
+  subjectA: string;
+  subjectB: string;
+  splitPct: number;
+  variantA: ABVariantStats;
+  variantB: ABVariantStats;
+}
+
 interface ReportData {
   campaign: { id: string; name: string };
   totalSent: number;
@@ -21,6 +39,7 @@ interface ReportData {
   clicked: number;
   bounced: number;
   unsubscribed: number;
+  abReport: ABReportData | null;
   contactsOpened: Array<{
     contact: { email: string; firstName?: string; lastName?: string };
     createdAt: string;
@@ -418,6 +437,127 @@ export default function CampaignReport() {
                 color="text-error"
               />
             </div>
+
+            {/* Section A/B Test */}
+            {data.abReport && (
+              <div className="rounded-3xl border border-outline-variant/20 bg-white p-6 shadow-sm space-y-6">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant mb-1">
+                    Test A/B
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <h2 className="text-xl font-bold text-on-surface">Résultats du test A/B</h2>
+                    {data.abReport.winner ? (
+                      <span className="px-2 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold uppercase tracking-wider">
+                        Variante {data.abReport.winner} gagnante
+                      </span>
+                    ) : (
+                      <span className="px-2 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-bold uppercase tracking-wider">
+                        En cours…
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {(['A', 'B'] as const).map((variant) => {
+                    const stats =
+                      variant === 'A' ? data.abReport!.variantA : data.abReport!.variantB;
+                    const subject =
+                      variant === 'A' ? data.abReport!.subjectA : data.abReport!.subjectB;
+                    const isWinner = data.abReport!.winner === variant;
+                    return (
+                      <div
+                        key={variant}
+                        className={`rounded-2xl p-5 border-2 transition-all ${
+                          isWinner
+                            ? 'border-green-400 bg-green-50'
+                            : 'border-outline-variant/20 bg-surface-container-low'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white ${variant === 'A' ? 'bg-primary' : 'bg-secondary'}`}
+                            >
+                              {variant}
+                            </span>
+                            <p className="font-bold text-on-surface text-sm">Variante {variant}</p>
+                          </div>
+                          {isWinner && <span className="text-green-600 text-lg">✓</span>}
+                        </div>
+                        <p
+                          className="text-xs text-on-surface-variant italic mb-3 truncate"
+                          title={subject}
+                        >
+                          {subject || "(pas d'objet)"}
+                        </p>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-on-surface-variant">Envoyés</span>
+                            <strong>{stats.sent.toLocaleString('fr-FR')}</strong>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-on-surface-variant">Ouvertures</span>
+                            <strong>
+                              {stats.opened}{' '}
+                              <span className="text-xs font-normal text-on-surface-variant">
+                                ({stats.openRate.toFixed(1)}%)
+                              </span>
+                            </strong>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-on-surface-variant">Clics</span>
+                            <strong>
+                              {stats.clicked}{' '}
+                              <span className="text-xs font-normal text-on-surface-variant">
+                                ({stats.clickRate.toFixed(1)}%)
+                              </span>
+                            </strong>
+                          </div>
+                        </div>
+                        <div className="mt-3 space-y-1.5">
+                          <div>
+                            <div className="flex justify-between text-xs mb-0.5">
+                              <span className="text-on-surface-variant">Taux d'ouverture</span>
+                              <span className="font-bold text-primary">
+                                {stats.openRate.toFixed(1)}%
+                              </span>
+                            </div>
+                            <div className="h-1.5 rounded-full bg-outline-variant/20">
+                              <div
+                                className="h-full rounded-full bg-primary transition-all"
+                                style={{ width: `${Math.min(100, stats.openRate * 2)}%` }}
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <div className="flex justify-between text-xs mb-0.5">
+                              <span className="text-on-surface-variant">Taux de clic</span>
+                              <span className="font-bold text-secondary">
+                                {stats.clickRate.toFixed(1)}%
+                              </span>
+                            </div>
+                            <div className="h-1.5 rounded-full bg-outline-variant/20">
+                              <div
+                                className="h-full rounded-full bg-secondary transition-all"
+                                style={{ width: `${Math.min(100, stats.clickRate * 5)}%` }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {!data.abReport.winner && (
+                  <p className="text-xs text-on-surface-variant">
+                    Le gagnant sera désigné automatiquement une fois la période de test terminée.
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Contacts ayant ouvert / cliqué */}
             <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">

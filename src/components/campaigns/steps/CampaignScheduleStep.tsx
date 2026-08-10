@@ -41,6 +41,7 @@ export const CampaignScheduleStep: FC<CampaignScheduleStepProps> = ({ onPrev }) 
   const [splitRatio, setSplitRatio] = useState(draft.abTest?.splitRatio || 20);
   const [winnerCriteria, setWinnerCriteria] = useState(draft.abTest?.winnerCriteria || 'open_rate');
   const [autoEvaluate, setAutoEvaluate] = useState(draft.abTest?.autoEvaluate || false);
+  const [abTestDuration, setAbTestDuration] = useState(draft.abTest?.testDuration || 4);
   const [variantASubject, setVariantASubject] = useState(
     draft.abTest?.variantA?.emailSubject || draft.emailContent?.subject || '',
   );
@@ -85,6 +86,7 @@ export const CampaignScheduleStep: FC<CampaignScheduleStepProps> = ({ onPrev }) 
     setSplitRatio(draft.abTest?.splitRatio || 20);
     setWinnerCriteria(draft.abTest?.winnerCriteria || 'open_rate');
     setAutoEvaluate(draft.abTest?.autoEvaluate || false);
+    setAbTestDuration(draft.abTest?.testDuration || 4);
     setVariantASubject(draft.abTest?.variantA?.emailSubject || draft.emailContent?.subject || '');
     setVariantBSubject(
       draft.abTest?.variantB?.emailSubject ||
@@ -166,6 +168,7 @@ export const CampaignScheduleStep: FC<CampaignScheduleStepProps> = ({ onPrev }) 
       splitRatio,
       winnerCriteria,
       autoEvaluate,
+      testDuration: abTestDuration,
       variantA: {
         emailSubject: variantASubject,
         smsMessage: variantAMessage,
@@ -341,6 +344,7 @@ export const CampaignScheduleStep: FC<CampaignScheduleStepProps> = ({ onPrev }) 
         draftData.subjectA = variantASubject;
         draftData.subjectB = variantBSubject;
         draftData.abSplitPct = splitRatio;
+        draftData.abTestDuration = abTestDuration;
       }
       if (latestDraft.segmentId && !isAutomationMode) draftData.segmentId = latestDraft.segmentId;
       if (promoCode) draftData.promoCode = promoCode;
@@ -467,6 +471,7 @@ export const CampaignScheduleStep: FC<CampaignScheduleStepProps> = ({ onPrev }) 
         draftData.subjectA = variantASubject;
         draftData.subjectB = variantBSubject;
         draftData.abSplitPct = splitRatio;
+        draftData.abTestDuration = abTestDuration;
       }
       if (promoCode) draftData.promoCode = promoCode;
       const saveResult = await saveCampaignDraft(campaignId, draftData);
@@ -645,7 +650,7 @@ export const CampaignScheduleStep: FC<CampaignScheduleStepProps> = ({ onPrev }) 
               </h2>
               <p className="text-on-surface-variant">
                 {isAutomationMode
-                  ? 'Aucun segment n’est requis. La campagne sera sauvegardée comme automatisation.'
+                  ? "Aucun segment n'est requis. La campagne sera sauvegardée comme automatisation."
                   : "Configurez la date et l'heure d'envoi de votre campagne."}
               </p>
             </div>
@@ -668,7 +673,7 @@ export const CampaignScheduleStep: FC<CampaignScheduleStepProps> = ({ onPrev }) 
                       <div>
                         <span className="font-bold text-on-surface block">Envoyer maintenant</span>
                         <span className="text-sm text-on-surface-variant">
-                          L’envoi démarre dès l’enregistrement.
+                          L'envoi démarre dès l'enregistrement.
                         </span>
                       </div>
                     </div>
@@ -787,171 +792,263 @@ export const CampaignScheduleStep: FC<CampaignScheduleStepProps> = ({ onPrev }) 
 
             {/* A/B Test Options */}
             <div className="space-y-4 rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-6">
-              <label className="flex items-center gap-3 cursor-pointer">
+              <label className="flex items-center gap-3 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={abEnabled}
                   onChange={(e) => setAbEnabled(e.target.checked)}
                   className="w-5 h-5 cursor-pointer"
                 />
-                <span className="font-bold text-on-surface">Activer test A/B</span>
+                <div>
+                  <span className="font-bold text-on-surface block">Activer test A/B</span>
+                  <span className="text-xs text-on-surface-variant">
+                    Comparez deux variantes et envoyez automatiquement la gagnante au reste de
+                    l'audience.
+                  </span>
+                </div>
               </label>
 
               {abEnabled && (
-                <div className="mt-4 p-4 bg-primary/5 rounded-2xl border border-primary/20 space-y-4">
-                  <div className="flex items-center justify-between gap-4">
-                    <label className="text-sm font-bold text-on-surface">
-                      Ratio de séparation: {splitRatio}%
-                    </label>
-                    <span className="text-xs font-semibold text-primary uppercase tracking-widest">
-                      Test A/B
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min="10"
-                    max="50"
-                    value={splitRatio}
-                    onChange={(e) => setSplitRatio(Number(e.target.value))}
-                    className="w-full"
-                  />
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div className="rounded-xl bg-surface-container-lowest p-3 border border-outline-variant/20">
-                      <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-1">
-                        Variante A
+                <div className="mt-2 space-y-5">
+                  {/* Split + durée */}
+                  <div className="p-4 bg-primary/5 rounded-2xl border border-primary/20 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-bold text-on-surface">
+                        Taille du groupe test : {splitRatio}%
                       </p>
-                      <p className="font-bold text-on-surface">
-                        {estimatedVariantA.toLocaleString('fr-FR')} contacts
-                      </p>
+                      <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-1 rounded-full uppercase tracking-widest">
+                        A/B
+                      </span>
                     </div>
-                    <div className="rounded-xl bg-surface-container-lowest p-3 border border-outline-variant/20">
-                      <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-1">
-                        Variante B
-                      </p>
-                      <p className="font-bold text-on-surface">
-                        {estimatedVariantB.toLocaleString('fr-FR')} contacts
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div className="rounded-2xl bg-surface-container-lowest p-4 border border-outline-variant/20 space-y-3">
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="text-xs font-bold uppercase tracking-widest text-primary">
+                    <input
+                      type="range"
+                      min="10"
+                      max="50"
+                      step="5"
+                      value={splitRatio}
+                      onChange={(e) => setSplitRatio(Number(e.target.value))}
+                      className="w-full accent-primary"
+                    />
+                    {/* Distribution visuelle */}
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="rounded-xl bg-primary/10 border border-primary/20 p-3 text-center">
+                        <p className="text-[11px] font-bold uppercase text-primary mb-1">
                           Variante A
                         </p>
-                        <span className="text-[11px] font-semibold text-on-surface-variant">
-                          {channelLabel}
+                        <p className="font-bold text-on-surface text-sm">
+                          {Math.round(estimatedVariantA / 2).toLocaleString('fr-FR')}
+                        </p>
+                        <p className="text-[10px] text-on-surface-variant">
+                          {Math.round(splitRatio / 2)}%
+                        </p>
+                      </div>
+                      <div className="rounded-xl bg-secondary/10 border border-secondary/20 p-3 text-center">
+                        <p className="text-[11px] font-bold uppercase text-secondary mb-1">
+                          Variante B
+                        </p>
+                        <p className="font-bold text-on-surface text-sm">
+                          {Math.round(estimatedVariantB / 2).toLocaleString('fr-FR')}
+                        </p>
+                        <p className="text-[10px] text-on-surface-variant">
+                          {Math.round(splitRatio / 2)}%
+                        </p>
+                      </div>
+                      <div className="rounded-xl bg-surface-container border border-outline-variant/20 p-3 text-center">
+                        <p className="text-[11px] font-bold uppercase text-on-surface-variant mb-1">
+                          Gagnante
+                        </p>
+                        <p className="font-bold text-on-surface text-sm">
+                          {Math.max(
+                            0,
+                            (draft.estimatedRecipients || 0) - estimatedVariantA,
+                          ).toLocaleString('fr-FR')}
+                        </p>
+                        <p className="text-[10px] text-on-surface-variant">{100 - splitRatio}%</p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-on-surface-variant">
+                      {splitRatio}% de l'audience participe au test ({Math.round(splitRatio / 2)}%
+                      reçoivent A, {Math.round(splitRatio / 2)}% reçoivent B). Le {100 - splitRatio}
+                      % restant reçoit la variante gagnante après évaluation.
+                    </p>
+                  </div>
+
+                  {/* Contenu des variantes */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Variante A */}
+                    <div className="rounded-2xl border-2 border-primary/30 bg-surface-container-lowest p-4 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-full bg-primary text-on-primary text-xs font-bold flex items-center justify-center">
+                          A
                         </span>
+                        <p className="text-sm font-bold text-on-surface">Variante A</p>
                       </div>
                       {draft.channel === 'EMAIL' ? (
-                        <div className="space-y-2">
-                          <input
-                            type="text"
-                            value={variantASubject}
-                            onChange={(e) => setVariantASubject(e.target.value)}
-                            placeholder="Objet de l'email A"
-                            className="w-full px-4 py-2 border border-outline-variant rounded-lg bg-surface"
-                          />
-                          <textarea
-                            value={variantAHtml}
-                            onChange={(e) => setVariantAHtml(e.target.value)}
-                            rows={5}
-                            placeholder="Template HTML A (indépendant)"
-                            className="w-full px-4 py-2 border border-outline-variant rounded-lg bg-surface resize-none font-mono text-xs"
-                          />
-                        </div>
+                        <>
+                          <div>
+                            <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1 block">
+                              Objet de l'email
+                            </label>
+                            <input
+                              type="text"
+                              value={variantASubject}
+                              onChange={(e) => setVariantASubject(e.target.value)}
+                              placeholder="Objet email A…"
+                              className="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+                            />
+                          </div>
+                          <div className="rounded-xl bg-primary/5 border border-primary/10 px-3 py-2">
+                            <p className="text-[11px] font-bold uppercase text-on-surface-variant mb-1">
+                              Corps de l'email
+                            </p>
+                            <p className="text-xs text-on-surface-variant italic">
+                              Contenu de l'étape 2 (partagé entre les deux variantes)
+                            </p>
+                          </div>
+                        </>
                       ) : (
-                        <textarea
-                          value={variantAMessage}
-                          onChange={(e) => setVariantAMessage(e.target.value)}
-                          rows={4}
-                          placeholder="Message SMS A"
-                          className="w-full px-4 py-2 border border-outline-variant rounded-lg bg-surface resize-none"
-                        />
+                        <div>
+                          <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1 block">
+                            Message SMS
+                          </label>
+                          <textarea
+                            value={variantAMessage}
+                            onChange={(e) => setVariantAMessage(e.target.value)}
+                            rows={5}
+                            placeholder="Contenu du SMS A…"
+                            className="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-sm resize-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                          />
+                          <p className="text-xs text-on-surface-variant mt-1">
+                            {variantAMessage.length} caractères
+                          </p>
+                        </div>
                       )}
-                      <div className="rounded-xl bg-white/80 border border-outline-variant/20 p-3 text-sm text-on-surface-variant whitespace-pre-line">
-                        {variantAPreview}
+                      {/* Aperçu mock */}
+                      <div className="rounded-xl bg-white border border-outline-variant/20 p-3">
+                        <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">
+                          Aperçu
+                        </p>
+                        <p className="text-sm font-semibold text-on-surface truncate">
+                          {draft.channel === 'EMAIL'
+                            ? variantASubject || '(aucun objet)'
+                            : variantAMessage.slice(0, 60) || '(aucun message)'}
+                        </p>
                       </div>
                     </div>
 
-                    <div className="rounded-2xl bg-surface-container-lowest p-4 border border-outline-variant/20 space-y-3">
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="text-xs font-bold uppercase tracking-widest text-primary">
-                          Variante B
-                        </p>
-                        <span className="text-[11px] font-semibold text-on-surface-variant">
-                          {channelLabel}
+                    {/* Variante B */}
+                    <div className="rounded-2xl border-2 border-secondary/30 bg-surface-container-lowest p-4 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-full bg-secondary text-on-secondary text-xs font-bold flex items-center justify-center">
+                          B
                         </span>
+                        <p className="text-sm font-bold text-on-surface">Variante B</p>
                       </div>
                       {draft.channel === 'EMAIL' ? (
-                        <div className="space-y-2">
-                          <input
-                            type="text"
-                            value={variantBSubject}
-                            onChange={(e) => setVariantBSubject(e.target.value)}
-                            placeholder="Objet de l'email B"
-                            className="w-full px-4 py-2 border border-outline-variant rounded-lg bg-surface"
-                          />
-                          <textarea
-                            value={variantBHtml}
-                            onChange={(e) => setVariantBHtml(e.target.value)}
-                            rows={5}
-                            placeholder="Template HTML B (indépendant)"
-                            className="w-full px-4 py-2 border border-outline-variant rounded-lg bg-surface resize-none font-mono text-xs"
-                          />
-                        </div>
+                        <>
+                          <div>
+                            <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1 block">
+                              Objet de l'email
+                            </label>
+                            <input
+                              type="text"
+                              value={variantBSubject}
+                              onChange={(e) => setVariantBSubject(e.target.value)}
+                              placeholder="Objet email B (différent de A)…"
+                              className="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-sm focus:ring-2 focus:ring-secondary focus:border-transparent"
+                            />
+                          </div>
+                          <div className="rounded-xl bg-secondary/5 border border-secondary/10 px-3 py-2">
+                            <p className="text-[11px] font-bold uppercase text-on-surface-variant mb-1">
+                              Corps de l'email
+                            </p>
+                            <p className="text-xs text-on-surface-variant italic">
+                              Contenu de l'étape 2 (partagé entre les deux variantes)
+                            </p>
+                          </div>
+                        </>
                       ) : (
-                        <textarea
-                          value={variantBMessage}
-                          onChange={(e) => setVariantBMessage(e.target.value)}
-                          rows={4}
-                          placeholder="Message SMS B"
-                          className="w-full px-4 py-2 border border-outline-variant rounded-lg bg-surface resize-none"
-                        />
+                        <div>
+                          <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1 block">
+                            Message SMS
+                          </label>
+                          <textarea
+                            value={variantBMessage}
+                            onChange={(e) => setVariantBMessage(e.target.value)}
+                            rows={5}
+                            placeholder="Contenu du SMS B (différent de A)…"
+                            className="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-sm resize-none focus:ring-2 focus:ring-secondary focus:border-transparent"
+                          />
+                          <p className="text-xs text-on-surface-variant mt-1">
+                            {variantBMessage.length} caractères
+                          </p>
+                        </div>
                       )}
-                      <div className="rounded-xl bg-white/80 border border-outline-variant/20 p-3 text-sm text-on-surface-variant whitespace-pre-line">
-                        {variantBPreview}
+                      {/* Aperçu mock */}
+                      <div className="rounded-xl bg-white border border-outline-variant/20 p-3">
+                        <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">
+                          Aperçu
+                        </p>
+                        <p className="text-sm font-semibold text-on-surface truncate">
+                          {draft.channel === 'EMAIL'
+                            ? variantBSubject || '(aucun objet)'
+                            : variantBMessage.slice(0, 60) || '(aucun message)'}
+                        </p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* Critère + durée + évaluation auto */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
-                      <label className="text-sm font-bold text-on-surface">Critère gagnant</label>
+                      <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1 block">
+                        Critère gagnant
+                      </label>
                       <select
                         value={winnerCriteria}
                         onChange={(e) => setWinnerCriteria(e.target.value as typeof winnerCriteria)}
-                        className="w-full mt-2 px-4 py-2 border border-outline-variant rounded-lg bg-surface"
+                        className="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-sm"
                       >
-                        <option value="open_rate">Taux d’ouverture</option>
+                        <option value="open_rate">Taux d'ouverture</option>
                         <option value="click_rate">Taux de clic</option>
                         <option value="conversion">Conversion</option>
                       </select>
                     </div>
+                    <div>
+                      <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1 block">
+                        Durée du test
+                      </label>
+                      <select
+                        value={abTestDuration}
+                        onChange={(e) => setAbTestDuration(Number(e.target.value))}
+                        className="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-sm"
+                      >
+                        <option value={2}>2 heures</option>
+                        <option value={4}>4 heures</option>
+                        <option value={8}>8 heures</option>
+                        <option value={24}>24 heures</option>
+                        <option value={48}>48 heures</option>
+                      </select>
+                    </div>
                     <div className="flex items-end">
-                      <label className="flex items-center gap-3 cursor-pointer w-full rounded-2xl border border-outline-variant/20 p-4 bg-surface-container-lowest">
+                      <label className="flex items-center gap-2 cursor-pointer w-full rounded-xl border border-outline-variant/20 p-3 bg-surface-container-lowest select-none">
                         <input
                           type="checkbox"
                           checked={autoEvaluate}
                           onChange={(e) => setAutoEvaluate(e.target.checked)}
-                          className="w-5 h-5 cursor-pointer"
+                          className="w-4 h-4 cursor-pointer accent-primary"
                         />
                         <div>
-                          <span className="font-bold text-on-surface block">
-                            Évaluation automatique
+                          <span className="text-sm font-bold text-on-surface block">
+                            Auto-évaluation
                           </span>
-                          <span className="text-sm text-on-surface-variant">
-                            Choisit le gagnant automatiquement.
+                          <span className="text-xs text-on-surface-variant">
+                            Désigne le gagnant après {abTestDuration}h
                           </span>
                         </div>
                       </label>
                     </div>
                   </div>
-
-                  <p className="text-xs text-on-surface-variant">
-                    {splitRatio}% recevront la variante A, {100 - splitRatio}% la variante B.
-                  </p>
                 </div>
               )}
             </div>

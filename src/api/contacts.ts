@@ -103,9 +103,14 @@ export const contactsApi = {
   },
 
   bulkDeleteAll: async (filters?: { search?: string; tag?: string; location?: string }) => {
-    const response = await api.delete<{ success: boolean; deleted: number }>('/contacts/bulk/all', {
-      data: filters ?? {},
-    });
+    const params = new URLSearchParams();
+    if (filters?.search) params.append('search', filters.search);
+    if (filters?.tag) params.append('tag', filters.tag);
+    if (filters?.location) params.append('location', filters.location);
+    const qs = params.toString();
+    const response = await api.delete<{ success: boolean; deleted: number }>(
+      `/contacts/bulk/all${qs ? `?${qs}` : ''}`,
+    );
     return response.data;
   },
 
