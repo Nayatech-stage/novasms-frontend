@@ -54,6 +54,7 @@ export interface ABTestConfig {
   };
   winnerCriteria?: 'open_rate' | 'click_rate' | 'conversion';
   autoEvaluate?: boolean;
+  testDuration?: number;
 }
 
 export interface ScheduleConfig {

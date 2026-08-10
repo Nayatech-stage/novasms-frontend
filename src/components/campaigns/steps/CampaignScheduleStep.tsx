@@ -580,8 +580,6 @@ export const CampaignScheduleStep: FC<CampaignScheduleStepProps> = ({ onPrev }) 
 
   const estimatedVariantA = Math.round((draft.estimatedRecipients || 0) * (splitRatio / 100));
   const estimatedVariantB = Math.max((draft.estimatedRecipients || 0) - estimatedVariantA, 0);
-  const channelLabel = draft.channel === 'SMS' ? 'SMS' : 'Email';
-
   // ── A/B identity guard ─────────────────────────────────────────────────
   // Block send when A/B is active but both variants carry identical content.
   const isAbIdentical = (() => {
@@ -593,14 +591,6 @@ export const CampaignScheduleStep: FC<CampaignScheduleStepProps> = ({ onPrev }) 
     const sameHtml = variantAHtml.trim() === variantBHtml.trim();
     return sameSubject && sameHtml;
   })();
-  const variantAPreview =
-    draft.channel === 'SMS'
-      ? variantAMessage || 'Votre message de test A'
-      : `${variantASubject || draft.emailContent?.subject || 'Objet de test A'}\n${buildEmailTextContent() || 'Aucun contenu'}`;
-  const variantBPreview =
-    draft.channel === 'SMS'
-      ? variantBMessage || 'Votre message de test B'
-      : `${variantBSubject || draft.emailContent?.subject || 'Objet de test B'}\n${buildEmailTextContent() || 'Aucun contenu'}`;
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8 sm:py-12 space-y-8 sm:space-y-10">
