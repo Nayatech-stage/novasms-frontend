@@ -482,7 +482,7 @@ export default function Team() {
         </div>
       )}
 
-      {/* Dépenses du mois — admin seulement */}
+      {/* Dépenses du mois — admin seulement (résumé rapide) */}
       {currentUser?.role === 'Admin' && spending && (
         <div className="card">
           <div className="flex items-center justify-between mb-12">
@@ -492,29 +492,57 @@ export default function Team() {
             </span>
           </div>
 
-          {/* Par canal */}
-          <div style={{ marginBottom: 16 }}>
-            <div
-              style={{
-                fontSize: 10.5,
-                fontWeight: 600,
-                color: 'var(--text-3)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-                marginBottom: 8,
-              }}
-            >
-              {t('team.byChannel')}
-            </div>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {spending.byChannel.map((c) => (
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
+            {spending.byChannel.map((c) => (
+              <div
+                key={c.channel}
+                style={{
+                  flex: '1 1 110px',
+                  background: 'var(--muted)',
+                  borderRadius: 10,
+                  padding: '8px 12px',
+                }}
+              >
                 <div
-                  key={c.channel}
                   style={{
-                    flex: '1 1 120px',
+                    fontSize: 10,
+                    fontWeight: 700,
+                    color: 'var(--text-3)',
+                    textTransform: 'uppercase',
+                    marginBottom: 2,
+                  }}
+                >
+                  {c.channel}
+                </div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-1)' }}>
+                  {c.totalCost.toLocaleString('fr-FR')} FCFA
+                </div>
+                <div style={{ fontSize: 10.5, color: 'var(--text-2)' }}>
+                  {c.operationCount} envoi{c.operationCount > 1 ? 's' : ''} ·{' '}
+                  {c.totalContacts.toLocaleString('fr-FR')} contacts
+                </div>
+              </div>
+            ))}
+            {spending.byChannel.length === 0 && (
+              <span style={{ fontSize: 12, color: 'var(--text-3)' }}>{t('team.noSpending')}</span>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+            {spending.bySource.map((s) => {
+              const srcLabel: Record<string, string> = {
+                CAMPAIGN: 'Campagnes',
+                AUTOMATION: 'Automatisations',
+                API: 'API publique',
+              };
+              return (
+                <div
+                  key={s.source}
+                  style={{
+                    flex: '1 1 110px',
                     background: 'var(--muted)',
                     borderRadius: 10,
-                    padding: '10px 14px',
+                    padding: '8px 12px',
                   }}
                 >
                   <div
@@ -523,132 +551,36 @@ export default function Team() {
                       fontWeight: 700,
                       color: 'var(--text-3)',
                       textTransform: 'uppercase',
-                      marginBottom: 4,
+                      marginBottom: 2,
                     }}
                   >
-                    {c.channel}
+                    {srcLabel[s.source] ?? s.source}
                   </div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-1)' }}>
-                    {c.totalCost.toLocaleString('fr-FR')} FCFA
+                  <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-1)' }}>
+                    {s.totalCost.toLocaleString('fr-FR')} FCFA
                   </div>
-                  <div style={{ fontSize: 10.5, color: 'var(--text-2)', marginTop: 2 }}>
-                    {c.operationCount} envoi{c.operationCount > 1 ? 's' : ''} ·{' '}
-                    {c.totalContacts.toLocaleString('fr-FR')} contacts
+                  <div style={{ fontSize: 10.5, color: 'var(--text-2)' }}>
+                    {s.operationCount} opération{s.operationCount > 1 ? 's' : ''}
                   </div>
                 </div>
-              ))}
-              {spending.byChannel.length === 0 && (
-                <span style={{ fontSize: 12, color: 'var(--text-3)' }}>{t('team.noSpending')}</span>
-              )}
-            </div>
+              );
+            })}
           </div>
 
-          {/* Par source */}
-          <div style={{ marginBottom: 16 }}>
-            <div
-              style={{
-                fontSize: 10.5,
-                fontWeight: 600,
-                color: 'var(--text-3)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-                marginBottom: 8,
-              }}
-            >
-              {t('team.bySource')}
-            </div>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {spending.bySource.map((s) => {
-                const srcLabel: Record<string, string> = {
-                  CAMPAIGN: 'Campagnes',
-                  AUTOMATION: 'Automatisations',
-                  API: 'API publique',
-                };
-                return (
-                  <div
-                    key={s.source}
-                    style={{
-                      flex: '1 1 120px',
-                      background: 'var(--muted)',
-                      borderRadius: 10,
-                      padding: '10px 14px',
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: 10,
-                        fontWeight: 700,
-                        color: 'var(--text-3)',
-                        textTransform: 'uppercase',
-                        marginBottom: 4,
-                      }}
-                    >
-                      {srcLabel[s.source] ?? s.source}
-                    </div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-1)' }}>
-                      {s.totalCost.toLocaleString('fr-FR')} FCFA
-                    </div>
-                    <div style={{ fontSize: 10.5, color: 'var(--text-2)', marginTop: 2 }}>
-                      {s.operationCount} opération{s.operationCount > 1 ? 's' : ''}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Par membre */}
-          {spending.byMember.length > 0 && (
-            <div>
-              <div
-                style={{
-                  fontSize: 10.5,
-                  fontWeight: 600,
-                  color: 'var(--text-3)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.08em',
-                  marginBottom: 8,
-                }}
-              >
-                {t('team.byMember')}
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {spending.byMember.map((m) => {
-                  const name = m.user
-                    ? [m.user.firstName, m.user.lastName].filter(Boolean).join(' ') || m.user.email
-                    : 'Membre inconnu';
-                  return (
-                    <div
-                      key={m.userId ?? 'anon'}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '8px 12px',
-                        background: 'var(--muted)',
-                        borderRadius: 8,
-                      }}
-                    >
-                      <div className="flex items-center gap-8">
-                        {m.user && <Avatar email={m.user.email} size={28} />}
-                        <div>
-                          <div style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--text-1)' }}>
-                            {name}
-                          </div>
-                          <div style={{ fontSize: 10.5, color: 'var(--text-2)' }}>
-                            {m.operationCount} envoi{m.operationCount > 1 ? 's' : ''}
-                          </div>
-                        </div>
-                      </div>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--brand)' }}>
-                        {m.totalCost.toLocaleString('fr-FR')} FCFA
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+          <a
+            href="/settings?tab=depenses"
+            style={{
+              fontSize: 12,
+              color: 'var(--brand)',
+              fontWeight: 600,
+              textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+            }}
+          >
+            Voir le détail complet →
+          </a>
         </div>
       )}
 

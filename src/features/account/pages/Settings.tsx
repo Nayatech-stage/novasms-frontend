@@ -96,9 +96,22 @@ export default function Settings() {
   const userRole = (useAuthStore((s) => s.user?.role) ?? 'Admin') as 'Admin' | 'Editor' | 'Analyst';
   const isAdmin = userRole === 'Admin';
   const saved = loadSettings();
+  const urlTab = new URLSearchParams(window.location.search).get('tab');
   const [activeTab, setActiveTab] = useState<
-    'general' | 'notifications' | 'api' | 'data' | 'payments'
-  >('general');
+    'general' | 'notifications' | 'api' | 'data' | 'payments' | 'depenses'
+  >(
+    urlTab === 'depenses' && isAdmin
+      ? 'depenses'
+      : urlTab === 'payments'
+        ? 'payments'
+        : urlTab === 'api'
+          ? 'api'
+          : urlTab === 'notifications'
+            ? 'notifications'
+            : urlTab === 'data'
+              ? 'data'
+              : 'general',
+  );
 
   // ── Historique paiements ────────────────────────────────────────────────────
   type PaymentTx = {
@@ -129,6 +142,72 @@ export default function Settings() {
   const [creditLimitInput, setCreditLimitInput] = useState<string>('');
   const [saving, setSaving] = useState(false);
   const [balance, setBalance] = useState<BalanceData | null>(null);
+
+  // ── Dépenses ────────────────────────────────────────────────────────────────
+  type CreditUsageRow = {
+    id: string;
+    channel: string;
+    source: string;
+    sourceName: string | null;
+    contacts: number;
+    parts: number;
+    unitPrice: number;
+    totalCost: number;
+    createdAt: string;
+    user: { id: string; email: string; firstName: string | null; lastName: string | null } | null;
+  };
+  type SpendingSummary = {
+    monthTotal: number;
+    yearTotal: number;
+    allTimeTotal: number;
+    byChannel: {
+      channel: string;
+      totalCost: number;
+      totalContacts: number;
+      operationCount: number;
+    }[];
+    bySource: { source: string; totalCost: number; operationCount: number }[];
+  };
+  const [spendingSummary, setSpendingSummary] = useState<SpendingSummary | null>(null);
+  const [spendingRows, setSpendingRows] = useState<CreditUsageRow[]>([]);
+  const [spendingTotal, setSpendingTotal] = useState(0);
+  const [spendingPage, setSpendingPage] = useState(1);
+  const [spendingLoading, setSpendingLoading] = useState(false);
+  const [spendingFilterChannel, setSpendingFilterChannel] = useState('');
+  const [spendingFilterSource, setSpendingFilterSource] = useState('');
+  const [spendingFilterFrom, setSpendingFilterFrom] = useState('');
+  const [spendingFilterTo, setSpendingFilterTo] = useState('');
+  const SPENDING_LIMIT = 25;
+
+  const loadSpendingData = useCallback(
+    async (page = 1) => {
+      if (!isAdmin) return;
+      setSpendingLoading(true);
+      try {
+        const params = new URLSearchParams({
+          page: String(page),
+          limit: String(SPENDING_LIMIT),
+          ...(spendingFilterChannel ? { channel: spendingFilterChannel } : {}),
+          ...(spendingFilterSource ? { source: spendingFilterSource } : {}),
+          ...(spendingFilterFrom ? { from: spendingFilterFrom } : {}),
+          ...(spendingFilterTo ? { to: spendingFilterTo } : {}),
+        });
+        const [summaryRes, historyRes] = await Promise.all([
+          api.get<SpendingSummary>('/account/credit-usage/summary'),
+          api.get<{ data: CreditUsageRow[]; total: number }>(`/account/credit-usage?${params}`),
+        ]);
+        setSpendingSummary(summaryRes.data);
+        setSpendingRows(historyRes.data.data);
+        setSpendingTotal(historyRes.data.total);
+        setSpendingPage(page);
+      } catch {
+        toast.error('Impossible de charger les dépenses');
+      } finally {
+        setSpendingLoading(false);
+      }
+    },
+    [isAdmin, spendingFilterChannel, spendingFilterSource, spendingFilterFrom, spendingFilterTo],
+  );
 
   // États clés API
   const [apiKeys, setApiKeys] = useState<ApiKeyItem[]>([]);
@@ -312,6 +391,11 @@ export default function Settings() {
     return () => window.removeEventListener('novasms:balance-refresh', fetchBalance);
   }, []);
 
+  // Charger les dépenses quand l'onglet Dépenses est actif
+  useEffect(() => {
+    if (activeTab === 'depenses') void loadSpendingData(1);
+  }, [activeTab, loadSpendingData]);
+
   // Charger les transactions quand l'onglet Paiements est actif
   useEffect(() => {
     if (activeTab !== 'payments') return;
@@ -394,13 +478,14 @@ export default function Settings() {
   };
 
   const TABS: {
-    id: 'general' | 'notifications' | 'api' | 'data' | 'payments';
+    id: 'general' | 'notifications' | 'api' | 'data' | 'payments' | 'depenses';
     label: string;
   }[] = [
     { id: 'general', label: t('settings.tabs.general') },
     { id: 'notifications', label: t('settings.tabs.notifications') },
     { id: 'api', label: t('settings.tabs.api') },
     { id: 'payments', label: t('settings.tabs.payments') },
+    ...(isAdmin ? [{ id: 'depenses' as const, label: 'Dépenses' }] : []),
     { id: 'data', label: t('settings.tabs.data') },
   ];
 
@@ -1471,6 +1556,529 @@ export default function Settings() {
             </div>
           );
         })()}
+
+      {/* ─── Onglet Dépenses ─── */}
+      {activeTab === 'depenses' && isAdmin && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {/* KPI résumé */}
+          {spendingSummary && (
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                gap: 10,
+              }}
+            >
+              {[
+                { label: 'Ce mois', value: spendingSummary.monthTotal },
+                { label: 'Cette année', value: spendingSummary.yearTotal },
+                { label: 'Tout le temps', value: spendingSummary.allTimeTotal },
+              ].map((kpi) => (
+                <div key={kpi.label} className="card" style={{ padding: '14px 18px', margin: 0 }}>
+                  <div
+                    style={{
+                      fontSize: 10.5,
+                      fontWeight: 600,
+                      color: 'var(--text-3)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.07em',
+                      marginBottom: 4,
+                    }}
+                  >
+                    {kpi.label}
+                  </div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--brand)' }}>
+                    {kpi.value.toLocaleString('fr-FR')} FCFA
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Répartition canal / source */}
+          {spendingSummary &&
+            (spendingSummary.byChannel.length > 0 || spendingSummary.bySource.length > 0) && (
+              <div className="card" style={{ padding: '14px 18px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                  <div>
+                    <div
+                      style={{
+                        fontSize: 10.5,
+                        fontWeight: 600,
+                        color: 'var(--text-3)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.07em',
+                        marginBottom: 8,
+                      }}
+                    >
+                      Par canal
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {spendingSummary.byChannel.map((c) => (
+                        <div
+                          key={c.channel}
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            padding: '6px 10px',
+                            background: 'var(--muted)',
+                            borderRadius: 8,
+                          }}
+                        >
+                          <div>
+                            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-1)' }}>
+                              {c.channel}
+                            </div>
+                            <div style={{ fontSize: 10.5, color: 'var(--text-2)' }}>
+                              {c.operationCount} envois · {c.totalContacts.toLocaleString('fr-FR')}{' '}
+                              contacts
+                            </div>
+                          </div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--brand)' }}>
+                            {c.totalCost.toLocaleString('fr-FR')} FCFA
+                          </div>
+                        </div>
+                      ))}
+                      {spendingSummary.byChannel.length === 0 && (
+                        <span style={{ fontSize: 12, color: 'var(--text-3)' }}>
+                          Aucune dépense ce mois
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <div
+                      style={{
+                        fontSize: 10.5,
+                        fontWeight: 600,
+                        color: 'var(--text-3)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.07em',
+                        marginBottom: 8,
+                      }}
+                    >
+                      Par source
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {spendingSummary.bySource.map((s) => {
+                        const srcLabel: Record<string, string> = {
+                          CAMPAIGN: 'Campagnes',
+                          AUTOMATION: 'Automatisations',
+                          API: 'API',
+                        };
+                        return (
+                          <div
+                            key={s.source}
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              padding: '6px 10px',
+                              background: 'var(--muted)',
+                              borderRadius: 8,
+                            }}
+                          >
+                            <div>
+                              <div
+                                style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-1)' }}
+                              >
+                                {srcLabel[s.source] ?? s.source}
+                              </div>
+                              <div style={{ fontSize: 10.5, color: 'var(--text-2)' }}>
+                                {s.operationCount} opérations
+                              </div>
+                            </div>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--brand)' }}>
+                              {s.totalCost.toLocaleString('fr-FR')} FCFA
+                            </div>
+                          </div>
+                        );
+                      })}
+                      {spendingSummary.bySource.length === 0 && (
+                        <span style={{ fontSize: 12, color: 'var(--text-3)' }}>
+                          Aucune dépense ce mois
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+          {/* Filtres + historique */}
+          <div className="card" style={{ padding: '14px 18px' }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: 12,
+                flexWrap: 'wrap',
+                gap: 8,
+              }}
+            >
+              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-1)' }}>
+                Historique des dépenses
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  className="btn-sm"
+                  onClick={() => {
+                    if (spendingRows.length === 0) return;
+                    const headers = [
+                      'Date',
+                      'Nom',
+                      'Canal',
+                      'Source',
+                      'Contacts',
+                      'Coût (FCFA)',
+                      'Par qui',
+                    ];
+                    const rows = spendingRows.map((r) => [
+                      new Date(r.createdAt).toLocaleDateString('fr-FR'),
+                      r.sourceName || '—',
+                      r.channel,
+                      r.source,
+                      r.contacts,
+                      r.totalCost.toFixed(2),
+                      r.user ? r.user.email : '—',
+                    ]);
+                    const csv = [headers, ...rows]
+                      .map((row) =>
+                        row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','),
+                      )
+                      .join('\n');
+                    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `depenses-novasms-${new Date().toISOString().split('T')[0]}.csv`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  }}
+                >
+                  CSV
+                </button>
+                <button
+                  className="btn-sm"
+                  onClick={async () => {
+                    if (spendingRows.length === 0) return;
+                    const { jsPDF } = await import('jspdf');
+                    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+                    const W = doc.internal.pageSize.getWidth();
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(14);
+                    doc.setTextColor(12, 84, 96);
+                    doc.text('NovaSMS — Historique des dépenses', 14, 16);
+                    doc.setFontSize(9);
+                    doc.setTextColor(100, 116, 139);
+                    doc.text(`Généré le ${new Date().toLocaleDateString('fr-FR')}`, W - 14, 16, {
+                      align: 'right',
+                    });
+                    if (spendingSummary) {
+                      doc.setFont('helvetica', 'normal');
+                      doc.setTextColor(15, 23, 42);
+                      doc.text(
+                        `Ce mois: ${spendingSummary.monthTotal.toLocaleString('fr-FR')} FCFA  |  Cette année: ${spendingSummary.yearTotal.toLocaleString('fr-FR')} FCFA  |  Total: ${spendingSummary.allTimeTotal.toLocaleString('fr-FR')} FCFA`,
+                        14,
+                        24,
+                      );
+                    }
+                    const cols = [42, 52, 20, 28, 22, 30, 60];
+                    const headers = [
+                      'Date',
+                      'Nom/Campagne',
+                      'Canal',
+                      'Source',
+                      'Contacts',
+                      'Coût FCFA',
+                      'Par qui',
+                    ];
+                    let y = 32;
+                    doc.setFillColor(241, 245, 249);
+                    doc.rect(14, y - 5, W - 28, 8, 'F');
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(8);
+                    doc.setTextColor(71, 85, 105);
+                    let xH = 14;
+                    headers.forEach((h, i) => {
+                      doc.text(h, xH, y);
+                      xH += cols[i];
+                    });
+                    y += 6;
+                    doc.setFont('helvetica', 'normal');
+                    doc.setTextColor(15, 23, 42);
+                    spendingRows.forEach((r, idx) => {
+                      if (y > 185) {
+                        doc.addPage();
+                        y = 16;
+                      }
+                      if (idx % 2 === 1) {
+                        doc.setFillColor(248, 250, 252);
+                        doc.rect(14, y - 4, W - 28, 7, 'F');
+                      }
+                      const cells = [
+                        new Date(r.createdAt).toLocaleDateString('fr-FR'),
+                        (r.sourceName || '—').substring(0, 26),
+                        r.channel,
+                        r.source,
+                        String(r.contacts),
+                        r.totalCost.toFixed(2),
+                        r.user ? r.user.email.substring(0, 28) : '—',
+                      ];
+                      let xC = 14;
+                      cells.forEach((cell, i) => {
+                        doc.text(cell, xC, y);
+                        xC += cols[i];
+                      });
+                      y += 7;
+                    });
+                    doc.save(`depenses-novasms-${new Date().toISOString().split('T')[0]}.pdf`);
+                  }}
+                >
+                  PDF
+                </button>
+              </div>
+            </div>
+
+            {/* Filtres */}
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+              <select
+                value={spendingFilterChannel}
+                onChange={(e) => setSpendingFilterChannel(e.target.value)}
+                style={{
+                  fontSize: 12,
+                  padding: '5px 10px',
+                  border: '1px solid var(--border)',
+                  borderRadius: 8,
+                  background: 'var(--surface)',
+                  color: 'var(--text-1)',
+                }}
+              >
+                <option value="">Tous les canaux</option>
+                <option value="EMAIL">EMAIL</option>
+                <option value="SMS">SMS</option>
+                <option value="WHATSAPP">WHATSAPP</option>
+              </select>
+              <select
+                value={spendingFilterSource}
+                onChange={(e) => setSpendingFilterSource(e.target.value)}
+                style={{
+                  fontSize: 12,
+                  padding: '5px 10px',
+                  border: '1px solid var(--border)',
+                  borderRadius: 8,
+                  background: 'var(--surface)',
+                  color: 'var(--text-1)',
+                }}
+              >
+                <option value="">Toutes les sources</option>
+                <option value="CAMPAIGN">Campagnes</option>
+                <option value="AUTOMATION">Automatisations</option>
+                <option value="API">API</option>
+              </select>
+              <input
+                type="date"
+                value={spendingFilterFrom}
+                onChange={(e) => setSpendingFilterFrom(e.target.value)}
+                placeholder="Du"
+                style={{
+                  fontSize: 12,
+                  padding: '5px 10px',
+                  border: '1px solid var(--border)',
+                  borderRadius: 8,
+                  background: 'var(--surface)',
+                  color: 'var(--text-1)',
+                }}
+              />
+              <input
+                type="date"
+                value={spendingFilterTo}
+                onChange={(e) => setSpendingFilterTo(e.target.value)}
+                placeholder="Au"
+                style={{
+                  fontSize: 12,
+                  padding: '5px 10px',
+                  border: '1px solid var(--border)',
+                  borderRadius: 8,
+                  background: 'var(--surface)',
+                  color: 'var(--text-1)',
+                }}
+              />
+              <button className="btn-sm btn-primary" onClick={() => void loadSpendingData(1)}>
+                Filtrer
+              </button>
+              {(spendingFilterChannel ||
+                spendingFilterSource ||
+                spendingFilterFrom ||
+                spendingFilterTo) && (
+                <button
+                  className="btn-sm"
+                  onClick={() => {
+                    setSpendingFilterChannel('');
+                    setSpendingFilterSource('');
+                    setSpendingFilterFrom('');
+                    setSpendingFilterTo('');
+                  }}
+                >
+                  Réinitialiser
+                </button>
+              )}
+            </div>
+
+            {/* Table */}
+            {spendingLoading ? (
+              <div
+                style={{ textAlign: 'center', padding: 24, color: 'var(--text-2)', fontSize: 12 }}
+              >
+                Chargement…
+              </div>
+            ) : spendingRows.length === 0 ? (
+              <div
+                style={{ textAlign: 'center', padding: 24, color: 'var(--text-3)', fontSize: 12 }}
+              >
+                Aucune dépense trouvée
+              </div>
+            ) : (
+              <>
+                <div className="data-table-wrapper">
+                  <table className="data-table" style={{ minWidth: 700 }}>
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Nom / Campagne</th>
+                        <th>Canal</th>
+                        <th>Source</th>
+                        <th style={{ textAlign: 'right' }}>Contacts</th>
+                        <th style={{ textAlign: 'right' }}>Coût</th>
+                        <th>Par qui</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {spendingRows.map((r) => (
+                        <tr key={r.id}>
+                          <td
+                            style={{ color: 'var(--text-2)', fontSize: 12, whiteSpace: 'nowrap' }}
+                          >
+                            {new Date(r.createdAt).toLocaleDateString('fr-FR', {
+                              day: '2-digit',
+                              month: 'short',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </td>
+                          <td
+                            style={{
+                              fontSize: 12,
+                              fontWeight: 500,
+                              maxWidth: 200,
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {r.sourceName || <span style={{ color: 'var(--text-3)' }}>—</span>}
+                          </td>
+                          <td>
+                            <span
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                padding: '2px 8px',
+                                borderRadius: 20,
+                                fontSize: 10.5,
+                                fontWeight: 600,
+                                background:
+                                  r.channel === 'EMAIL'
+                                    ? '#e0edef'
+                                    : r.channel === 'SMS'
+                                      ? '#e8f5e9'
+                                      : '#f3e8ff',
+                                color:
+                                  r.channel === 'EMAIL'
+                                    ? '#0c5460'
+                                    : r.channel === 'SMS'
+                                      ? '#1b5e20'
+                                      : '#6b21a8',
+                              }}
+                            >
+                              {r.channel}
+                            </span>
+                          </td>
+                          <td style={{ fontSize: 11, color: 'var(--text-2)' }}>
+                            {{ CAMPAIGN: 'Campagne', AUTOMATION: 'Automation', API: 'API' }[
+                              r.source
+                            ] ?? r.source}
+                          </td>
+                          <td style={{ textAlign: 'right', fontSize: 12 }}>
+                            {r.contacts.toLocaleString('fr-FR')}
+                          </td>
+                          <td
+                            style={{
+                              textAlign: 'right',
+                              fontSize: 13,
+                              fontWeight: 700,
+                              color: 'var(--brand)',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {r.totalCost.toLocaleString('fr-FR')} FCFA
+                          </td>
+                          <td style={{ fontSize: 11, color: 'var(--text-2)' }}>
+                            {r.user ? (
+                              r.user.firstName ? (
+                                `${r.user.firstName} ${r.user.lastName || ''}`.trim()
+                              ) : (
+                                r.user.email
+                              )
+                            ) : (
+                              <span style={{ color: 'var(--text-3)' }}>—</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {/* Pagination */}
+                {spendingTotal > SPENDING_LIMIT && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginTop: 12,
+                    }}
+                  >
+                    <span style={{ fontSize: 11, color: 'var(--text-2)' }}>
+                      {Math.min((spendingPage - 1) * SPENDING_LIMIT + 1, spendingTotal)}–
+                      {Math.min(spendingPage * SPENDING_LIMIT, spendingTotal)} / {spendingTotal}
+                    </span>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button
+                        className="btn-sm"
+                        disabled={spendingPage <= 1}
+                        onClick={() => void loadSpendingData(spendingPage - 1)}
+                      >
+                        ← Préc.
+                      </button>
+                      <button
+                        className="btn-sm"
+                        disabled={spendingPage * SPENDING_LIMIT >= spendingTotal}
+                        onClick={() => void loadSpendingData(spendingPage + 1)}
+                      >
+                        Suiv. →
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ─── Onglet Données ─── */}
       {activeTab === 'data' && (
