@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '@/api/axios';
 import { toast } from 'sonner';
 import {
@@ -71,6 +71,7 @@ const AMOUNTS = [5_000, 10_000, 25_000, 50_000];
 export default function Rechargement() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [tab, setTab] = useState<PayTab>('mobile');
   const [operator, setOperator] = useState<Operator>('NOVASEND');
   const [phone, setPhone] = useState('');
@@ -91,7 +92,7 @@ export default function Rechargement() {
 
   // ── Polling / waiting payment ───────────────────────────────────────────────
   const [waitingPayment, setWaitingPayment] = useState(false);
-  const [, setPendingTxId] = useState<string | null>(null);
+  const [pendingTxId, setPendingTxId] = useState<string | null>(null);
   const [pendingAmount, setPendingAmount] = useState(0);
   const [pendingOperator, setPendingOperator] = useState<Operator>('NOVASEND');
   const [wavePaymentUrl, setWavePaymentUrl] = useState<string | null>(null);
@@ -152,55 +153,104 @@ export default function Rechargement() {
     }
   }
 
-  function startPolling(txId: string, paid: number, op?: Operator) {
-    stopPolling();
-    // WAVE / NOVASEND : l'utilisateur doit ouvrir un lien externe → 10 min
-    // MOMO / MOOV / ORANGE : push téléphone → 5 min
-    const currentOp = op ?? pendingOperator;
-    const timeoutMs = currentOp === 'WAVE' || currentOp === 'NOVASEND' ? 600_000 : 300_000;
-    const timeoutLabel = timeoutMs === 600_000 ? '10 min' : '5 min';
+  // useCallback pour pouvoir l'appeler depuis le useEffect de reprise
+  const startPolling = useCallback(
+    (txId: string, paid: number, op: Operator, payUrl?: string | null) => {
+      stopPolling();
+      const timeoutMs = op === 'WAVE' || op === 'NOVASEND' ? 600_000 : 300_000;
+      const timeoutLabel = timeoutMs === 600_000 ? '10 min' : '5 min';
 
-    pollingRef.current = setInterval(() => {
+      setPendingTxId(txId);
+      setPendingAmount(paid);
+      setPendingOperator(op);
+      if (payUrl !== undefined) setWavePaymentUrl(payUrl);
+      setWaitingPayment(true);
+
+      pollingRef.current = setInterval(() => {
+        void (async () => {
+          try {
+            const res = await api.get<{ success: boolean; status: string }>(
+              `/mobile-money/${txId}/status`,
+            );
+            if (res.data.status === 'completed') {
+              stopPolling();
+              setWaitingPayment(false);
+              // Nettoyer les params URL après confirmation
+              navigate('/rechargement', { replace: true });
+              setPaidAmount(paid);
+              setTransactionId(txId);
+              setReceiptKind('mobile');
+              setSuccess(true);
+              toast.success('Paiement confirmé ! Crédits ajoutés.');
+              window.dispatchEvent(new CustomEvent('novasms:balance-refresh'));
+            } else if (res.data.status === 'failed') {
+              stopPolling();
+              setWaitingPayment(false);
+              navigate('/rechargement', { replace: true });
+              const failMsg =
+                op === 'MOOV'
+                  ? 'Paiement Moov Money refusé. Vérifiez que votre numéro est inscrit à Moov Money et que votre solde est suffisant.'
+                  : op === 'MOMO'
+                    ? 'Paiement MTN MoMo refusé. Vérifiez que votre numéro est inscrit à MTN MoMo et que votre solde est suffisant.'
+                    : "Paiement refusé par l'opérateur. Veuillez réessayer.";
+              toast.error(failMsg, { duration: 6000 });
+            }
+          } catch {
+            /* réseau — on continue de poller */
+          }
+        })();
+      }, 3_000);
+
+      pollingTimeoutRef.current = setTimeout(() => {
+        stopPolling();
+        setWaitingPayment(false);
+        navigate('/rechargement', { replace: true });
+        toast.error(
+          `Délai de paiement dépassé (${timeoutLabel}). Revenez sur cette page avec le même lien pour reprendre le suivi.`,
+          { duration: 8000 },
+        );
+      }, timeoutMs);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },
+    [navigate],
+  );
+
+  // ── Reprise automatique depuis l'URL (?txId=…&amount=…&op=…) ──────────────
+  useEffect(() => {
+    const urlTxId = searchParams.get('txId');
+    const urlAmount = Number(searchParams.get('amount') ?? '0');
+    const urlOp = (searchParams.get('op') ?? 'NOVASEND') as Operator;
+    const urlPayUrl = searchParams.get('payUrl');
+
+    if (urlTxId && urlAmount > 0 && !waitingPayment) {
+      // Vérifier d'abord si la transaction n'est pas déjà terminée
       void (async () => {
         try {
-          const res = await api.get<{ success: boolean; status: string }>(
-            `/mobile-money/${txId}/status`,
-          );
+          const res = await api.get<{ status: string }>(`/mobile-money/${urlTxId}/status`);
           if (res.data.status === 'completed') {
-            stopPolling();
-            setWaitingPayment(false);
-            setPaidAmount(paid);
-            setTransactionId(txId);
+            navigate('/rechargement', { replace: true });
+            setPaidAmount(urlAmount);
+            setTransactionId(urlTxId);
             setReceiptKind('mobile');
             setSuccess(true);
-            toast.success('Paiement confirmé ! Crédits ajoutés.');
+            toast.success('Paiement déjà confirmé ! Crédits ajoutés.');
             window.dispatchEvent(new CustomEvent('novasms:balance-refresh'));
           } else if (res.data.status === 'failed') {
-            stopPolling();
-            setWaitingPayment(false);
-            const failMsg =
-              pendingOperator === 'MOOV'
-                ? 'Paiement Moov Money refusé. Vérifiez que votre numéro est inscrit à Moov Money et que votre solde est suffisant.'
-                : pendingOperator === 'MOMO'
-                  ? 'Paiement MTN MoMo refusé. Vérifiez que votre numéro est inscrit à MTN MoMo et que votre solde est suffisant.'
-                  : "Paiement refusé par l'opérateur. Veuillez réessayer.";
-            toast.error(failMsg, { duration: 6000 });
+            navigate('/rechargement', { replace: true });
+            toast.error('Ce paiement a échoué. Veuillez réessayer.', { duration: 6000 });
+          } else {
+            // Encore en attente → reprendre le polling
+            startPolling(urlTxId, urlAmount, urlOp, urlPayUrl);
           }
         } catch {
-          /* réseau — on continue de poller */
+          // Réseau : reprendre le polling quand même
+          startPolling(urlTxId, urlAmount, urlOp, urlPayUrl);
         }
       })();
-    }, 3_000);
-
-    pollingTimeoutRef.current = setTimeout(() => {
-      stopPolling();
-      setWaitingPayment(false);
-      toast.error(
-        `Délai de paiement dépassé (${timeoutLabel}). Vous êtes revenu sur la page de rechargement — réessayez si nécessaire.`,
-        { duration: 8000 },
-      );
-    }, timeoutMs);
-  }
+    }
+    // Dépendances stables uniquement — ne pas relancer si waitingPayment change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   async function handleConfirm() {
     const paid = finalAmount;
@@ -260,15 +310,16 @@ export default function Rechargement() {
 
         if (!txId) throw new Error('Transaction introuvable — réessayez');
 
-        // Ne pas auto-ouvrir : les navigateurs bloquent window.open après un await.
-        // Le lien est affiché sur l'écran d'attente pour que l'utilisateur clique directement.
-
-        setPendingTxId(txId);
-        setPendingAmount(paid);
-        setPendingOperator(operator);
-        setWavePaymentUrl(pUrl);
-        setWaitingPayment(true);
-        startPolling(txId, paid, operator);
+        // Naviguer vers l'URL persistante AVANT de démarrer le polling
+        // → si l'utilisateur quitte l'app pour Wave et revient, l'URL le ramène ici
+        const params = new URLSearchParams({
+          txId,
+          amount: String(paid),
+          op: operator,
+          ...(pUrl ? { payUrl: pUrl } : {}),
+        });
+        navigate(`/rechargement?${params.toString()}`, { replace: false });
+        // startPolling est appelé par le useEffect qui écoute searchParams
       } else {
         // Visa — flux direct inchangé
         const [expiryMonth = '', expiryYearRaw = ''] = cardExp.split('/');
@@ -327,6 +378,7 @@ export default function Rechargement() {
     }
   }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => () => stopPolling(), []); // cleanup on unmount
 
   const OPERATOR_WAIT: Record<
@@ -503,7 +555,7 @@ export default function Rechargement() {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 8,
-                marginBottom: 28,
+                marginBottom: 12,
               }}
             >
               <span style={{ fontSize: 12, color: 'var(--text-2)' }}>
@@ -513,6 +565,19 @@ export default function Rechargement() {
                 {pendingAmount.toLocaleString('fr-FR')} FCFA
               </strong>
             </div>
+            {pendingTxId && (
+              <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 20 }}>
+                Réf.&nbsp;
+                <span style={{ fontFamily: 'monospace', fontWeight: 600, color: 'var(--text-2)' }}>
+                  {pendingTxId}
+                </span>
+                &nbsp;·&nbsp;
+                <span style={{ fontSize: 10.5 }}>
+                  Cette page est récupérable si vous revenez sur ce lien après avoir confirmé dans
+                  votre application.
+                </span>
+              </div>
+            )}
 
             <div>
               <button
@@ -520,6 +585,8 @@ export default function Rechargement() {
                 onClick={() => {
                   stopPolling();
                   setWaitingPayment(false);
+                  setWavePaymentUrl(null);
+                  navigate('/rechargement', { replace: true });
                 }}
                 style={{ fontSize: 12 }}
               >
