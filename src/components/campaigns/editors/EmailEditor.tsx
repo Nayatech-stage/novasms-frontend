@@ -558,7 +558,7 @@ export const EmailEditor: FC = () => {
       columns: { blocks: CampaignBlock[] }[];
     },
   ) => {
-    const current = blocks.find((b) => b.id === blockId);
+    const current = currentBlocks.find((b) => b.id === blockId);
     if (!current) return;
     const state = getColumnsState(current.content);
     const next = updater(state);
@@ -1067,7 +1067,7 @@ export const EmailEditor: FC = () => {
             </h3>
 
             {(() => {
-              const block = blocks.find((b) => b.id === selectedBlockId);
+              const block = currentBlocks.find((b) => b.id === selectedBlockId);
               if (!block) return null;
 
               if (block.type === 'text') {
@@ -1809,31 +1809,36 @@ export const EmailEditor: FC = () => {
                                         placeholder="Description"
                                       />
 
-                                      <input
-                                        type="url"
-                                        value={(nestedBlock.content.image as string) || ''}
-                                        onChange={(e) => {
-                                          updateColumnsContent(block.id, (state) => {
-                                            const nextColumns = [...state.columns];
-                                            const target = nextColumns[columnIndex] || {
-                                              blocks: [],
-                                            };
-                                            const nextBlocks = [...target.blocks];
-                                            nextBlocks[nestedIndex] = {
-                                              ...nestedBlock,
-                                              content: {
-                                                ...nestedBlock.content,
-                                                image: e.target.value,
-                                              },
-                                            };
-                                            target.blocks = nextBlocks;
-                                            nextColumns[columnIndex] = target;
-                                            return { layout: state.layout, columns: nextColumns };
-                                          });
-                                        }}
-                                        className="w-full bg-surface-container-lowest ring-1 ring-outline-variant rounded px-2 py-1 text-xs"
-                                        placeholder="URL image (https://...)"
-                                      />
+                                      <div className="space-y-1">
+                                        <button
+                                          onClick={() =>
+                                            triggerImageUpload((uploadedImage) => {
+                                              updateNestedColumnBlock(
+                                                block.id,
+                                                columnIndex,
+                                                nestedIndex,
+                                                {
+                                                  ...nestedBlock.content,
+                                                  image: uploadedImage.url,
+                                                },
+                                              );
+                                            })
+                                          }
+                                          disabled={isUploadingImage}
+                                          className="w-full rounded-md bg-primary/10 px-3 py-2 text-xs font-semibold text-primary hover:bg-primary/20 disabled:opacity-50"
+                                        >
+                                          {isUploadingImage ? 'Envoi...' : 'Image produit'}
+                                        </button>
+                                        {(nestedBlock.content.image as string) && (
+                                          <img
+                                            src={imageUploadService.getThumbnail(
+                                              nestedBlock.content.image as string,
+                                            )}
+                                            alt="product preview"
+                                            className="w-full h-16 object-contain rounded border border-outline-variant/20"
+                                          />
+                                        )}
+                                      </div>
 
                                       <input
                                         type="url"
