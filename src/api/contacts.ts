@@ -96,8 +96,7 @@ export const contactsApi = {
    */
   bulkDelete: async (ids: string[]) => {
     const response = await api.delete<{ success: boolean; deleted: number }>(
-      '/contacts/bulk/delete',
-      { data: { ids } },
+      `/contacts/bulk/delete?ids=${ids.map(encodeURIComponent).join(',')}`,
     );
     return response.data;
   },
