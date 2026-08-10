@@ -47,6 +47,7 @@ import ExportModal from './ExportModal';
 import { useAuthStore } from '@/stores/authStore';
 import { contactsApi } from '@/api/contacts';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 import type {
   Contact,
   ContactFilter,
@@ -435,6 +436,7 @@ export default function ContactTable({
       setIsDeleting(true);
       await contactsApi.delete(id);
       setContacts((prev) => prev.filter((c) => c.id !== id));
+      setTotal((prev) => Math.max(0, prev - 1));
       setSelectedContactIds((prev) => {
         const newSet = new Set(prev);
         newSet.delete(id);
@@ -443,7 +445,7 @@ export default function ContactTable({
       setOpenMenuId(null);
     } catch (error) {
       console.error('Failed to delete contact:', error);
-      alert('Erreur lors de la suppression du contact');
+      toast.error('Erreur lors de la suppression du contact');
     } finally {
       setIsDeleting(false);
     }
@@ -460,13 +462,14 @@ export default function ContactTable({
 
     try {
       setIsDeleting(true);
+      const count = selectedContactIds.size;
       await contactsApi.bulkDelete([...selectedContactIds]);
       setContacts((prev) => prev.filter((c) => !selectedContactIds.has(c.id)));
-      setTotal((prev) => prev - selectedContactIds.size);
+      setTotal((prev) => Math.max(0, prev - count));
       setSelectedContactIds(new Set());
     } catch (error) {
       console.error('Failed to delete contacts:', error);
-      alert('Erreur lors de la suppression des contacts');
+      toast.error('Erreur lors de la suppression des contacts');
     } finally {
       setIsDeleting(false);
     }
