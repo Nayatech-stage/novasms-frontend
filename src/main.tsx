@@ -57,6 +57,8 @@ const AuditLogs = React.lazy(() => import('./features/account/pages/AuditLogs'))
 const Integrations = React.lazy(() => import('./features/account/pages/Integrations'));
 const Developers = React.lazy(() => import('./features/account/pages/Developers'));
 const StatusPage = React.lazy(() => import('./pages/StatusPage'));
+const Unsubscribed = React.lazy(() => import('./pages/Unsubscribed'));
+const UnsubscribeError = React.lazy(() => import('./pages/UnsubscribeError'));
 
 import './index.css';
 
@@ -93,6 +95,10 @@ ReactDOM.createRoot(rootElement).render(
 
             {/* Page de statut publique */}
             <Route path="/status" element={<StatusPage />} />
+
+            {/* Pages de désabonnement email — publiques (pas d'auth) */}
+            <Route path="/unsubscribed" element={<Unsubscribed />} />
+            <Route path="/unsubscribe-error" element={<UnsubscribeError />} />
 
             {/* Auth Routes */}
             <Route path="/login" element={<Login />} />
