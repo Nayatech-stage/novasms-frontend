@@ -7,6 +7,7 @@ import i18n from '@/i18n/index';
 import { apiKeysApi, type ApiKeyItem, type NewApiKey, type ApiKeyStats } from '@/api/apiKeys';
 
 const SETTINGS_KEY = 'novasms_settings';
+const PENDING_API_KEY_SESSION = 'novasms_pending_api_key';
 
 const PERMISSION_GROUPS = [
   {
@@ -216,7 +217,14 @@ export default function Settings() {
   const [newKeyName, setNewKeyName] = useState('');
   const [selectedGroups, setSelectedGroups] = useState<string[]>(['messaging', 'contacts']);
   const [creatingKey, setCreatingKey] = useState(false);
-  const [generatedKey, setGeneratedKey] = useState<NewApiKey | null>(null);
+  const [generatedKey, setGeneratedKey] = useState<NewApiKey | null>(() => {
+    try {
+      const raw = sessionStorage.getItem(PENDING_API_KEY_SESSION);
+      return raw ? (JSON.parse(raw) as NewApiKey) : null;
+    } catch {
+      return null;
+    }
+  });
   const [revokingId, setRevokingId] = useState<string | null>(null);
   const [keyCopied, setKeyCopied] = useState(false);
   const [confirmedCopy, setConfirmedCopy] = useState(false);
@@ -256,6 +264,7 @@ export default function Settings() {
     try {
       const scopes = scopesForGroups(selectedGroups);
       const created = await apiKeysApi.create(newKeyName.trim(), scopes);
+      sessionStorage.setItem(PENDING_API_KEY_SESSION, JSON.stringify(created));
       setGeneratedKey(created);
       setShowCreateModal(false);
       setNewKeyName('');
@@ -425,6 +434,16 @@ export default function Settings() {
       }
       if (parsedCreditLimit < 0) {
         toast.error("La limite d'utilisation doit être positive");
+        return;
+      }
+    }
+
+    if (alertThreshold && parsedCreditLimit !== null) {
+      const parsedAlert = Number(alertThreshold);
+      if (!isNaN(parsedAlert) && parsedAlert >= parsedCreditLimit) {
+        toast.error(
+          `Le seuil d'alerte (${parsedAlert.toLocaleString('fr-FR')} FCFA) doit être inférieur à la limite d'utilisation (${parsedCreditLimit.toLocaleString('fr-FR')} FCFA)`,
+        );
         return;
       }
     }
@@ -2472,7 +2491,10 @@ export default function Settings() {
             </div>
 
             <button
-              onClick={() => setGeneratedKey(null)}
+              onClick={() => {
+                sessionStorage.removeItem(PENDING_API_KEY_SESSION);
+                setGeneratedKey(null);
+              }}
               disabled={!confirmedCopy}
               style={{
                 width: '100%',
