@@ -108,7 +108,7 @@ export const contactsApi = {
     if (filters?.location) params.append('location', filters.location);
     const qs = params.toString();
     const response = await api.delete<{ success: boolean; deleted: number }>(
-      `/contacts/bulk/all${qs ? `?${qs}` : ''}`,
+      `/contacts/bulk-all${qs ? `?${qs}` : ''}`,
     );
     return response.data;
   },
