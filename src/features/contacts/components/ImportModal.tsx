@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Upload, X, Check, AlertCircle, Loader2, FileSpreadsheet } from 'lucide-react';
@@ -15,7 +15,7 @@ type ImportModalProps = {
 
 type ParsedImportData = {
   headers: string[];
-  rows: Record<string, unknown>[];
+  totalRows: number;
   preview: Record<string, unknown>[];
 };
 
@@ -25,6 +25,11 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
   const { t } = useTranslation();
   const { accessToken } = useAuthStore();
   const { parseFile } = useCsvParser();
+
+  // Les lignes brutes ne sont PAS dans le state React (évite de tracker 50k objets)
+  const parsedRowsRef = useRef<Record<string, unknown>[]>([]);
+  // Annulation du polling si le modal est fermé pendant l'import
+  const cancelledRef = useRef(false);
 
   const [file, setFile] = useState<File | null>(null);
   const [parsedData, setParsedData] = useState<ParsedImportData | null>(null);
@@ -60,8 +65,15 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
   ];
 
   const handleClose = useCallback(() => {
+    // Capture le rapport AVANT de reset le state
+    const completedReport = report?.status === 'completed' ? report : null;
+
+    // Stoppe le polling en cours s'il y en a un
+    cancelledRef.current = true;
+
     setFile(null);
     setParsedData(null);
+    parsedRowsRef.current = [];
     setMapping({});
     setError(null);
     setStep('upload');
@@ -72,7 +84,12 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
     setProcessingJob(false);
     setLiveStats(null);
     onClose();
-  }, [onClose]);
+
+    // Rafraîchir la liste de contacts APRÈS fermeture (si import réussi)
+    if (completedReport) {
+      onImportComplete(completedReport);
+    }
+  }, [report, onImportComplete, onClose]);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -112,9 +129,11 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
           setError('Le fichier est vide ou ne contient pas de données.');
           return;
         }
+        parsedRowsRef.current = res.data.rows;
+        cancelledRef.current = false;
         setParsedData({
           headers: res.data.headers,
-          rows: res.data.rows,
+          totalRows: res.data.totalRows,
           preview: res.data.preview,
         });
         setStep('mapping');
@@ -131,7 +150,13 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
       setError(result.error);
       return;
     }
-    setParsedData({ headers: result.headers, rows: result.rows, preview: result.preview });
+    parsedRowsRef.current = result.rows as Record<string, unknown>[];
+    cancelledRef.current = false;
+    setParsedData({
+      headers: result.headers,
+      totalRows: result.totalRows,
+      preview: result.preview as Record<string, unknown>[],
+    });
     setStep('mapping');
   };
 
@@ -167,17 +192,19 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
       return;
     }
 
+    cancelledRef.current = false;
     setIsUploading(true);
     setError(null);
 
-    try {
-      // Si gros fichier, utiliser upload par chunks parallèles (objectif < 60s pour 50k lignes)
-      const CHUNK_THRESHOLD = 5000;
-      const CHUNK_SIZE = 2000; // 2000 lignes × ~300 octets ≈ 600 Ko, bien sous 10 Mo
-      const PARALLEL = 5; // 5 chunks en parallèle → 50k lignes = 25 chunks = 5 vagues
+    const rows = parsedRowsRef.current;
 
-      if (parsedData.rows.length > CHUNK_THRESHOLD) {
-        const numChunks = Math.ceil(parsedData.rows.length / CHUNK_SIZE);
+    try {
+      const CHUNK_THRESHOLD = 5000;
+      const CHUNK_SIZE = 2000;
+      const PARALLEL = 5;
+
+      if (rows.length > CHUNK_THRESHOLD) {
+        const numChunks = Math.ceil(rows.length / CHUNK_SIZE);
         setTotalChunks(numChunks);
         setStep('progress');
 
@@ -189,23 +216,24 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
         );
         const fileId = startRes.data.fileId;
 
-        // 2) Préparer tous les chunks avec mapping appliqué
-        const allChunks: Record<string, unknown>[][] = [];
-        for (let i = 0; i < parsedData.rows.length; i += CHUNK_SIZE) {
-          allChunks.push(
-            parsedData.rows
-              .slice(i, i + CHUNK_SIZE)
-              .map(applyMapping)
-              .filter((r) => r.email || r.phone),
-          );
-        }
+        // 2) Envoyer en vagues parallèles — chunks construits à la volée (pas tous en mémoire)
+        // + yield entre chaque vague pour que React puisse mettre à jour la barre de progression
+        let sentChunks = 0;
+        for (let waveStart = 0; waveStart < numChunks; waveStart += PARALLEL) {
+          if (cancelledRef.current) break;
 
-        // 3) Envoyer en vagues parallèles (PARALLEL chunks simultanés)
-        let sent = 0;
-        for (let wave = 0; wave < allChunks.length; wave += PARALLEL) {
-          const batch = allChunks.slice(wave, wave + PARALLEL);
+          const waveBatch: Record<string, unknown>[][] = [];
+          for (let ci = waveStart; ci < Math.min(waveStart + PARALLEL, numChunks); ci++) {
+            waveBatch.push(
+              rows
+                .slice(ci * CHUNK_SIZE, (ci + 1) * CHUNK_SIZE)
+                .map(applyMapping)
+                .filter((r) => r.email || r.phone),
+            );
+          }
+
           await Promise.all(
-            batch.map((chunk) =>
+            waveBatch.map((chunk) =>
               api.post(
                 '/contacts/import/chunk',
                 { fileId, rows: chunk },
@@ -213,10 +241,16 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
               ),
             ),
           );
-          sent += batch.length;
-          setCurrentChunk(sent);
-          setUploadProgress(Math.round((sent / numChunks) * 90));
+
+          sentChunks += waveBatch.length;
+          setCurrentChunk(sentChunks);
+          setUploadProgress(Math.round((sentChunks / numChunks) * 90));
+
+          // Libère le main thread → React met à jour la barre de progression
+          await new Promise<void>((r) => setTimeout(r, 0));
         }
+
+        if (cancelledRef.current) return;
 
         // 3) Déclencher le job BullMQ (retour immédiat avec jobId)
         setUploadProgress(95);
@@ -235,6 +269,11 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
           let elapsed = 0;
 
           const interval = setInterval(() => {
+            if (cancelledRef.current) {
+              clearInterval(interval);
+              resolve();
+              return;
+            }
             elapsed += POLL_INTERVAL;
             void (async () => {
               try {
@@ -260,7 +299,12 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
                   headers: { Authorization: `Bearer ${accessToken}` },
                 });
 
-                // Mettre à jour les stats temps réel si disponibles
+                if (cancelledRef.current) {
+                  clearInterval(interval);
+                  resolve();
+                  return;
+                }
+
                 if (statusRes.data.progress) {
                   setLiveStats(statusRes.data.progress);
                   const pct = statusRes.data.progress.percentage;
@@ -275,42 +319,40 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
                   const importedReport: ImportReport = {
                     jobId,
                     fileName: file.name,
-                    totalRecords: r?.totalRecords ?? parsedData.rows.length,
+                    totalRecords: r?.totalRecords ?? rows.length,
                     successCount: r?.successCount ?? 0,
                     duplicateCount: r?.duplicateCount ?? 0,
                     errorCount: r?.errorCount ?? 0,
                     status: 'completed',
                   };
                   setReport(importedReport);
-                  onImportComplete(importedReport);
                   setStep('report');
+                  // onImportComplete sera appelé depuis handleClose après l'affichage du rapport
                   resolve();
                 } else if (statusRes.data.status === 'failed') {
                   clearInterval(interval);
                   setProcessingJob(false);
                   reject(new Error("L'import a échoué côté serveur. Veuillez réessayer."));
                 } else if (!statusRes.data.success && statusRes.data.status === undefined) {
-                  // Job purgé de BullMQ et pas de rapport en base : l'import a quand même
-                  // traité les contacts — fermer proprement plutôt que de boucler 20 min.
+                  // Job purgé de BullMQ — traité quand même, afficher bilan vide
                   clearInterval(interval);
                   setProcessingJob(false);
                   const importedReport: ImportReport = {
                     jobId,
                     fileName: file.name,
-                    totalRecords: parsedData.rows.length,
+                    totalRecords: rows.length,
                     successCount: 0,
                     duplicateCount: 0,
                     errorCount: 0,
                     status: 'completed',
                   };
                   setReport(importedReport);
-                  onImportComplete(importedReport);
                   setStep('report');
                   resolve();
                 } else if (elapsed >= TIMEOUT_MS) {
                   clearInterval(interval);
                   setProcessingJob(false);
-                  reject(new Error('Délai de traitement dépassé (5 min). Vérifiez les imports.'));
+                  reject(new Error('Délai de traitement dépassé. Vérifiez les imports.'));
                 }
               } catch {
                 // erreur réseau passagère — on continue de poller
@@ -319,7 +361,7 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
           }, POLL_INTERVAL);
         });
       } else {
-        // Petit fichier: comportement existant (POST unique)
+        // Petit fichier : POST unique, le backend applique le mapping
         setStep('progress');
         setTotalChunks(1);
         setCurrentChunk(0);
@@ -330,7 +372,7 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
           {
             fileName: file.name,
             mapping,
-            rows: parsedData.rows,
+            rows,
           },
           {
             headers: { Authorization: `Bearer ${accessToken}` },
@@ -340,20 +382,18 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
         setUploadProgress(100);
 
         if (response.data.success) {
-          setStep('report');
-          // Utiliser les stats du rapport retourné par le backend
           const importedReport: ImportReport = {
             jobId: response.data.jobId,
             fileName: file.name,
-            totalRecords: response.data.report?.totalRecords || parsedData.rows.length,
+            totalRecords: response.data.report?.totalRecords || rows.length,
             successCount: response.data.report?.successCount || 0,
             duplicateCount: response.data.report?.duplicateCount || 0,
             errorCount: response.data.report?.errorCount || 0,
             status: 'completed',
           };
-
           setReport(importedReport);
-          onImportComplete(importedReport);
+          setStep('report');
+          // onImportComplete sera appelé depuis handleClose après l'affichage du rapport
         }
       }
     } catch (err: unknown) {
@@ -706,7 +746,7 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
                       {file?.name}
                     </p>
                     <p style={{ fontSize: 11, color: '#4ade80' }}>
-                      {parsedData.rows.length.toLocaleString()} lignes détectées ·{' '}
+                      {parsedData.totalRows.toLocaleString()} lignes détectées ·{' '}
                       {parsedData.headers.length} colonnes · {isExcel ? 'Excel' : 'CSV'}
                     </p>
                   </div>

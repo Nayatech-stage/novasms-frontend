@@ -22,7 +22,6 @@ export function useCsvParser() {
       Papa.parse<CsvRow>(file, {
         header: true,
         skipEmptyLines: true,
-        dynamicTyping: true,
         complete(results) {
           setIsParsing(false);
           const jsonData = results.data;
