@@ -11,6 +11,8 @@ type TeamMember = {
   email: string;
   role: TeamRole;
   lastLogin: string | null;
+  firstName: string | null;
+  lastName: string | null;
 };
 
 type Invitation = {
@@ -83,8 +85,52 @@ const ROLE_COPY: Record<TeamRole, { description: string; permissions: string[] }
   },
 };
 
-function Avatar({ email, size = 32 }: { email: string; size?: number }) {
-  const initials = email.substring(0, 2).toUpperCase();
+function formatLastLogin(lastLogin: string | null): { label: string; full: string | null } {
+  if (!lastLogin) return { label: 'Jamais connecté', full: null };
+
+  const date = new Date(lastLogin);
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterdayStart = new Date(todayStart.getTime() - 86400000);
+
+  const time = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  const full = date.toLocaleString('fr-FR', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  if (date >= todayStart) return { label: `Aujourd'hui à ${time}`, full };
+  if (date >= yesterdayStart) return { label: `Hier à ${time}`, full };
+
+  const label =
+    date.toLocaleDateString('fr-FR', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    }) + ` à ${time}`;
+  return { label, full };
+}
+
+function Avatar({
+  email,
+  firstName,
+  lastName,
+  size = 32,
+}: {
+  email: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  size?: number;
+}) {
+  const initials =
+    firstName && lastName
+      ? (firstName[0] + lastName[0]).toUpperCase()
+      : firstName
+        ? firstName.substring(0, 2).toUpperCase()
+        : email.substring(0, 2).toUpperCase();
   const colors = ['#2ec80a', '#0c5460', '#aaee22', '#d97706', '#6366f1'];
   const bg = colors[email.charCodeAt(0) % colors.length];
   return (
@@ -321,75 +367,139 @@ export default function Team() {
           </div>
         ) : (
           <div className="data-table-wrapper">
-            <table className="data-table" style={{ minWidth: 480 }}>
+            <table className="data-table" style={{ minWidth: 560 }}>
               <thead>
                 <tr>
                   <th>{t('team.memberCol')}</th>
                   <th>{t('team.roleCol')}</th>
+                  <th>Statut</th>
                   <th>{t('team.lastLoginCol')}</th>
                   <th>{t('team.actionsCol')}</th>
                 </tr>
               </thead>
               <tbody>
-                {members.map((m) => (
-                  <tr key={m.id}>
-                    <td>
-                      <div className="flex items-center gap-8">
-                        <Avatar email={m.email} />
-                        <div>
-                          <div style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--text-1)' }}>
-                            {m.email}
-                          </div>
-                          {m.id === currentUser?.id && (
-                            <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 1 }}>
-                              {t('team.you')}
+                {members.map((m) => {
+                  const displayName =
+                    m.firstName || m.lastName
+                      ? [m.firstName, m.lastName].filter(Boolean).join(' ')
+                      : null;
+                  const { label: loginLabel, full: loginFull } = formatLastLogin(m.lastLogin);
+                  const isActive = !!m.lastLogin;
+                  return (
+                    <tr key={m.id}>
+                      <td>
+                        <div className="flex items-center gap-8">
+                          <Avatar email={m.email} firstName={m.firstName} lastName={m.lastName} />
+                          <div>
+                            {displayName && (
+                              <div
+                                style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-1)' }}
+                              >
+                                {displayName}
+                                {m.id === currentUser?.id && (
+                                  <span
+                                    style={{
+                                      fontSize: 10,
+                                      color: 'var(--text-3)',
+                                      fontWeight: 400,
+                                      marginLeft: 6,
+                                    }}
+                                  >
+                                    {t('team.you')}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                            <div
+                              style={{
+                                fontSize: displayName ? 11 : 12.5,
+                                fontWeight: displayName ? 400 : 500,
+                                color: displayName ? 'var(--text-2)' : 'var(--text-1)',
+                                marginTop: displayName ? 1 : 0,
+                              }}
+                            >
+                              {m.email}
                             </div>
-                          )}
+                            {!displayName && m.id === currentUser?.id && (
+                              <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 1 }}>
+                                {t('team.you')}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td>
-                      <span
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          padding: '2px 8px',
-                          borderRadius: 20,
-                          fontSize: 11,
-                          fontWeight: 500,
-                          ...ROLE_COLORS[m.role],
-                        }}
-                      >
-                        {ROLE_LABELS[m.role]}
-                      </span>
-                    </td>
-                    <td style={{ color: 'var(--text-2)', fontSize: 12 }}>
-                      {m.lastLogin ? (
-                        new Date(m.lastLogin).toLocaleDateString('fr-FR', {
-                          day: '2-digit',
-                          month: 'short',
-                          year: 'numeric',
-                        })
-                      ) : (
-                        <span style={{ color: 'var(--text-3)' }}>{t('team.neverLoggedIn')}</span>
-                      )}
-                    </td>
-                    <td>
-                      {m.id !== currentUser?.id ? (
-                        <button
-                          onClick={() => handleRevoke(m.id)}
-                          disabled={revoking === m.id}
-                          className="btn-sm btn-danger"
-                          style={{ fontSize: 11 }}
+                      </td>
+                      <td>
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            padding: '2px 8px',
+                            borderRadius: 20,
+                            fontSize: 11,
+                            fontWeight: 500,
+                            ...ROLE_COLORS[m.role],
+                          }}
                         >
-                          {revoking === m.id ? t('team.revoking') : t('team.revoke')}
-                        </button>
-                      ) : (
-                        <span style={{ fontSize: 11, color: 'var(--text-3)' }}>—</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                          {ROLE_LABELS[m.role]}
+                        </span>
+                      </td>
+                      <td>
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 5,
+                            fontSize: 11,
+                            fontWeight: 500,
+                            color: isActive ? '#166534' : 'var(--text-3)',
+                          }}
+                        >
+                          <span
+                            style={{
+                              width: 7,
+                              height: 7,
+                              borderRadius: '50%',
+                              background: isActive ? '#22c55e' : '#d1d5db',
+                              flexShrink: 0,
+                            }}
+                          />
+                          {isActive ? 'Actif' : 'Inactif'}
+                        </span>
+                      </td>
+                      <td style={{ color: 'var(--text-2)', fontSize: 12 }}>
+                        {m.lastLogin ? (
+                          <span
+                            title={loginFull ?? undefined}
+                            style={{
+                              cursor: 'default',
+                              borderBottom: '1px dashed var(--border-md)',
+                            }}
+                          >
+                            {loginLabel}
+                          </span>
+                        ) : (
+                          <span style={{ color: 'var(--text-3)', fontStyle: 'italic' }}>
+                            {loginLabel}
+                          </span>
+                        )}
+                      </td>
+                      <td>
+                        {m.id !== currentUser?.id ? (
+                          <button
+                            onClick={() => handleRevoke(m.id)}
+                            disabled={revoking === m.id}
+                            className="btn-sm btn-danger"
+                            style={{ fontSize: 11 }}
+                          >
+                            {revoking === m.id ? t('team.revoking') : t('team.revoke')}
+                          </button>
+                        ) : (
+                          <span style={{ fontSize: 11, color: 'var(--text-3)' }}>—</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
