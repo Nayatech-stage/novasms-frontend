@@ -19,12 +19,21 @@ import api from '@/api/axios';
  */
 
 export const EmailEditor: FC = () => {
-  const { draft, setDraftEmailContent, setDraftABTest, selectedCampaignId } = useCampaignStore();
+  const {
+    draft,
+    setDraftEmailContent,
+    setDraftABTest,
+    setPendingVariantEdit,
+    pendingVariantEdit,
+    selectedCampaignId,
+  } = useCampaignStore();
   const abTest = draft.abTest;
   const abEnabled = Boolean(abTest?.enabled);
 
   // Quel onglet est actif : 'main' | 'A' | 'B'
-  const [activeVariant, setActiveVariant] = useState<'main' | 'A' | 'B'>('main');
+  const [activeVariant, setActiveVariant] = useState<'main' | 'A' | 'B'>(
+    pendingVariantEdit ?? 'main',
+  );
 
   // ── Contenu principal ──────────────────────────────────────────────────────
   const [subject, setSubject] = useState(draft.emailContent?.subject || '');
@@ -112,6 +121,15 @@ export const EmailEditor: FC = () => {
 
   // Get campaign ID from store (used for image uploads)
   const campaignId = selectedCampaignId;
+
+  // Appliquer et effacer le variant en attente (navigation depuis CampaignScheduleStep)
+  useEffect(() => {
+    if (pendingVariantEdit) {
+      setActiveVariant(pendingVariantEdit);
+      setPendingVariantEdit(undefined);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Hydrate principal depuis le store
   useEffect(() => {

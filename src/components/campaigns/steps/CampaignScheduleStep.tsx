@@ -19,8 +19,14 @@ interface CampaignScheduleStepProps {
 
 export const CampaignScheduleStep: FC<CampaignScheduleStepProps> = ({ onPrev }) => {
   const navigate = useNavigate();
-  const { draft, setDraftSchedule, setDraftABTest, clearDraft, selectedCampaignId } =
-    useCampaignStore();
+  const {
+    draft,
+    setDraftSchedule,
+    setDraftABTest,
+    setPendingVariantEdit,
+    clearDraft,
+    selectedCampaignId,
+  } = useCampaignStore();
   const isAutomationMode = draft.mode === 'automation';
 
   const [scheduleType, setScheduleType] = useState<'immediate' | 'scheduled'>(
@@ -887,13 +893,36 @@ export const CampaignScheduleStep: FC<CampaignScheduleStepProps> = ({ onPrev }) 
                               className="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
                             />
                           </div>
-                          <div className="rounded-xl bg-primary/5 border border-primary/10 px-3 py-2">
-                            <p className="text-[11px] font-bold uppercase text-on-surface-variant mb-1">
+                          <div className="rounded-xl bg-primary/5 border border-primary/10 px-3 py-2 space-y-2">
+                            <p className="text-[11px] font-bold uppercase text-on-surface-variant">
                               Corps de l'email
                             </p>
-                            <p className="text-xs text-on-surface-variant italic">
-                              Contenu de l'étape 2 (partagé entre les deux variantes)
-                            </p>
+                            {draft.abTest?.variantA?.emailBlocks?.length ? (
+                              <p className="text-xs text-on-surface-variant">
+                                {draft.abTest.variantA.emailBlocks.length} bloc
+                                {draft.abTest.variantA.emailBlocks.length > 1 ? 's' : ''} —{' '}
+                                {draft.abTest.variantA.emailBlocks
+                                  .map((b) => b.type)
+                                  .slice(0, 3)
+                                  .join(', ')}
+                                {draft.abTest.variantA.emailBlocks.length > 3 ? '…' : ''}
+                              </p>
+                            ) : (
+                              <p className="text-xs text-on-surface-variant italic">
+                                Même contenu que l'email principal (étape 2)
+                              </p>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setPendingVariantEdit('A');
+                                onPrev();
+                              }}
+                              className="flex items-center gap-1 text-xs font-bold text-primary hover:underline"
+                            >
+                              <span className="material-symbols-outlined text-[14px]">edit</span>
+                              Éditer le corps de la variante A
+                            </button>
                           </div>
                         </>
                       ) : (
@@ -948,13 +977,36 @@ export const CampaignScheduleStep: FC<CampaignScheduleStepProps> = ({ onPrev }) 
                               className="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-sm focus:ring-2 focus:ring-secondary focus:border-transparent"
                             />
                           </div>
-                          <div className="rounded-xl bg-secondary/5 border border-secondary/10 px-3 py-2">
-                            <p className="text-[11px] font-bold uppercase text-on-surface-variant mb-1">
+                          <div className="rounded-xl bg-secondary/5 border border-secondary/10 px-3 py-2 space-y-2">
+                            <p className="text-[11px] font-bold uppercase text-on-surface-variant">
                               Corps de l'email
                             </p>
-                            <p className="text-xs text-on-surface-variant italic">
-                              Contenu de l'étape 2 (partagé entre les deux variantes)
-                            </p>
+                            {draft.abTest?.variantB?.emailBlocks?.length ? (
+                              <p className="text-xs text-on-surface-variant">
+                                {draft.abTest.variantB.emailBlocks.length} bloc
+                                {draft.abTest.variantB.emailBlocks.length > 1 ? 's' : ''} —{' '}
+                                {draft.abTest.variantB.emailBlocks
+                                  .map((b) => b.type)
+                                  .slice(0, 3)
+                                  .join(', ')}
+                                {draft.abTest.variantB.emailBlocks.length > 3 ? '…' : ''}
+                              </p>
+                            ) : (
+                              <p className="text-xs text-on-surface-variant italic">
+                                Même contenu que l'email principal (étape 2)
+                              </p>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setPendingVariantEdit('B');
+                                onPrev();
+                              }}
+                              className="flex items-center gap-1 text-xs font-bold text-secondary hover:underline"
+                            >
+                              <span className="material-symbols-outlined text-[14px]">edit</span>
+                              Éditer le corps de la variante B
+                            </button>
                           </div>
                         </>
                       ) : (

@@ -51,9 +51,11 @@ interface CampaignStore {
   selectedCampaignId?: string;
   isLoading: boolean;
   error?: string;
+  pendingVariantEdit?: 'A' | 'B';
 
   // Actions: Draft Management
   setDraftStep: (step: CampaignDraft['step']) => void;
+  setPendingVariantEdit: (variant: 'A' | 'B' | undefined) => void;
   setDraftMode: (mode: 'standard' | 'automation') => void;
   setDraftChannel: (channel: CampaignChannel) => void;
   setDraftName: (name: string) => void;
@@ -313,6 +315,8 @@ export const useCampaignStore = create<CampaignStore>()(
         set((state) => ({
           draft: { ...state.draft, step },
         })),
+
+      setPendingVariantEdit: (variant) => set({ pendingVariantEdit: variant }),
 
       setDraftMode: (mode) =>
         set((state) => ({
