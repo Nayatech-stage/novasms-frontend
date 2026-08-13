@@ -273,21 +273,23 @@ export const MobilePreview: FC<MobilePreviewProps> = ({ type, emailContent, smsC
           </div>
 
           {type === 'sms' && smsContent && (
-            <div className="flex-1 min-h-0 p-4 flex flex-col justify-end gap-2 overflow-y-auto">
-              <div className="flex justify-end">
-                <div className="bg-primary text-on-primary rounded-2xl rounded-tr-sm px-4 py-3 max-w-[200px] shadow-sm">
-                  <p className="text-[13px] leading-relaxed break-words">{smsContent.message}</p>
+            <div className="flex-1 min-h-0 overflow-y-auto">
+              <div className="p-4 flex flex-col justify-end gap-2 min-h-full">
+                <div className="flex justify-end">
+                  <div className="bg-primary text-on-primary rounded-2xl rounded-tr-sm px-4 py-3 max-w-[200px] shadow-sm">
+                    <p className="text-[13px] leading-relaxed break-words">{smsContent.message}</p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex justify-end text-[10px] text-secondary">
-                {new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                <div className="flex justify-end text-[10px] text-secondary">
+                  {new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                </div>
               </div>
             </div>
           )}
 
           {type === 'email' && emailContent && (
-            <div className="flex-1 min-h-0 flex flex-col">
-              {/* En-tête email */}
+            <>
+              {/* En-tête email — hauteur fixe */}
               <div className="bg-surface-container-low px-5 py-4 border-b border-outline-variant shrink-0">
                 <div className="text-[11px] text-secondary mb-1">DE: noreply@novasms.ci</div>
                 <div className="font-bold text-[13px] truncate">
@@ -299,17 +301,19 @@ export const MobilePreview: FC<MobilePreviewProps> = ({ type, emailContent, smsC
                   </div>
                 )}
               </div>
-              {/* Corps email — défilement ici uniquement */}
-              <div className="flex-1 min-h-0 overflow-y-auto p-4 flex flex-col gap-3 text-[13px] leading-relaxed text-on-surface">
-                {emailContent.blocks.length === 0 ? (
-                  <p className="text-secondary text-xs">Aucun bloc ajouté</p>
-                ) : (
-                  emailContent.blocks.map((block: CampaignBlock) =>
-                    renderCompactBlock(block, block.id),
-                  )
-                )}
+              {/* Corps email — zone scrollable, séparée du layout flex */}
+              <div className="flex-1 min-h-0 overflow-y-auto">
+                <div className="p-4 flex flex-col gap-3 text-[13px] leading-relaxed text-on-surface">
+                  {emailContent.blocks.length === 0 ? (
+                    <p className="text-secondary text-xs">Aucun bloc ajouté</p>
+                  ) : (
+                    emailContent.blocks.map((block: CampaignBlock) =>
+                      renderCompactBlock(block, block.id),
+                    )
+                  )}
+                </div>
               </div>
-            </div>
+            </>
           )}
         </div>
       </div>
