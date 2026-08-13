@@ -205,12 +205,22 @@ const normalizeABTest = (response: Record<string, unknown>): ABTestConfig | unde
     splitRatio: typeof abTestConfig.splitRatio === 'number' ? abTestConfig.splitRatio : 20,
     variantA: {
       emailSubject: typeof variantA?.emailSubject === 'string' ? variantA.emailSubject : undefined,
+      emailPreheader:
+        typeof variantA?.emailPreheader === 'string' ? variantA.emailPreheader : undefined,
+      emailBlocks: Array.isArray(variantA?.emailBlocks)
+        ? (variantA.emailBlocks as CampaignBlock[])
+        : undefined,
       smsMessage: typeof variantA?.smsMessage === 'string' ? variantA.smsMessage : undefined,
       emailHtml: typeof variantA?.emailHtml === 'string' ? variantA.emailHtml : undefined,
       templateId: typeof variantA?.templateId === 'string' ? variantA.templateId : undefined,
     },
     variantB: {
       emailSubject: typeof variantB?.emailSubject === 'string' ? variantB.emailSubject : undefined,
+      emailPreheader:
+        typeof variantB?.emailPreheader === 'string' ? variantB.emailPreheader : undefined,
+      emailBlocks: Array.isArray(variantB?.emailBlocks)
+        ? (variantB.emailBlocks as CampaignBlock[])
+        : undefined,
       smsMessage: typeof variantB?.smsMessage === 'string' ? variantB.smsMessage : undefined,
       emailHtml: typeof variantB?.emailHtml === 'string' ? variantB.emailHtml : undefined,
       templateId: typeof variantB?.templateId === 'string' ? variantB.templateId : undefined,

@@ -225,10 +225,55 @@ export const EmailEditor: FC = () => {
 
     setDraftEmailContent(content);
 
-    // If editing an already-persisted campaign, persist changes to backend
+    // Sync A/B variant state to store before saving
+    if (abEnabled) {
+      const updatedAB = {
+        ...(abTest as NonNullable<typeof abTest>),
+        variantA: {
+          ...(abTest?.variantA ?? {}),
+          emailSubject: subjectA,
+          emailPreheader: preheaderA,
+          emailBlocks: blocksA,
+        } as NonNullable<typeof abTest>['variantA'],
+        variantB: {
+          ...(abTest?.variantB ?? {}),
+          emailSubject: subjectB,
+          emailPreheader: preheaderB,
+          emailBlocks: blocksB,
+        } as NonNullable<typeof abTest>['variantB'],
+      };
+      setDraftABTest(updatedAB);
+    }
+
+    // If editing an already-persisted campaign, persist to backend
     if (selectedCampaignId) {
       try {
-        await campaignApi.update(selectedCampaignId, { emailContent: content });
+        // Embed A/B variant blocks/subjects inside emailContent.abTestConfig
+        // so the backend stores them in contentJson and restores them on reload
+        const emailContent: Record<string, unknown> = { ...content };
+        if (abEnabled) {
+          emailContent.abTestConfig = {
+            ...(abTest ?? {}),
+            enabled: true,
+            variantA: {
+              ...(abTest?.variantA ?? {}),
+              emailSubject: subjectA,
+              emailPreheader: preheaderA,
+              emailBlocks: blocksA,
+            },
+            variantB: {
+              ...(abTest?.variantB ?? {}),
+              emailSubject: subjectB,
+              emailPreheader: preheaderB,
+              emailBlocks: blocksB,
+            },
+          };
+        }
+        await campaignApi.update(selectedCampaignId, {
+          emailContent: emailContent as unknown as Parameters<
+            typeof campaignApi.update
+          >[1]['emailContent'],
+        });
       } catch (err) {
         alert(
           'Erreur lors de la sauvegarde distante: ' +
@@ -759,6 +804,30 @@ export const EmailEditor: FC = () => {
 
       {/* Center: Editor Canvas */}
       <div className="lg:col-span-6 flex flex-col gap-4 pb-8">
+        {/* Bandeau variante active (A/B test uniquement) */}
+        {abEnabled && (
+          <div
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl border font-semibold text-sm ${
+              activeVariant === 'A'
+                ? 'bg-blue-50 border-blue-200 text-blue-700'
+                : activeVariant === 'B'
+                  ? 'bg-purple-50 border-purple-200 text-purple-700'
+                  : 'bg-primary/5 border-primary/20 text-primary'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[18px]">
+              {activeVariant === 'A' ? 'looks_one' : activeVariant === 'B' ? 'looks_two' : 'mail'}
+            </span>
+            <span>
+              {activeVariant === 'main'
+                ? 'Vous éditez : Email principal'
+                : activeVariant === 'A'
+                  ? 'Vous éditez : Version A — les blocs ci-dessous sont indépendants'
+                  : 'Vous éditez : Version B — les blocs ci-dessous sont indépendants'}
+            </span>
+          </div>
+        )}
+
         {/* Subject Block Card */}
         <div className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant overflow-hidden group">
           <div className="flex items-center justify-between px-4 py-3 bg-surface-container-low border-b border-outline-variant">
@@ -1588,9 +1657,12 @@ export const EmailEditor: FC = () => {
         {/* Save Button */}
         <button
           onClick={handleSave}
-          className="w-full bg-primary-container text-on-primary-fixed-variant font-headline-md text-headline-md py-4 rounded-xl shadow-lg hover:bg-primary-fixed transition-colors mt-2"
+          className="w-full bg-primary-container text-on-primary-fixed-variant font-headline-md text-headline-md py-4 rounded-xl shadow-lg hover:bg-primary-fixed transition-colors mt-2 flex items-center justify-center gap-2"
         >
-          Enregistrer le contenu
+          <span className="material-symbols-outlined text-[20px]">save</span>
+          {abEnabled
+            ? 'Enregistrer toutes les variantes (Principal + A + B)'
+            : 'Enregistrer le contenu'}
         </button>
       </div>
 
