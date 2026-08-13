@@ -436,7 +436,7 @@ export default function LandingPage() {
               ))}
             </div>
             <p className="text-lg italic text-secondary leading-relaxed mb-8">
-              "NovaSMS a radicalement changé notre façon de communiquer. Leur précision sur le
+              "NovaMessenger a radicalement changé notre façon de communiquer. Leur précision sur le
               ciblage nous a permis de doubler nos conversions en moins de 3 mois."
             </p>
             <div className="flex items-center gap-4">
@@ -498,7 +498,7 @@ export default function LandingPage() {
               </svg>
             </div>
             <span className="font-headline font-extrabold text-xl tracking-tight text-secondary">
-              NovaSMS
+              NovaMessenger
             </span>
           </div>
 
@@ -514,7 +514,7 @@ export default function LandingPage() {
             </a>
           </div>
 
-          <p className="text-sm text-secondary/40">© 2026 NovaSMS Inc.</p>
+          <p className="text-sm text-secondary/40">© 2026 NovaMessenger Inc.</p>
         </div>
       </footer>
     </div>

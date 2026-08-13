@@ -146,7 +146,7 @@ export default function Produit() {
             <div className="absolute top-0 right-0 w-96 h-96 bg-primary/20 blur-[120px] rounded-full translate-x-1/2 -translate-y-1/2"></div>
             <div className="relative z-10 space-y-8">
               <h2 className="font-headline text-4xl lg:text-5xl font-extrabold text-white tracking-tight">
-                Prêt à découvrir NovaSMS ?
+                Prêt à découvrir NovaMessenger ?
               </h2>
               <p className="text-white/70 text-lg max-w-2xl mx-auto">
                 Commencez votre essai gratuit de 14 jours. Aucune carte de crédit requise.
@@ -180,7 +180,7 @@ export default function Produit() {
               </svg>
             </div>
             <span className="font-headline font-extrabold text-xl tracking-tight text-secondary">
-              NovaSMS
+              NovaMessenger
             </span>
           </div>
           <div className="pub-footer-links flex gap-6 text-sm font-semibold text-secondary/60">
@@ -194,7 +194,7 @@ export default function Produit() {
               Support
             </a>
           </div>
-          <p className="text-sm text-secondary/40">© 2026 NovaSMS Inc.</p>
+          <p className="text-sm text-secondary/40">© 2026 NovaMessenger Inc.</p>
         </div>
       </footer>
     </div>

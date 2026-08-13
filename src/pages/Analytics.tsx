@@ -340,7 +340,7 @@ export default function Analytics() {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(17);
     doc.setTextColor(255, 255, 255);
-    doc.text('NovaSMS', margin, 15);
+    doc.text('NovaMessenger', margin, 15);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     doc.text(`Rapport Analytics — ${period} derniers jours`, margin + 42, 15);
@@ -556,7 +556,7 @@ export default function Analytics() {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7.5);
     doc.setTextColor(150, 150, 150);
-    doc.text('NovaSMS — Plateforme de messagerie multi-canal', margin, 289);
+    doc.text('NovaMessenger — Plateforme de messagerie multi-canal', margin, 289);
     doc.text(`Genere le ${new Date().toLocaleDateString('fr-FR')}`, pageW - margin, 289, {
       align: 'right',
     });

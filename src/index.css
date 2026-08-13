@@ -551,7 +551,7 @@ body {
 .font-bold { font-weight: 700; }
 
 
-/* ─── Driver.js — NovaSMS brand overrides ────────────────────────────────── */
+/* ─── Driver.js — NovaMessenger brand overrides ────────────────────────────────── */
 .novasms-tour-popover.driver-popover {
   border-radius: 16px;
   border: 1.5px solid rgba(46, 200, 10, 0.15);
@@ -605,7 +605,7 @@ body {
   font-size: 11px;
   color: var(--text-3, #9ca3af);
 }
-/* Highlight ring NovaSMS vert */
+/* Highlight ring NovaMessenger vert */
 .driver-active .driver-overlay { background: rgba(0,0,0,0.52); }
 
 /* ─── Form input ──────────────────────────────────────────────────────────── */

@@ -47,7 +47,7 @@ describe('blocksToHtml — conversion blocs → HTML email (US-007)', () => {
     ]);
 
     expect(html).toContain('https://x.ci');
-    expect(html).toContain('Voir NovaSMS');
+    expect(html).toContain('Voir NovaMessenger');
   });
 
   it('rend un placeholder pour une image sans src', () => {

@@ -297,7 +297,9 @@ export default function Sidebar() {
       <div className="sb-logo">
         <div className="sb-logomark">N</div>
         {!collapsed && (
-          <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-1)' }}>NovaSMS</span>
+          <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-1)' }}>
+            NovaMessenger
+          </span>
         )}
         <button
           type="button"
@@ -344,23 +346,18 @@ export default function Sidebar() {
                     ? `${credits.toLocaleString('fr-FR')} FCFA disponible`
                     : t('sidebar.noCredits');
               return (
-                <div className="flex items-center gap-3">
-                  <span className="credits-amount">
-                    {credits == null ? '--' : credits.toLocaleString('fr-FR')}
-                  </span>
-                  <div style={{ flex: 1 }}>
-                    <div className="credits-bar">
-                      <div
-                        className="credits-bar-fill"
-                        style={{
-                          width: `${pct}%`,
-                          background: barColor,
-                          transition: 'width 0.4s ease',
-                        }}
-                      />
-                    </div>
-                    <div className="credits-hint">{hint}</div>
+                <div>
+                  <div className="credits-bar">
+                    <div
+                      className="credits-bar-fill"
+                      style={{
+                        width: `${pct}%`,
+                        background: barColor,
+                        transition: 'width 0.4s ease',
+                      }}
+                    />
                   </div>
+                  <div className="credits-hint">{hint}</div>
                 </div>
               );
             })()}

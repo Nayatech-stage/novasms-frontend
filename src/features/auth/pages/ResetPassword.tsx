@@ -94,7 +94,7 @@ export default function ResetPassword() {
           <div className="w-8 h-8 bg-primary rounded flex items-center justify-center">
             <Bolt className="w-5 h-5 text-white" />
           </div>
-          <span className="font-headline font-bold text-secondary">NovaSMS</span>
+          <span className="font-headline font-bold text-secondary">NovaMessenger</span>
         </div>
 
         <h1 className="text-2xl font-bold text-secondary mb-2">{t('resetPassword.title')}</h1>

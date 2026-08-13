@@ -667,7 +667,7 @@ export const EMAIL_TEMPLATES: EmailTemplate[] = [
           id: 'spotlight-product',
           type: 'product',
           content: {
-            title: 'Pack Premium NovaSMS',
+            title: 'Pack Premium NovaMessenger',
             description:
               '5000 SMS + accès complet à toutes les fonctionnalités marketing. Idéal pour les PME.',
             price: '49 000 FCFA / mois',

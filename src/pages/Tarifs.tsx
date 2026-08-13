@@ -159,7 +159,7 @@ export default function Tarifs() {
               </svg>
             </div>
             <span className="font-headline font-extrabold text-xl tracking-tight text-secondary">
-              NovaSMS
+              NovaMessenger
             </span>
           </div>
           <div className="pub-footer-links flex gap-6 text-sm font-semibold text-secondary/60">
@@ -173,7 +173,7 @@ export default function Tarifs() {
               Support
             </a>
           </div>
-          <p className="text-sm text-secondary/40">© 2026 NovaSMS Inc.</p>
+          <p className="text-sm text-secondary/40">© 2026 NovaMessenger Inc.</p>
         </div>
       </footer>
     </div>

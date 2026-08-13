@@ -1173,7 +1173,7 @@ export default function Settings() {
               {[
                 {
                   name: 'Zapier',
-                  desc: 'Reliez NovaSMS à plus de 6 000 applications',
+                  desc: 'Reliez NovaMessenger à plus de 6 000 applications',
                   color: '#FF4A00',
                   soon: true,
                 },
@@ -1185,7 +1185,7 @@ export default function Settings() {
                 },
                 {
                   name: 'WordPress',
-                  desc: 'Plugin NovaSMS pour votre site WordPress',
+                  desc: 'Plugin NovaMessenger pour votre site WordPress',
                   color: '#21759B',
                   soon: true,
                 },
@@ -1789,7 +1789,7 @@ export default function Settings() {
                     doc.setFont('helvetica', 'bold');
                     doc.setFontSize(14);
                     doc.setTextColor(12, 84, 96);
-                    doc.text('NovaSMS — Historique des dépenses', 14, 16);
+                    doc.text('NovaMessenger — Historique des dépenses', 14, 16);
                     doc.setFontSize(9);
                     doc.setTextColor(100, 116, 139);
                     doc.text(`Généré le ${new Date().toLocaleDateString('fr-FR')}`, W - 14, 16, {

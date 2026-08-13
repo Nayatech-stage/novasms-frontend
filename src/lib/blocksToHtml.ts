@@ -10,7 +10,7 @@ type Vars = Record<string, string>;
 const DEFAULT_VARS: Vars = {
   prénom: 'Awa',
   nom: 'Diallo',
-  boutique: 'NovaSMS',
+  boutique: 'NovaMessenger',
   code_promo: 'PROMO10',
 };
 
@@ -165,7 +165,7 @@ export function blocksToHtml(
           <!-- Header Brand -->
           <tr>
             <td style="background:linear-gradient(135deg,#2ec80a,#aaee22);padding:24px 32px;text-align:center;">
-              <span style="font-size:20px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;">NovaSMS</span>
+              <span style="font-size:20px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;">NovaMessenger</span>
             </td>
           </tr>
           <!-- Body -->

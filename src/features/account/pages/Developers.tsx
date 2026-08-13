@@ -49,21 +49,21 @@ const PERMISSION_GROUPS = [
 const INTEGRATIONS = [
   {
     name: 'Zapier',
-    description: 'Reliez NovaSMS à plus de 6 000 applications sans écrire de code',
+    description: 'Reliez NovaMessenger à plus de 6 000 applications sans écrire de code',
     cta: 'Connecter',
     soon: true,
     bgColor: '#FF4A00',
   },
   {
     name: 'Make',
-    description: "Créez des scénarios d'automatisation visuels avec NovaSMS",
+    description: "Créez des scénarios d'automatisation visuels avec NovaMessenger",
     cta: 'Ouvrir Make',
     soon: true,
     bgColor: '#6D00CC',
   },
   {
     name: 'WordPress',
-    description: 'Installez le plugin NovaSMS en 2 minutes sur votre site WordPress',
+    description: 'Installez le plugin NovaMessenger en 2 minutes sur votre site WordPress',
     cta: 'Télécharger',
     soon: true,
     bgColor: '#21759B',
@@ -284,7 +284,7 @@ export default function Developers() {
                 Clés API
               </h1>
               <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--text-2)' }}>
-                Permettez à votre site web, application ou outil de communiquer avec NovaSMS
+                Permettez à votre site web, application ou outil de communiquer avec NovaMessenger
               </p>
             </div>
           </div>
@@ -365,7 +365,7 @@ export default function Developers() {
                 marginInline: 'auto',
               }}
             >
-              Créez une clé pour permettre à votre site ou application d'utiliser NovaSMS
+              Créez une clé pour permettre à votre site ou application d'utiliser NovaMessenger
             </p>
             <button
               onClick={() => setShowCreate(true)}
@@ -640,7 +640,7 @@ export default function Developers() {
             Vous n&apos;avez pas de développeur ?
           </div>
           <div style={{ fontSize: 12, color: 'var(--text-2)' }}>
-            Connectez NovaSMS à vos outils existants sans écrire une seule ligne de code.
+            Connectez NovaMessenger à vos outils existants sans écrire une seule ligne de code.
           </div>
         </div>
         <div
@@ -758,7 +758,7 @@ export default function Developers() {
               Nouvelle clé API
             </h2>
             <p style={{ margin: '0 0 20px', fontSize: 12, color: '#64748b' }}>
-              Cette clé permettra à votre site ou application de communiquer avec NovaSMS.
+              Cette clé permettra à votre site ou application de communiquer avec NovaMessenger.
             </p>
 
             <label

@@ -29,7 +29,7 @@ export default function PublicNavbar({ isScrolled, activePath }: PublicNavbarPro
               </svg>
             </div>
             <span className="font-headline font-extrabold text-xl sm:text-2xl tracking-tight text-secondary">
-              NovaSMS
+              NovaMessenger
             </span>
           </a>
 

@@ -78,7 +78,7 @@ export default function Login() {
             <Bolt className="w-5 h-5 text-white" />
           </div>
           <span className="font-headline font-extrabold text-xl tracking-tight text-secondary">
-            NovaSMS
+            NovaMessenger
           </span>
         </div>
       </header>
@@ -214,7 +214,7 @@ export default function Login() {
 
       {/* Footer */}
       <footer className="py-6 text-center text-xs text-secondary/40 border-t border-outline-variant/20 bg-white">
-        Copyright 2026 NovaSMS —{' '}
+        Copyright 2026 NovaMessenger —{' '}
         <Link to="/" className="hover:text-primary">
           {t('login.backToSite')}
         </Link>

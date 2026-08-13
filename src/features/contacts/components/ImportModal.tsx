@@ -54,7 +54,7 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
     invalidPhones: number;
   } | null>(null);
 
-  // Champs NovaSMS attendus
+  // Champs NovaMessenger attendus
   const targetFields = [
     { key: 'email', label: 'Email', required: false },
     { key: 'phone', label: 'Téléphone', required: false },
@@ -164,7 +164,7 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Impor
     setMapping((prev) => ({ ...prev, [targetField]: sourceColumn }));
   };
 
-  /** Applique le mapping CSV→champs NovaSMS sur une ligne brute */
+  /** Applique le mapping CSV→champs NovaMessenger sur une ligne brute */
   const applyMapping = (row: Record<string, unknown>): Record<string, unknown> => {
     const result: Record<string, unknown> = {};
     for (const [targetField, sourceCol] of Object.entries(mapping)) {

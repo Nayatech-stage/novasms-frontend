@@ -22,7 +22,7 @@ export default function Register() {
             <Bolt className="w-5 h-5 text-white" />
           </div>
           <span className="font-headline font-extrabold text-xl tracking-tight text-secondary">
-            NovaSMS
+            NovaMessenger
           </span>
         </Link>
         <Link

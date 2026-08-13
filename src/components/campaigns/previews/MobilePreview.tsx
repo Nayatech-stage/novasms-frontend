@@ -291,7 +291,7 @@ export const MobilePreview: FC<MobilePreviewProps> = ({ type, emailContent, smsC
             <>
               {/* En-tête email — hauteur fixe */}
               <div className="bg-surface-container-low px-5 py-4 border-b border-outline-variant shrink-0">
-                <div className="text-[11px] text-secondary mb-1">DE: noreply@novasms.ci</div>
+                <div className="text-[11px] text-secondary mb-1">DE: noreply@novamessenger.ci</div>
                 <div className="font-bold text-[13px] truncate">
                   {emailContent.subject || "Ligne d'objet"}
                 </div>

@@ -100,7 +100,7 @@ export default function StatusPage() {
         <div className="mb-10 text-center">
           <h1 className="text-3xl font-black text-gray-900">État de la plateforme</h1>
           <p className="mt-2 text-sm text-gray-500">
-            NovaSMS — vérification en temps réel des services
+            NovaMessenger — vérification en temps réel des services
           </p>
         </div>
 
@@ -109,7 +109,7 @@ export default function StatusPage() {
             <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">
               Statut global
             </p>
-            <p className="mt-1 text-xl font-black text-gray-900">NovaSMS API</p>
+            <p className="mt-1 text-xl font-black text-gray-900">NovaMessenger API</p>
             {data?.uptime !== undefined && (
               <p className="mt-0.5 text-xs text-gray-400">Uptime : {formatUptime(data.uptime)}</p>
             )}

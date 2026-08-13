@@ -38,7 +38,7 @@ const TOUR_PHASES: TourPhase[] = [
     page: '/dashboard',
     steps: [
       {
-        title: '👋 Bienvenue sur NovaSMS !',
+        title: '👋 Bienvenue sur NovaMessenger !',
         desc: 'Laissez-nous vous faire découvrir votre espace en quelques secondes. Vous pouvez quitter le guide à tout moment en appuyant sur <b>Échap</b>.',
         align: 'center',
       },
@@ -104,7 +104,7 @@ const TOUR_PHASES: TourPhase[] = [
       },
       {
         title: '🅰🅱 Test A/B intelligent',
-        desc: "Comparez deux versions de votre email : objet, contenu, heure d'envoi. NovaSMS envoie la version A à 50 % de votre audience et la version B à l'autre moitié — vous identifiez la meilleure version avant l'envoi final.",
+        desc: "Comparez deux versions de votre email : objet, contenu, heure d'envoi. NovaMessenger envoie la version A à 50 % de votre audience et la version B à l'autre moitié — vous identifiez la meilleure version avant l'envoi final.",
         align: 'center',
       },
       {
@@ -198,7 +198,7 @@ const TOUR_PHASES: TourPhase[] = [
       },
       {
         title: '🎉 Vous êtes prêt !',
-        desc: 'Félicitations ! Vous avez fait le tour complet de NovaSMS. Retournez sur le tableau de bord et créez votre première campagne pour commencer à engager vos clients.',
+        desc: 'Félicitations ! Vous avez fait le tour complet de NovaMessenger. Retournez sur le tableau de bord et créez votre première campagne pour commencer à engager vos clients.',
         align: 'center',
       },
     ],

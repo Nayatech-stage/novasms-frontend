@@ -77,7 +77,7 @@ export default function LoginPage() {
               <Bolt className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="font-headline text-xl font-bold text-secondary">NovaSMS</h1>
+              <h1 className="font-headline text-xl font-bold text-secondary">NovaMessenger</h1>
               <p className="text-sm text-on-surface-variant">{t('login.merchantLogin')}</p>
             </div>
           </div>
@@ -179,7 +179,7 @@ export default function LoginPage() {
         {/* Footer */}
         <div className="px-8 py-4 bg-surface/50 border-t border-outline-variant/20 text-center">
           <p className="text-xs text-on-surface-variant">
-            © 2026 NovaSMS — The Precision Architect
+            © 2026 NovaMessenger — The Precision Architect
           </p>
         </div>
       </motion.div>

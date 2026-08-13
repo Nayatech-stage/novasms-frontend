@@ -322,7 +322,7 @@ export const CampaignWizard: FC = () => {
       {/* Header */}
       <header className="campaign-wizard-header flex justify-between items-center w-full px-8 h-16 bg-surface border-b border-outline-variant/10 sticky top-0 z-40">
         <div className="flex items-center gap-4 min-w-0 flex-1">
-          <h1 className="font-headline text-2xl font-bold text-primary shrink-0">NovaSMS</h1>
+          <h1 className="font-headline text-2xl font-bold text-primary shrink-0">NovaMessenger</h1>
           <div className="h-6 w-[1px] bg-outline-variant/30 shrink-0" />
           <span className="text-sm text-on-surface-variant truncate">
             {draft.name ? `Brouillon: ${draft.name}` : 'Nouvelle campagne'}

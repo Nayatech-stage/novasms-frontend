@@ -146,7 +146,7 @@ export default function CampaignReport() {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(17);
     doc.setTextColor(255, 255, 255);
-    doc.text('NovaSMS', margin, 15);
+    doc.text('NovaMessenger', margin, 15);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     const campaignTitle =
@@ -335,7 +335,7 @@ export default function CampaignReport() {
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(7.5);
       doc.setTextColor(150, 150, 150);
-      doc.text('NovaSMS — Plateforme de messagerie multi-canal', margin, 289);
+      doc.text('NovaMessenger — Plateforme de messagerie multi-canal', margin, 289);
       doc.text(
         `Rapport — ${new Date().toLocaleDateString('fr-FR')} — Page ${p}/${lastPage}`,
         pageW - margin,

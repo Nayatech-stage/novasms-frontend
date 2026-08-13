@@ -33,13 +33,13 @@ export default function Ressources() {
     {
       icon: <Video className="w-8 h-8" />,
       title: 'Webinaires & Tutoriels',
-      desc: 'Sessions live et replays pour maîtriser les fonctionnalités avancées de NovaSMS.',
+      desc: 'Sessions live et replays pour maîtriser les fonctionnalités avancées de NovaMessenger.',
       link: '#',
     },
     {
       icon: <FileText className="w-8 h-8" />,
       title: 'Études de cas',
-      desc: 'Découvrez comment des entreprises comme la vôtre ont multiplié leur ROI avec NovaSMS.',
+      desc: 'Découvrez comment des entreprises comme la vôtre ont multiplié leur ROI avec NovaMessenger.',
       link: '#',
     },
   ];
@@ -123,7 +123,7 @@ export default function Ressources() {
               </svg>
             </div>
             <span className="font-headline font-extrabold text-xl tracking-tight text-secondary">
-              NovaSMS
+              NovaMessenger
             </span>
           </div>
           <div className="pub-footer-links flex gap-6 text-sm font-semibold text-secondary/60">
@@ -137,7 +137,7 @@ export default function Ressources() {
               Support
             </a>
           </div>
-          <p className="text-sm text-secondary/40">© 2026 NovaSMS Inc.</p>
+          <p className="text-sm text-secondary/40">© 2026 NovaMessenger Inc.</p>
         </div>
       </footer>
     </div>

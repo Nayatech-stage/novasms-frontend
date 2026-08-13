@@ -247,7 +247,7 @@ export default function Header() {
   const pageTitle =
     PAGE_TITLES[exactPath] ??
     Object.entries(PAGE_TITLES).find(([k]) => exactPath.startsWith(k))?.[1] ??
-    'NovaSMS';
+    'NovaMessenger';
 
   const today = new Date().toLocaleDateString('fr-FR', {
     weekday: 'long',
@@ -342,31 +342,38 @@ export default function Header() {
         </p>
       </div>
 
-      {/* Credits pill — visible sur le dashboard principalement */}
-      <div className="credits-pill">
-        <div className="credits-pill-top">
-          <span className="credits-label">Crédits disponibles</span>
-          <button className="credits-recharge" onClick={() => navigate('/rechargement')}>
-            Recharger ↗
-          </button>
-        </div>
-        <div className="flex items-center gap-8">
-          <span className="credits-amount">
-            {credits != null ? credits.toLocaleString('fr-FR') : '—'} FCFA
-          </span>
-          <div style={{ flex: 1 }}>
-            <div className="credits-bar">
-              <div className="credits-bar-fill" style={{ width: `${creditsPct}%` }} />
-            </div>
-            <div className="credits-hint">
-              {gaugeMax != null
-                ? `${creditsPct}% restant · Alerte < ${alertThreshold?.toLocaleString('fr-FR') ?? '—'} FCFA`
-                : credits != null && credits > 0
-                  ? `${credits.toLocaleString('fr-FR')} FCFA disponible`
-                  : 'Aucun crédit'}
+      {/* Bloc crédits + bouton Recharger côte à côte */}
+      <div className="flex items-center gap-3">
+        <div className="credits-pill">
+          <div className="credits-pill-top">
+            <span className="credits-label">Crédits disponibles</span>
+          </div>
+          <div className="flex items-center gap-8">
+            <span className="credits-amount">
+              {credits != null ? credits.toLocaleString('fr-FR') : '—'} FCFA
+            </span>
+            <div style={{ flex: 1 }}>
+              <div className="credits-bar">
+                <div className="credits-bar-fill" style={{ width: `${creditsPct}%` }} />
+              </div>
+              <div className="credits-hint">
+                {gaugeMax != null
+                  ? `${creditsPct}% restant · Alerte < ${alertThreshold?.toLocaleString('fr-FR') ?? '—'} FCFA`
+                  : credits != null && credits > 0
+                    ? `${credits.toLocaleString('fr-FR')} FCFA disponible`
+                    : 'Aucun crédit'}
+              </div>
             </div>
           </div>
         </div>
+        <button
+          type="button"
+          className="btn-primary"
+          style={{ whiteSpace: 'nowrap', fontSize: 12, padding: '7px 14px' }}
+          onClick={() => navigate('/rechargement')}
+        >
+          ↑ Recharger
+        </button>
       </div>
 
       <div className="hdr-actions">

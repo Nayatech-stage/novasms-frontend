@@ -118,7 +118,7 @@ export default function Solutions() {
               Des solutions adaptées à votre secteur
             </h1>
             <p className="text-xl text-on-surface-variant leading-relaxed">
-              Que vous soyez e-commerce, santé, éducation ou services, NovaSMS s'adapte à vos
+              Que vous soyez e-commerce, santé, éducation ou services, NovaMessenger s'adapte à vos
               besoins spécifiques.
             </p>
           </motion.div>
@@ -210,7 +210,7 @@ export default function Solutions() {
               </svg>
             </div>
             <span className="font-headline font-extrabold text-xl tracking-tight text-secondary">
-              NovaSMS
+              NovaMessenger
             </span>
           </div>
           <div className="pub-footer-links flex gap-6 text-sm font-semibold text-secondary/60">
@@ -224,7 +224,7 @@ export default function Solutions() {
               Support
             </a>
           </div>
-          <p className="text-sm text-secondary/40">© 2026 NovaSMS Inc.</p>
+          <p className="text-sm text-secondary/40">© 2026 NovaMessenger Inc.</p>
         </div>
       </footer>
     </div>
