@@ -252,7 +252,7 @@ export const MobilePreview: FC<MobilePreviewProps> = ({ type, emailContent, smsC
   return (
     <div className="flex flex-col items-center">
       {/* iPhone 16 Pro Frame */}
-      <div className="relative w-full aspect-[9/19.5] bg-black rounded-[48px] p-[6px] shadow-2xl border border-gray-700 flex flex-col mx-auto max-w-[320px]">
+      <div className="relative w-full aspect-[9/19.5] bg-black rounded-[48px] p-[6px] shadow-2xl border border-gray-700 flex flex-col mx-auto max-w-[340px]">
         {/* Inner Bezel */}
         <div className="absolute inset-[6px] border-[6px] border-black rounded-[42px] pointer-events-none z-30" />
         {/* Dynamic Island */}
