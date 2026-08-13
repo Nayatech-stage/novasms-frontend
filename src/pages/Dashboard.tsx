@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAppMetrics } from '@/hooks/useAppMetrics';
 import { useCampaignStore } from '@/store/campaign.store';
@@ -203,14 +203,6 @@ function DonutChart({
   );
 }
 
-// ─── Heatmap 7×24 ────────────────────────────────────────────────────────
-const DAYS_FR = ['Lu', 'Ma', 'Me', 'Je', 'Ve', 'Sa', 'Di'];
-const HEAT_COLORS = ['#f0f7f0', '#c8f0b0', '#8ee060', '#52cc22', '#2ec80a'];
-function heatColor(v: number, max: number) {
-  if (max === 0) return HEAT_COLORS[0];
-  return HEAT_COLORS[Math.min(4, Math.floor((v / max) * 5))];
-}
-
 export default function Dashboard() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -306,9 +298,7 @@ export default function Dashboard() {
 
   const totalSent = overview?.messagesSent ?? 0;
   const byChannel = overview?.byChannel ?? [];
-  const top5 = overview?.top5 ?? [];
   const evolution = overview?.evolution ?? [];
-  const heatmap = overview?.heatmap ?? [];
   const prev = overview?.previous;
 
   const deltaSent =
@@ -317,8 +307,6 @@ export default function Dashboard() {
       : null;
   const deltaOpen = prev != null && overview ? overview.openRate - prev.openRate : null;
   const deltaClick = prev != null && overview ? overview.clickRate - prev.clickRate : null;
-
-  const heatMax = Math.max(...heatmap.map((h) => h.openCount), 1);
 
   const onboardingSteps = [
     { label: t('dashboard.stepProfileDone'), done: true },
@@ -754,130 +742,372 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Top 5 campagnes */}
-      <div className="card">
-        <div className="flex items-center justify-between mb-12">
-          <div className="card-title">{t('dashboard.top5Title', { period })}</div>
-          <Link
-            to="/campaigns"
-            style={{ fontSize: 11, color: 'var(--brand-primary)', fontWeight: 600 }}
-          >
-            {t('campaigns.viewAll')}
-          </Link>
-        </div>
-        {campaignsLoading ? (
-          <div
-            style={{ textAlign: 'center', padding: '16px 0', color: 'var(--text-2)', fontSize: 12 }}
-          >
-            {t('common.loading')}
-          </div>
-        ) : top5.length === 0 ? (
-          <div
-            style={{ textAlign: 'center', padding: '20px 0', color: 'var(--text-2)', fontSize: 12 }}
-          >
-            {t('campaigns.noData')}{' '}
-            <button
-              onClick={async () => {
-                await createNewCampaign();
-                navigate('/campaigns/new?fresh=1');
-              }}
-              style={{
-                color: 'var(--brand-primary)',
-                background: 'none',
-                border: 'none',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              {t('campaigns.createNow')}
-            </button>
-          </div>
-        ) : (
-          <div className="data-table-wrapper">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>{t('campaigns.name')}</th>
-                  <th>{t('campaigns.sends')}</th>
-                  <th>{t('campaigns.opens')}</th>
-                  <th>{t('campaigns.clicks')}</th>
-                  <th>{t('campaigns.clickRate')}</th>
-                  <th>{t('campaigns.status')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {top5.map((c) => (
-                  <tr
-                    key={c.id}
-                    style={{ cursor: 'pointer' }}
-                    onClick={() => navigate(`/campaigns/${c.id}`)}
-                  >
-                    <td style={{ fontWeight: 500, color: 'var(--text-1)' }}>{c.name}</td>
-                    <td>{c.sentCount.toLocaleString('fr-FR')}</td>
-                    <td>{c.openedCount.toLocaleString('fr-FR')}</td>
-                    <td>{c.clickedCount.toLocaleString('fr-FR')}</td>
-                    <td style={{ color: '#16A34A', fontWeight: 600 }}>
-                      {c.sentCount > 0
-                        ? `${((c.clickedCount / c.sentCount) * 100).toFixed(1)}%`
-                        : '—'}
-                    </td>
-                    <td>
-                      <span className="tag green">{t('campaigns.active')}</span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {/* Heatmap engagement 7×24 */}
-      <div className="card">
-        <div className="card-title mb-12">{t('dashboard.heatmapTitle', { period })}</div>
-        <div className="heatmap-wrapper">
+      {/* ── Vue opérationnelle du jour ──────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: 12 }}>
+        {/* Contacts ajoutés aujourd'hui */}
+        <div
+          className="card"
+          style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '14px 16px' }}
+        >
           <div
             style={{
-              display: 'grid',
-              gridTemplateColumns: '28px repeat(24, minmax(14px, 1fr))',
-              gap: 2,
+              width: 32,
+              height: 32,
+              borderRadius: 9,
+              background: '#e6f7e0',
+              display: 'flex',
               alignItems: 'center',
-              minWidth: 460,
+              justifyContent: 'center',
+              marginBottom: 6,
             }}
           >
-            <div />
-            {Array.from({ length: 24 }, (_, h) => (
-              <div key={h} style={{ fontSize: 8, color: 'var(--text-3)', textAlign: 'center' }}>
-                {h}h
-              </div>
-            ))}
-            {DAYS_FR.map((day, di) => (
-              <Fragment key={`d${di}`}>
-                <div style={{ fontSize: 9, color: 'var(--text-2)' }}>{day}</div>
-                {Array.from({ length: 24 }, (_, h) => {
-                  const row = heatmap.find((r) => r.hour === h);
-                  const v = row ? Math.round(row.openCount * (0.7 + di * 0.05)) : 0;
-                  return (
-                    <div
-                      key={`${di}-${h}`}
-                      className="hm-cell"
-                      style={{ background: heatColor(v, heatMax) }}
-                    />
-                  );
-                })}
-              </Fragment>
-            ))}
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 14 14"
+              fill="none"
+              stroke="#2ec80a"
+              strokeWidth="1.4"
+              strokeLinecap="round"
+            >
+              <circle cx="5.5" cy="4" r="2.5" />
+              <path d="M1 12c0-2.5 2-4.5 4.5-4.5s4.5 2 4.5 4.5" />
+              <line x1="10.5" y1="4.5" x2="10.5" y2="8.5" />
+              <line x1="8.5" y1="6.5" x2="12.5" y2="6.5" />
+            </svg>
+          </div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-1)', lineHeight: 1 }}>
+            {contactsAddedToday.toLocaleString('fr-FR')}
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--text-2)' }}>Contacts ajoutés aujourd'hui</div>
+          <Link
+            to="/contacts"
+            style={{ fontSize: 10.5, color: 'var(--brand-primary)', fontWeight: 600, marginTop: 4 }}
+          >
+            Voir les contacts →
+          </Link>
+        </div>
+
+        {/* Automatisations actives */}
+        <div
+          className="card"
+          style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '14px 16px' }}
+        >
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 9,
+              background: '#e0f0f4',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: 6,
+            }}
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 14 14"
+              fill="none"
+              stroke="#0c5460"
+              strokeWidth="1.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polyline points="8,1 4,8 7,8 6,13 11,6 7,6" />
+            </svg>
+          </div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-1)', lineHeight: 1 }}>
+            {activeAutomations.length}
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--text-2)' }}>Automatisations actives</div>
+          <div style={{ fontSize: 10.5, color: 'var(--text-3)', marginTop: 4 }}>
+            {automationSendCount.toLocaleString('fr-FR')} envois automatiques
           </div>
         </div>
+
+        {/* Campagnes de la période */}
         <div
-          className="flex items-center gap-8"
-          style={{ marginTop: 10, justifyContent: 'flex-end' }}
+          className="card"
+          style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '14px 16px' }}
         >
-          <span className="text-xs text-muted">{t('dashboard.heatLow')}</span>
-          {HEAT_COLORS.map((c, i) => (
-            <div key={i} style={{ width: 12, height: 12, borderRadius: 2, background: c }} />
-          ))}
-          <span className="text-xs text-muted">{t('dashboard.heatHigh')}</span>
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 9,
+              background: '#fef3e2',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: 6,
+            }}
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 14 14"
+              fill="none"
+              stroke="#d97706"
+              strokeWidth="1.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect x="1" y="3" width="12" height="9" rx="1" />
+              <polyline points="1,4 7,9 13,4" />
+            </svg>
+          </div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-1)', lineHeight: 1 }}>
+            {campaigns.filter((c) => c.status === 'scheduled').length}
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--text-2)' }}>Campagnes planifiées</div>
+          <div style={{ fontSize: 10.5, color: 'var(--text-3)', marginTop: 4 }}>
+            {campaigns.filter((c) => c.status === 'sent').length} envoyées au total
+          </div>
+        </div>
+
+        {/* Crédits disponibles */}
+        <div
+          className="card"
+          style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '14px 16px' }}
+        >
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 9,
+              background:
+                creditBalance != null && creditThreshold != null && creditBalance <= creditThreshold
+                  ? '#fee2e2'
+                  : '#e6f7e0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: 6,
+            }}
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 14 14"
+              fill="none"
+              stroke={
+                creditBalance != null && creditThreshold != null && creditBalance <= creditThreshold
+                  ? '#ef4444'
+                  : '#2ec80a'
+              }
+              strokeWidth="1.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect x="1" y="3" width="12" height="9" rx="2" />
+              <line x1="1" y1="6.5" x2="13" y2="6.5" />
+              <line x1="4" y1="9.5" x2="6" y2="9.5" />
+            </svg>
+          </div>
+          <div
+            style={{
+              fontSize: 19,
+              fontWeight: 700,
+              color:
+                creditBalance != null && creditThreshold != null && creditBalance <= creditThreshold
+                  ? '#ef4444'
+                  : 'var(--text-1)',
+              lineHeight: 1,
+            }}
+          >
+            {creditBalance == null ? '—' : creditBalance.toLocaleString('fr-FR')}
+            <span style={{ fontSize: 10, fontWeight: 500, color: 'var(--text-3)', marginLeft: 3 }}>
+              FCFA
+            </span>
+          </div>
+          <div style={{ height: 4, background: 'var(--border)', borderRadius: 2, marginTop: 4 }}>
+            <div
+              style={{
+                height: '100%',
+                borderRadius: 2,
+                width: `${creditProgress}%`,
+                background:
+                  creditProgress < 20
+                    ? '#ef4444'
+                    : creditProgress < 50
+                      ? '#f59e0b'
+                      : 'var(--brand-gradient)',
+                transition: 'width 0.4s ease',
+              }}
+            />
+          </div>
+          <div style={{ fontSize: 10.5, color: 'var(--text-3)', marginTop: 2 }}>
+            {creditThreshold != null
+              ? `Alerte < ${creditThreshold.toLocaleString('fr-FR')} FCFA`
+              : 'Crédits disponibles'}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Campagnes récentes + Activité récente ───────────────── */}
+      <div
+        style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.4fr) minmax(0,1fr)', gap: 12 }}
+      >
+        {/* Campagnes récentes */}
+        <div className="card">
+          <div className="flex items-center justify-between mb-12">
+            <div className="card-title">Campagnes récentes</div>
+            <Link
+              to="/campaigns"
+              style={{ fontSize: 11, color: 'var(--brand-primary)', fontWeight: 600 }}
+            >
+              {t('campaigns.viewAll')}
+            </Link>
+          </div>
+          {campaignsLoading ? (
+            <div
+              style={{
+                textAlign: 'center',
+                padding: '16px 0',
+                color: 'var(--text-2)',
+                fontSize: 12,
+              }}
+            >
+              {t('common.loading')}
+            </div>
+          ) : recentCampaigns.length === 0 ? (
+            <div
+              style={{
+                textAlign: 'center',
+                padding: '20px 0',
+                color: 'var(--text-2)',
+                fontSize: 12,
+              }}
+            >
+              {t('campaigns.noData')}{' '}
+              <button
+                onClick={async () => {
+                  await createNewCampaign();
+                  navigate('/campaigns/new?fresh=1');
+                }}
+                style={{
+                  color: 'var(--brand-primary)',
+                  background: 'none',
+                  border: 'none',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                {t('campaigns.createNow')}
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gap: 8 }}>
+              {recentCampaigns.map((c) => {
+                const statusColor: Record<string, string> = {
+                  sent: '#16a34a',
+                  scheduled: '#d97706',
+                  draft: 'var(--text-3)',
+                  failed: '#ef4444',
+                };
+                const statusLabel: Record<string, string> = {
+                  sent: 'Envoyée',
+                  scheduled: 'Planifiée',
+                  draft: 'Brouillon',
+                  failed: 'Échouée',
+                };
+                const color = statusColor[c.status] ?? 'var(--text-3)';
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => navigate(`/campaigns/${c.id}`)}
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'minmax(0,1fr) auto',
+                      gap: 12,
+                      alignItems: 'center',
+                      textAlign: 'left',
+                      padding: '10px 12px',
+                      borderRadius: 10,
+                      border: '1px solid var(--border)',
+                      background: 'var(--surface)',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontWeight: 600, color: 'var(--text-1)', fontSize: 13 }}>
+                        {c.name}
+                      </div>
+                      <div className="text-xs text-muted" style={{ marginTop: 2 }}>
+                        {c.channel} · {Number(c.estimatedRecipients || 0).toLocaleString('fr-FR')}{' '}
+                        contacts
+                      </div>
+                    </div>
+                    <span style={{ fontSize: 10.5, fontWeight: 700, color, whiteSpace: 'nowrap' }}>
+                      {statusLabel[c.status] ?? c.status}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Activité récente */}
+        <div className="card">
+          <div className="card-title mb-12">Activité récente</div>
+          {auditLogs.length === 0 ? (
+            <div
+              style={{
+                fontSize: 12,
+                color: 'var(--text-3)',
+                textAlign: 'center',
+                padding: '16px 0',
+              }}
+            >
+              Aucune activité récente
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+              {auditLogs.map((log, i) => {
+                const label = log.action.replace(/_/g, ' ');
+                const isLast = i === auditLogs.length - 1;
+                return (
+                  <div
+                    key={log.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: 10,
+                      padding: '8px 0',
+                      borderBottom: isLast ? 'none' : '0.5px solid var(--border)',
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        background: 'var(--brand-primary)',
+                        marginTop: 5,
+                        flexShrink: 0,
+                      }}
+                    />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-1)' }}>
+                        {label.charAt(0).toUpperCase() + label.slice(1)}
+                      </div>
+                      <div style={{ fontSize: 10.5, color: 'var(--text-3)', marginTop: 1 }}>
+                        {new Date(log.createdAt).toLocaleString('fr-FR', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </div>

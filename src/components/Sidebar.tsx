@@ -244,7 +244,7 @@ export default function Sidebar() {
     | 'Analyst';
   const isAdmin = userRole === 'Admin';
   const isAdminOrEditor = userRole === 'Admin' || userRole === 'Editor';
-  const { contactsTotal, credits, alertThreshold, creditLimit, loading, refresh } = useAppMetrics();
+  const { contactsTotal } = useAppMetrics();
   const { activeDashboard, toggleDashboard, mobileSidebarOpen, setMobileSidebarOpen } =
     useUiStore();
 
@@ -311,59 +311,6 @@ export default function Sidebar() {
         </button>
       </div>
       <div className="sb-nav">
-        {!collapsed && (
-          <div id="tour-sidebar-credits" className="sidebar-credits">
-            <div className="credits-pill-top">
-              <span className="credits-label">{t('sidebar.creditsAvailable')}</span>
-              <button className="credits-recharge" onClick={() => void refresh()}>
-                {t('sidebar.recharge')}
-              </button>
-            </div>
-            {(() => {
-              const gaugeMax =
-                creditLimit && creditLimit > 0
-                  ? creditLimit
-                  : alertThreshold && alertThreshold > 0
-                    ? alertThreshold
-                    : null;
-              const pct =
-                credits != null && gaugeMax != null && gaugeMax > 0
-                  ? Math.min(100, Math.round((credits / gaugeMax) * 100))
-                  : credits != null && credits > 0
-                    ? 100
-                    : 0;
-              const barColor =
-                pct < 20
-                  ? 'var(--color-error, #ef4444)'
-                  : pct < 50
-                    ? '#f59e0b'
-                    : 'var(--brand-gradient)';
-              const hint = loading
-                ? t('sidebar.loading')
-                : gaugeMax != null
-                  ? `${pct}% · Alerte < ${alertThreshold ? alertThreshold.toLocaleString('fr-FR') : '—'} FCFA`
-                  : credits != null && credits > 0
-                    ? `${credits.toLocaleString('fr-FR')} FCFA disponible`
-                    : t('sidebar.noCredits');
-              return (
-                <div>
-                  <div className="credits-bar">
-                    <div
-                      className="credits-bar-fill"
-                      style={{
-                        width: `${pct}%`,
-                        background: barColor,
-                        transition: 'width 0.4s ease',
-                      }}
-                    />
-                  </div>
-                  <div className="credits-hint">{hint}</div>
-                </div>
-              );
-            })()}
-          </div>
-        )}
-
         {!collapsed && <div className="sb-section-label">{t('nav.principal')}</div>}
         <a
           href="/dashboard"

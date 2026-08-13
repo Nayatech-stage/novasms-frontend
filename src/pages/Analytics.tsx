@@ -682,7 +682,7 @@ export default function Analytics() {
         </div>
       </div>
 
-      {/* KPI Stats */}
+      {/* KPI Stats avec deltas période précédente */}
       {loading ? (
         <div style={{ textAlign: 'center', padding: 32, color: 'var(--text-2)', fontSize: 12 }}>
           {t('analyticsPage.loading')}
@@ -695,56 +695,231 @@ export default function Analytics() {
             gap: 10,
           }}
         >
-          {[
-            {
-              label: t('analyticsPage.sent'),
-              value: data?.messagesSent?.toLocaleString('fr-FR') ?? '—',
-              color: '#0c5460',
-              pct: 100,
-              bg: '#0c5460',
-            },
-            {
-              label: t('analyticsPage.openRate'),
-              value: data?.openRate != null ? `${data.openRate.toFixed(1)}%` : '—',
-              color: '#2ec80a',
-              pct: data?.openRate ?? 0,
-              bg: 'var(--brand-gradient)',
-            },
-            {
-              label: t('analyticsPage.clickRate'),
-              value: data?.clickRate != null ? `${data.clickRate.toFixed(1)}%` : '—',
-              color: '#aaee22',
-              pct: data?.clickRate ?? 0,
-              bg: '#aaee22',
-            },
-            {
-              label: t('analyticsPage.bounces'),
-              value: data?.bounceRate != null ? `${data.bounceRate.toFixed(1)}%` : '—',
-              color: '#ef4444',
-              pct: data?.bounceRate ?? 0,
-              bg: '#ef4444',
-            },
-            {
-              label: t('analyticsPage.unsubscribes'),
-              value: data?.unsubscribeRate != null ? `${data.unsubscribeRate.toFixed(1)}%` : '—',
-              color: 'var(--text-2)',
-              pct: data?.unsubscribeRate ?? 0,
-              bg: 'var(--text-3)',
-            },
-          ].map(({ label, value, color, pct, bg }) => (
-            <div key={label} className="analytics-stat">
-              <div className="big" style={{ color }}>
-                {value}
+          {(() => {
+            const prev = data?.previous;
+            const deltaSent =
+              prev && prev.messagesSent > 0 && data?.messagesSent != null
+                ? ((data.messagesSent - prev.messagesSent) / prev.messagesSent) * 100
+                : null;
+            const deltaOpen =
+              prev != null && data?.openRate != null ? data.openRate - prev.openRate : null;
+            const deltaClick =
+              prev != null && data?.clickRate != null ? data.clickRate - prev.clickRate : null;
+
+            const items = [
+              {
+                label: t('analyticsPage.sent'),
+                value: data?.messagesSent?.toLocaleString('fr-FR') ?? '—',
+                color: '#0c5460',
+                pct: 100,
+                bg: '#0c5460',
+                delta:
+                  deltaSent != null ? `${deltaSent >= 0 ? '+' : ''}${deltaSent.toFixed(1)}%` : null,
+                deltaUp: deltaSent != null ? deltaSent >= 0 : null,
+              },
+              {
+                label: t('analyticsPage.openRate'),
+                value: data?.openRate != null ? `${data.openRate.toFixed(1)}%` : '—',
+                color: '#2ec80a',
+                pct: data?.openRate ?? 0,
+                bg: 'var(--brand-gradient)',
+                delta:
+                  deltaOpen != null
+                    ? `${deltaOpen >= 0 ? '+' : ''}${deltaOpen.toFixed(1)} pt`
+                    : null,
+                deltaUp: deltaOpen != null ? deltaOpen >= 0 : null,
+              },
+              {
+                label: t('analyticsPage.clickRate'),
+                value: data?.clickRate != null ? `${data.clickRate.toFixed(1)}%` : '—',
+                color: '#aaee22',
+                pct: data?.clickRate ?? 0,
+                bg: '#aaee22',
+                delta:
+                  deltaClick != null
+                    ? `${deltaClick >= 0 ? '+' : ''}${deltaClick.toFixed(1)} pt`
+                    : null,
+                deltaUp: deltaClick != null ? deltaClick >= 0 : null,
+              },
+              {
+                label: t('analyticsPage.bounces'),
+                value: data?.bounceRate != null ? `${data.bounceRate.toFixed(1)}%` : '—',
+                color: '#ef4444',
+                pct: data?.bounceRate ?? 0,
+                bg: '#ef4444',
+                delta: null,
+                deltaUp: null,
+              },
+              {
+                label: t('analyticsPage.unsubscribes'),
+                value: data?.unsubscribeRate != null ? `${data.unsubscribeRate.toFixed(1)}%` : '—',
+                color: 'var(--text-2)',
+                pct: data?.unsubscribeRate ?? 0,
+                bg: 'var(--text-3)',
+                delta: null,
+                deltaUp: null,
+              },
+            ];
+
+            return items.map(({ label, value, color, pct, bg, delta, deltaUp }) => (
+              <div key={label} className="analytics-stat">
+                <div className="big" style={{ color }}>
+                  {value}
+                </div>
+                <div className="lbl">{label}</div>
+                <div className="progress-track">
+                  <div
+                    className="progress-fill"
+                    style={{ width: `${Math.min(100, pct)}%`, background: bg }}
+                  />
+                </div>
+                {delta != null && (
+                  <div
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 600,
+                      marginTop: 4,
+                      color: deltaUp ? '#16a34a' : '#ef4444',
+                    }}
+                  >
+                    {deltaUp ? '↑' : '↓'} {delta} vs période préc.
+                  </div>
+                )}
               </div>
-              <div className="lbl">{label}</div>
-              <div className="progress-track">
-                <div
-                  className="progress-fill"
-                  style={{ width: `${Math.min(100, pct)}%`, background: bg }}
-                />
+            ));
+          })()}
+        </div>
+      )}
+
+      {/* ── Entonnoir de conversion ──────────────────────────────── */}
+      {!loading && data && (
+        <div className="card">
+          <div className="flex items-center justify-between mb-12">
+            <div>
+              <div className="card-title">Entonnoir de conversion</div>
+              <div style={{ fontSize: 10.5, color: 'var(--text-3)', marginTop: 2 }}>
+                De l'envoi à l'action — {period} derniers jours
               </div>
             </div>
-          ))}
+            {data.previous && (
+              <div style={{ fontSize: 10.5, color: 'var(--text-3)' }}>vs période précédente</div>
+            )}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {[
+              {
+                label: 'Envois',
+                count: data.messagesSent,
+                pct: 100,
+                color: '#0c5460',
+                bg: '#0c5460',
+                prevPct: 100,
+              },
+              {
+                label: 'Ouvertures',
+                count: Math.round(data.messagesSent * (data.openRate / 100)),
+                pct: data.openRate,
+                color: '#2ec80a',
+                bg: 'var(--brand-gradient)',
+                prevPct: data.previous?.openRate ?? null,
+              },
+              {
+                label: 'Clics',
+                count: Math.round(data.messagesSent * (data.clickRate / 100)),
+                pct: data.clickRate,
+                color: '#aaee22',
+                bg: '#aaee22',
+                prevPct: data.previous?.clickRate ?? null,
+              },
+              {
+                label: 'Désinscrits',
+                count: Math.round(data.messagesSent * (data.unsubscribeRate / 100)),
+                pct: data.unsubscribeRate,
+                color: '#ef4444',
+                bg: '#ef4444',
+                prevPct: null,
+              },
+            ].map(({ label, count, pct, color, bg, prevPct }, i) => (
+              <div key={label}>
+                <div className="flex items-center justify-between" style={{ marginBottom: 4 }}>
+                  <div className="flex items-center gap-8">
+                    <span
+                      style={{
+                        width: 18,
+                        height: 18,
+                        borderRadius: 5,
+                        background:
+                          i === 0
+                            ? '#0c5460'
+                            : i === 1
+                              ? '#e6f7e0'
+                              : i === 2
+                                ? '#f0fce8'
+                                : '#fee2e2',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 9,
+                        fontWeight: 700,
+                        color: i === 0 ? '#fff' : color,
+                        flexShrink: 0,
+                      }}
+                    >
+                      {i + 1}
+                    </span>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-1)' }}>
+                      {label}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-8">
+                    {prevPct != null && prevPct !== 100 && (
+                      <span
+                        style={{
+                          fontSize: 10,
+                          color: pct >= prevPct ? '#16a34a' : '#ef4444',
+                          fontWeight: 600,
+                        }}
+                      >
+                        {pct >= prevPct ? '↑' : '↓'} {Math.abs(pct - prevPct).toFixed(1)} pt
+                      </span>
+                    )}
+                    <span style={{ fontSize: 11, color: 'var(--text-3)' }}>
+                      {count.toLocaleString('fr-FR')}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 700,
+                        color,
+                        minWidth: 42,
+                        textAlign: 'right',
+                      }}
+                    >
+                      {pct.toFixed(1)}%
+                    </span>
+                  </div>
+                </div>
+                <div
+                  style={{
+                    height: 8,
+                    background: 'var(--border)',
+                    borderRadius: 4,
+                    overflow: 'hidden',
+                  }}
+                >
+                  <div
+                    style={{
+                      height: '100%',
+                      borderRadius: 4,
+                      width: `${Math.min(100, pct)}%`,
+                      background: bg,
+                      transition: 'width 0.5s ease',
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
