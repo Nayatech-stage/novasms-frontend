@@ -992,7 +992,7 @@ export const EmailEditor: FC = () => {
                       className="w-7 h-7 rounded-full border border-outline-variant cursor-pointer p-0"
                       title="Couleur de fond"
                     />
-                    {block.content.backgroundColor && (
+                    {typeof block.content.backgroundColor === 'string' && (
                       <button
                         type="button"
                         onClick={() => {
@@ -1601,7 +1601,8 @@ export const EmailEditor: FC = () => {
           <div className="hidden">
             <div>
               {(() => {
-                const block = currentBlocks.find((b) => b.id === selectedBlockId);
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                const block = currentBlocks.find((b) => b.id === selectedBlockId)!;
                 if (!block) return null;
 
                 if (block.type === 'text') {
