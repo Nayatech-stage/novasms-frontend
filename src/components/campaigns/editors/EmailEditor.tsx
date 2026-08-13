@@ -1071,35 +1071,64 @@ export const EmailEditor: FC = () => {
                   </div>
                 )}
                 {block.type === 'image' && (
-                  <div className="w-full bg-surface-container rounded-lg flex items-center justify-center overflow-hidden min-h-[96px]">
-                    {getImageSrc(block.content) ? (
-                      <img
-                        src={getImageSrc(block.content)}
-                        alt={getImageAlt(block.content) || 'Email image'}
-                        className="w-full h-24 object-contain"
-                      />
-                    ) : (
-                      <div className="flex flex-col items-center gap-2 py-6 text-secondary">
-                        <span className="material-symbols-outlined text-2xl">image</span>
-                        <span className="text-xs">Cliquer pour éditer →</span>
-                      </div>
-                    )}
+                  <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
+                    <div className="w-full bg-surface-container rounded-lg flex items-center justify-center overflow-hidden min-h-[96px]">
+                      {getImageSrc(block.content) ? (
+                        <img
+                          src={getImageSrc(block.content)}
+                          alt={getImageAlt(block.content) || 'Email image'}
+                          className="w-full h-32 object-contain"
+                        />
+                      ) : (
+                        <div className="flex flex-col items-center gap-2 py-8 text-secondary">
+                          <span className="material-symbols-outlined text-3xl">image</span>
+                          <span className="text-xs">Aucune image sélectionnée</span>
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        triggerImageUpload((img) => {
+                          handleUpdateBlock(block.id, { src: img.url, alt: img.name });
+                        })
+                      }
+                      disabled={isUploadingImage}
+                      className="w-full py-2.5 bg-primary/10 text-primary font-bold rounded-lg text-sm hover:bg-primary/20 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">
+                        {isUploadingImage ? 'hourglass_empty' : 'upload'}
+                      </span>
+                      {isUploadingImage ? 'Envoi en cours...' : 'Insérer une image'}
+                    </button>
+                    <input
+                      type="text"
+                      value={getImageAlt(block.content)}
+                      onChange={(e) =>
+                        handleUpdateBlock(block.id, {
+                          src: getImageSrc(block.content),
+                          alt: e.target.value,
+                        })
+                      }
+                      placeholder="Texte alternatif (alt)..."
+                      className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
+                    />
                   </div>
                 )}
                 {block.type === 'product' &&
                   (() => {
                     const product = block.content as Record<string, unknown>;
                     return (
-                      <div className="rounded-lg border border-outline-variant overflow-hidden">
+                      <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
                         <div
-                          className="w-full bg-surface-container flex items-center justify-center"
+                          className="w-full bg-surface-container rounded-lg flex items-center justify-center overflow-hidden"
                           style={{ minHeight: 80 }}
                         >
                           {typeof product.image === 'string' && product.image ? (
                             <img
                               src={imageUploadService.getThumbnail(product.image)}
                               alt={String(product.title || '')}
-                              className="w-full h-20 object-contain"
+                              className="w-full h-28 object-contain"
                             />
                           ) : (
                             <span className="material-symbols-outlined text-4xl text-secondary py-4">
@@ -1107,122 +1136,315 @@ export const EmailEditor: FC = () => {
                             </span>
                           )}
                         </div>
-                        <div className="p-3">
-                          <div className="flex justify-between items-start gap-2">
-                            <p className="text-sm font-bold text-on-surface">
-                              {String(product.title || 'Produit')}
-                            </p>
-                            {product.price && (
-                              <span className="text-xs font-bold text-primary">
-                                {String(product.price)}
-                              </span>
-                            )}
-                          </div>
-                          {product.description && (
-                            <p className="text-[11px] text-secondary line-clamp-2 mt-1">
-                              {String(product.description)}
-                            </p>
-                          )}
+                        <div className="grid grid-cols-2 gap-2">
+                          <input
+                            type="text"
+                            value={String(product.title || '')}
+                            onChange={(e) =>
+                              handleUpdateBlock(block.id, { ...product, title: e.target.value })
+                            }
+                            placeholder="Titre du produit"
+                            className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
+                          />
+                          <input
+                            type="text"
+                            value={String(product.price || '')}
+                            onChange={(e) =>
+                              handleUpdateBlock(block.id, { ...product, price: e.target.value })
+                            }
+                            placeholder="Prix"
+                            className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
+                          />
+                        </div>
+                        <textarea
+                          value={String(product.description || '')}
+                          onChange={(e) =>
+                            handleUpdateBlock(block.id, { ...product, description: e.target.value })
+                          }
+                          rows={2}
+                          placeholder="Description..."
+                          className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors resize-none"
+                        />
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              triggerImageUpload((img) => {
+                                handleUpdateBlock(block.id, { ...product, image: img.url });
+                              })
+                            }
+                            disabled={isUploadingImage}
+                            className="py-2 px-3 bg-primary/10 text-primary font-bold rounded-lg text-xs hover:bg-primary/20 transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">upload</span>{' '}
+                            Image
+                          </button>
+                          <input
+                            type="url"
+                            value={String(product.url || '')}
+                            onChange={(e) =>
+                              handleUpdateBlock(block.id, { ...product, url: e.target.value })
+                            }
+                            placeholder="URL lien..."
+                            className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
+                          />
                         </div>
                       </div>
                     );
                   })()}
                 {block.type === 'divider' && (
-                  <div className="py-2">
-                    <div className="mx-auto" style={getDividerStyle(block.content)} />
+                  <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
+                    <div className="py-2">
+                      <div className="mx-auto" style={getDividerStyle(block.content)} />
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <label className="text-[11px] text-secondary font-semibold">
+                          Épaisseur
+                        </label>
+                        <input
+                          type="range"
+                          min={1}
+                          max={8}
+                          value={Number(block.content.thickness || 2)}
+                          onChange={(e) =>
+                            handleUpdateBlock(block.id, {
+                              ...block.content,
+                              thickness: Number(e.target.value),
+                            })
+                          }
+                          className="w-full mt-1"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] text-secondary font-semibold">Couleur</label>
+                        <input
+                          type="color"
+                          value={String(block.content.color || '#d1d5db')}
+                          onChange={(e) =>
+                            handleUpdateBlock(block.id, { ...block.content, color: e.target.value })
+                          }
+                          className="w-full mt-1 h-9 rounded border border-outline-variant"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] text-secondary font-semibold">Largeur</label>
+                        <select
+                          value={String(block.content.width || '100%')}
+                          onChange={(e) =>
+                            handleUpdateBlock(block.id, { ...block.content, width: e.target.value })
+                          }
+                          className="w-full mt-1 bg-surface border border-outline-variant rounded px-2 py-1.5 text-xs outline-none"
+                        >
+                          <option value="100%">100%</option>
+                          <option value="75%">75%</option>
+                          <option value="50%">50%</option>
+                        </select>
+                      </div>
+                    </div>
                   </div>
                 )}
                 {block.type === 'social' && (
-                  <div className="flex gap-3 justify-center py-2 flex-wrap">
+                  <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
                     {[
-                      { id: 'facebook', icon: 'f', color: '#1877F2' },
-                      { id: 'instagram', icon: '📷', color: '#E4405F' },
-                      { id: 'tiktok', icon: '♪', color: '#000000' },
-                      { id: 'linkedin', icon: '🔗', color: '#0A66C2' },
-                    ]
-                      .map((network) => {
-                        const url =
-                          ((block.content as Record<string, unknown>)?.[network.id] as string) ||
-                          '';
-                        if (!url) return null;
-                        return (
-                          <a
-                            key={network.id}
-                            href={url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm hover:opacity-80 transition-opacity"
-                            style={{ backgroundColor: network.color }}
-                          >
-                            {network.icon}
-                          </a>
-                        );
-                      })
-                      .filter(Boolean)}
-                    {!Object.values(block.content).some(Boolean) && (
-                      <p className="text-xs text-secondary italic">
-                        Aucun réseau configuré — éditer →
-                      </p>
-                    )}
+                      { id: 'facebook', name: 'Facebook', color: '#1877F2', icon: 'f' },
+                      { id: 'instagram', name: 'Instagram', color: '#E4405F', icon: '📷' },
+                      { id: 'tiktok', name: 'TikTok', color: '#000', icon: '♪' },
+                      { id: 'linkedin', name: 'LinkedIn', color: '#0A66C2', icon: 'in' },
+                    ].map((network) => {
+                      const isEnabled = Boolean(
+                        (block.content as Record<string, unknown>)?.[network.id],
+                      );
+                      const url =
+                        ((block.content as Record<string, unknown>)?.[network.id] as string) || '';
+                      return (
+                        <div key={network.id} className="space-y-2">
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="checkbox"
+                              checked={isEnabled}
+                              onChange={(e) =>
+                                handleUpdateBlock(block.id, {
+                                  ...block.content,
+                                  [network.id]: e.target.checked
+                                    ? `https://${network.id}.com/votre-profil`
+                                    : '',
+                                })
+                              }
+                              className="w-4 h-4 rounded cursor-pointer"
+                            />
+                            <div
+                              className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold"
+                              style={{ backgroundColor: network.color }}
+                            >
+                              {network.icon}
+                            </div>
+                            <label className="text-sm font-semibold text-on-surface">
+                              {network.name}
+                            </label>
+                          </div>
+                          {isEnabled && (
+                            <input
+                              type="url"
+                              value={url}
+                              onChange={(e) =>
+                                handleUpdateBlock(block.id, {
+                                  ...block.content,
+                                  [network.id]: e.target.value,
+                                })
+                              }
+                              placeholder={`https://${network.id}.com/...`}
+                              className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
+                            />
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
                 {block.type === 'columns' && (
-                  <div
-                    className="grid gap-2"
-                    style={{
-                      gridTemplateColumns: `repeat(${getColumnsState(block.content).layout}, minmax(0, 1fr))`,
-                    }}
-                  >
-                    {getColumnsState(block.content).columns.map((column, index) => (
-                      <div
-                        key={index}
-                        className="min-h-14 bg-surface-container rounded-lg border border-outline-variant/30 p-2"
-                      >
-                        {column.blocks.length === 0 ? (
-                          <div className="text-[10px] text-secondary text-center pt-2">
-                            Colonne vide
+                  <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex gap-2">
+                      {['1', '2', '3'].map((num) => (
+                        <button
+                          key={num}
+                          type="button"
+                          onClick={() => {
+                            const colCount = parseInt(num);
+                            updateColumnsContent(block.id, (state) => ({
+                              layout: colCount,
+                              columns: Array.from({ length: colCount }).map(
+                                (_, i) => state.columns[i] || { blocks: [] },
+                              ),
+                            }));
+                          }}
+                          className={`flex-1 py-1.5 rounded-lg font-bold text-sm transition-all ${String(getColumnsState(block.content).layout) === num ? 'bg-primary text-on-primary' : 'bg-surface-container text-on-surface hover:bg-surface-container-high'}`}
+                        >
+                          {num}
+                        </button>
+                      ))}
+                    </div>
+                    <div
+                      className="grid gap-2"
+                      style={{
+                        gridTemplateColumns: `repeat(${getColumnsState(block.content).layout}, minmax(0, 1fr))`,
+                      }}
+                    >
+                      {getColumnsState(block.content).columns.map((column, columnIndex) => (
+                        <div
+                          key={columnIndex}
+                          className="min-h-14 bg-surface-container rounded-lg border border-outline-variant/30 p-2 space-y-1"
+                        >
+                          <div className="text-[10px] text-secondary font-bold uppercase tracking-wider mb-1">
+                            Col. {columnIndex + 1}
                           </div>
-                        ) : (
-                          <div className="space-y-1">
-                            {column.blocks.map((nested) => (
-                              <div
-                                key={nested.id}
-                                className="rounded bg-primary/5 px-2 py-1 text-[10px] text-on-surface"
-                              >
+                          {column.blocks.map((nested) => (
+                            <div
+                              key={nested.id}
+                              className="rounded bg-primary/5 px-2 py-1 text-[10px] text-on-surface flex justify-between items-center"
+                            >
+                              <span>
                                 {nested.type === 'text'
                                   ? (nested.content.text as string) || 'Texte'
                                   : nested.type === 'button'
                                     ? (nested.content.text as string) || 'Bouton'
-                                    : nested.type === 'image'
-                                      ? 'Image'
-                                      : nested.type}
-                              </div>
+                                    : nested.type}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  updateColumnsContent(block.id, (state) => {
+                                    const cols = [...state.columns];
+                                    const col = cols[columnIndex] || { blocks: [] };
+                                    col.blocks = col.blocks.filter((b) => b.id !== nested.id);
+                                    cols[columnIndex] = col;
+                                    return { layout: state.layout, columns: cols };
+                                  })
+                                }
+                                className="text-error ml-1 hover:opacity-70"
+                              >
+                                <span className="material-symbols-outlined text-[12px]">close</span>
+                              </button>
+                            </div>
+                          ))}
+                          <div className="flex gap-1 flex-wrap mt-1">
+                            {(['text', 'button', 'image'] as CampaignBlock['type'][]).map((t) => (
+                              <button
+                                key={t}
+                                type="button"
+                                onClick={() =>
+                                  updateColumnsContent(block.id, (state) => {
+                                    const cols = [...state.columns];
+                                    const col = cols[columnIndex] || { blocks: [] };
+                                    col.blocks = [...col.blocks, createBlockByType(t)];
+                                    cols[columnIndex] = col;
+                                    return { layout: state.layout, columns: cols };
+                                  })
+                                }
+                                className="text-[10px] px-1.5 py-0.5 bg-primary/10 text-primary rounded hover:bg-primary/20"
+                              >
+                                +{t}
+                              </button>
                             ))}
                           </div>
-                        )}
-                      </div>
-                    ))}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
                 {block.type === 'spacing' && (
-                  <div
-                    className="w-full rounded-lg bg-primary/10 flex items-center justify-center"
-                    style={{
-                      height: getSpacingHeight(
-                        (block.content as Record<string, unknown>)?.size as string | undefined,
-                      ),
-                    }}
-                  >
-                    <span className="text-[10px] text-secondary uppercase tracking-widest">
-                      Espacement{' '}
-                      {String((block.content as Record<string, unknown>)?.size || 'medium')}
-                    </span>
+                  <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex gap-2">
+                      {(['small', 'medium', 'large', 'extra-large'] as const).map((size) => (
+                        <button
+                          key={size}
+                          type="button"
+                          onClick={() => handleUpdateBlock(block.id, { size })}
+                          className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${((block.content as Record<string, unknown>)?.size as string) === size ? 'bg-primary text-on-primary' : 'bg-surface-container text-on-surface hover:bg-surface-container-high'}`}
+                        >
+                          {size === 'small'
+                            ? 'S'
+                            : size === 'medium'
+                              ? 'M'
+                              : size === 'large'
+                                ? 'L'
+                                : 'XL'}
+                        </button>
+                      ))}
+                    </div>
+                    <div
+                      className="w-full rounded-lg bg-primary/10 flex items-center justify-center"
+                      style={{
+                        height: getSpacingHeight(
+                          (block.content as Record<string, unknown>)?.size as string | undefined,
+                        ),
+                      }}
+                    >
+                      <span className="text-[10px] text-secondary">
+                        {String((block.content as Record<string, unknown>)?.size || 'medium')}
+                      </span>
+                    </div>
                   </div>
                 )}
                 {block.type === 'html' && (
-                  <div className="p-3 bg-surface-container rounded-lg font-mono text-xs text-secondary truncate">
-                    {((block.content as Record<string, unknown>)?.html as string) ||
-                      '<HTML vide — éditer →>'}
+                  <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
+                    <textarea
+                      value={((block.content as Record<string, unknown>)?.html as string) || ''}
+                      onChange={(e) => handleUpdateBlock(block.id, { html: e.target.value })}
+                      rows={4}
+                      placeholder="<div><p>Mon contenu HTML</p></div>"
+                      className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 font-mono text-xs focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors resize-y"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    {((block.content as Record<string, unknown>)?.html as string) && (
+                      <div className="rounded-lg border border-outline-variant bg-white p-3 text-xs overflow-auto max-h-24">
+                        <div
+                          dangerouslySetInnerHTML={{
+                            __html: (block.content as Record<string, unknown>)?.html as string,
+                          }}
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -1239,18 +1461,12 @@ export const EmailEditor: FC = () => {
         </button>
       </div>
 
-      {/* Right: Block Editor + Mobile Preview + Images */}
+      {/* Right: Mobile Preview + Images */}
       <div className="lg:col-span-3 space-y-6">
-        {/* Block Editor Panel */}
-        {selectedBlockId && (
-          <div className="bg-surface-container-lowest rounded-xl border border-outline-variant overflow-hidden">
-            <div className="flex items-center gap-2 px-4 py-3 bg-surface-container-low border-b border-outline-variant">
-              <span className="material-symbols-outlined text-[18px] text-primary">edit</span>
-              <h3 className="font-label-caps text-label-caps text-secondary tracking-widest">
-                ÉDITER BLOC
-              </h3>
-            </div>
-            <div className="p-5 space-y-4">
+        {/* ÉDITER BLOC panel removed — editing is now inline in each block card */}
+        {selectedBlockId && false && (
+          <div className="hidden">
+            <div>
               {(() => {
                 const block = currentBlocks.find((b) => b.id === selectedBlockId);
                 if (!block) return null;
@@ -2223,7 +2439,7 @@ export const EmailEditor: FC = () => {
               APERÇU MOBILE
             </h3>
           </div>
-          <div className="p-4">
+          <div className="p-6">
             <MobilePreview
               type="email"
               emailContent={{

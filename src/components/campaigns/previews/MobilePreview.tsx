@@ -250,83 +250,77 @@ export const MobilePreview: FC<MobilePreviewProps> = ({ type, emailContent, smsC
   };
 
   return (
-    <div className="relative h-fit lg:self-start lg:sticky lg:top-20 lg:z-40">
-      <div className="bg-surface-container-low rounded-2xl p-6 border border-outline-variant/10 space-y-4">
-        <h3 className="font-headline font-bold text-sm text-on-surface">Aperçu Mobile</h3>
-
-        {/* iPhone Frame */}
-        <div
-          className="bg-black rounded-[40px] p-3 shadow-2xl flex flex-col"
-          style={{ aspectRatio: '9/16', width: '100%', maxWidth: '280px', margin: '0 auto' }}
-        >
-          {/* Status Bar */}
-          <div className="shrink-0 bg-black rounded-[30px] text-white text-[10px] px-4 py-2 flex justify-between items-center mb-1">
-            <span>9:41</span>
-            <span>●●●●●</span>
-          </div>
-
-          {/* Content Area - overflow-clip preserve rounded corners while allowing inner scroll */}
-          <div
-            className="bg-white rounded-[30px] min-h-0 flex-1 flex flex-col"
-            style={{ overflow: 'hidden', minHeight: 0 }}
-          >
-            {type === 'sms' && smsContent && (
-              <div className="min-h-0 flex-1 p-4 flex flex-col justify-end space-y-2 overflow-auto">
-                {/* SMS Message */}
-                <div className="flex justify-end">
-                  <div className="bg-primary text-on-primary rounded-2xl rounded-tr-sm p-3 max-w-[200px] shadow-sm">
-                    <p className="text-sm leading-relaxed break-words">{smsContent.message}</p>
-                  </div>
-                </div>
-                {/* Timestamp */}
-                <div className="flex justify-end text-[10px] text-on-surface-variant">
-                  {new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                </div>
-              </div>
-            )}
-
-            {type === 'email' && emailContent && (
-              <div className="min-h-0 flex-1 flex flex-col" style={{ height: 0 }}>
-                {/* Email Header - fixed */}
-                <div className="shrink-0 bg-surface-container p-3 border-b border-outline-variant/20">
-                  <p className="text-xs font-bold text-on-surface-variant mb-1">
-                    DE: noreply@novasms.ci
-                  </p>
-                  <p className="text-xs font-bold text-on-surface truncate">
-                    {emailContent.subject}
-                  </p>
-                  {emailContent.preheader && (
-                    <p className="text-[10px] text-on-surface-variant truncate">
-                      {emailContent.preheader}
-                    </p>
-                  )}
-                </div>
-
-                {/* Email Body - scrollable, height 0 forces flex to constrain to parent */}
-                <div
-                  className="min-h-0 flex-1 p-3 text-sm overflow-y-auto space-y-2 break-words"
-                  style={{ height: 0 }}
-                >
-                  {emailContent.blocks.length === 0 ? (
-                    <p className="text-on-surface-variant text-xs">Aucun bloc ajouté</p>
-                  ) : (
-                    emailContent.blocks.map((block: CampaignBlock) =>
-                      renderCompactBlock(block, block.id),
-                    )
-                  )}
-                </div>
-              </div>
-            )}
+    <div className="flex flex-col items-center">
+      {/* iPhone 16 Pro Frame */}
+      <div className="relative w-full aspect-[9/19.5] bg-black rounded-[48px] p-[6px] shadow-2xl border border-gray-700 flex flex-col mx-auto max-w-[320px]">
+        {/* Inner Bezel */}
+        <div className="absolute inset-[6px] border-[6px] border-black rounded-[42px] pointer-events-none z-30" />
+        {/* Dynamic Island */}
+        <div className="absolute top-[14px] left-1/2 -translate-x-1/2 w-[120px] h-[35px] bg-black rounded-full z-40 flex items-center justify-between px-3">
+          <div className="w-2.5 h-2.5 rounded-full bg-[#121212] ml-1 border border-[#333]" />
+          <div className="w-2.5 h-2.5 rounded-full bg-[#121212] flex items-center justify-center border border-[#333]">
+            <div className="w-1.5 h-1.5 rounded-full bg-[#2a2a2a]" />
           </div>
         </div>
 
-        {/* Device Info */}
-        <div className="pt-3 border-t border-outline-variant/20 text-center">
-          <p className="text-[10px] text-on-surface-variant uppercase tracking-widest">
-            iPhone 15 · 390×844px
-          </p>
+        {/* Screen */}
+        <div className="flex-1 bg-white rounded-[40px] overflow-hidden flex flex-col relative z-20">
+          {/* Status Bar */}
+          <div className="flex justify-between items-center px-6 pt-10 pb-2 text-black text-[13px] font-semibold shrink-0">
+            <span>9:41</span>
+            <div className="flex gap-1 items-center">
+              <span className="material-symbols-outlined text-[15px]">signal_cellular_4_bar</span>
+              <span className="material-symbols-outlined text-[15px]">wifi</span>
+              <span className="material-symbols-outlined text-[15px] rotate-90">battery_full</span>
+            </div>
+          </div>
+
+          {type === 'sms' && smsContent && (
+            <div className="flex-1 p-4 flex flex-col justify-end gap-2 overflow-y-auto">
+              <div className="flex justify-end">
+                <div className="bg-primary text-on-primary rounded-2xl rounded-tr-sm px-4 py-3 max-w-[200px] shadow-sm">
+                  <p className="text-[13px] leading-relaxed break-words">{smsContent.message}</p>
+                </div>
+              </div>
+              <div className="flex justify-end text-[10px] text-secondary">
+                {new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+              </div>
+            </div>
+          )}
+
+          {type === 'email' && emailContent && (
+            <div className="flex-1 flex flex-col min-h-0">
+              {/* Email Header */}
+              <div className="bg-surface-container-low px-5 py-4 border-b border-outline-variant shrink-0">
+                <div className="text-[11px] text-secondary mb-1">DE: noreply@novasms.ci</div>
+                <div className="font-bold text-[13px] truncate">
+                  {emailContent.subject || "Ligne d'objet"}
+                </div>
+                {emailContent.preheader && (
+                  <div className="text-[12px] text-secondary truncate">
+                    {emailContent.preheader}
+                  </div>
+                )}
+              </div>
+              {/* Email Body */}
+              <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 text-[13px] leading-relaxed text-on-surface">
+                {emailContent.blocks.length === 0 ? (
+                  <p className="text-secondary text-xs">Aucun bloc ajouté</p>
+                ) : (
+                  emailContent.blocks.map((block: CampaignBlock) =>
+                    renderCompactBlock(block, block.id),
+                  )
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Device Label */}
+      <p className="mt-4 font-label-caps text-label-caps text-secondary">
+        IPHONE 16 PRO · 393×852PX
+      </p>
     </div>
   );
 };
