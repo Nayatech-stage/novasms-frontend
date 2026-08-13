@@ -8,10 +8,6 @@ interface MobilePreviewProps {
   smsContent?: SMSContent;
 }
 
-/**
- * Mobile Preview Component
- * Affiche une prévisualisation réaliste sur téléphone mobile
- */
 export const MobilePreview: FC<MobilePreviewProps> = ({ type, emailContent, smsContent }) => {
   const renderCompactBlock = (block: CampaignBlock, key: string) => {
     if (block.type === 'text') {
@@ -251,10 +247,11 @@ export const MobilePreview: FC<MobilePreviewProps> = ({ type, emailContent, smsC
 
   return (
     <div className="flex flex-col items-center">
-      {/* iPhone 16 Pro Frame */}
-      <div className="relative w-full aspect-[9/19.5] bg-black rounded-[48px] p-[6px] shadow-2xl border border-gray-700 flex flex-col mx-auto max-w-[340px]">
-        {/* Inner Bezel */}
-        <div className="absolute inset-[6px] border-[6px] border-black rounded-[42px] pointer-events-none z-30" />
+      {/* iPhone 16 Pro Frame — taille fixe via aspect-ratio + overflow-hidden */}
+      <div className="relative w-full aspect-[9/19.5] bg-black rounded-[48px] shadow-2xl border border-gray-700 mx-auto max-w-[340px] overflow-hidden">
+        {/* Bordure interne noire (bezel) */}
+        <div className="absolute inset-0 border-[6px] border-black rounded-[48px] pointer-events-none z-30" />
+
         {/* Dynamic Island */}
         <div className="absolute top-[14px] left-1/2 -translate-x-1/2 w-[120px] h-[35px] bg-black rounded-full z-40 flex items-center justify-between px-3">
           <div className="w-2.5 h-2.5 rounded-full bg-[#121212] ml-1 border border-[#333]" />
@@ -263,8 +260,8 @@ export const MobilePreview: FC<MobilePreviewProps> = ({ type, emailContent, smsC
           </div>
         </div>
 
-        {/* Screen */}
-        <div className="flex-1 bg-white rounded-[40px] overflow-hidden flex flex-col relative z-20">
+        {/* Écran — positionné en absolu pour ne jamais agrandir le cadre */}
+        <div className="absolute inset-[6px] bg-white rounded-[42px] overflow-hidden flex flex-col z-20">
           {/* Status Bar */}
           <div className="flex justify-between items-center px-6 pt-10 pb-2 text-black text-[13px] font-semibold shrink-0">
             <span>9:41</span>
@@ -276,7 +273,7 @@ export const MobilePreview: FC<MobilePreviewProps> = ({ type, emailContent, smsC
           </div>
 
           {type === 'sms' && smsContent && (
-            <div className="flex-1 p-4 flex flex-col justify-end gap-2 overflow-y-auto">
+            <div className="flex-1 min-h-0 p-4 flex flex-col justify-end gap-2 overflow-y-auto">
               <div className="flex justify-end">
                 <div className="bg-primary text-on-primary rounded-2xl rounded-tr-sm px-4 py-3 max-w-[200px] shadow-sm">
                   <p className="text-[13px] leading-relaxed break-words">{smsContent.message}</p>
@@ -289,8 +286,8 @@ export const MobilePreview: FC<MobilePreviewProps> = ({ type, emailContent, smsC
           )}
 
           {type === 'email' && emailContent && (
-            <div className="flex-1 flex flex-col min-h-0">
-              {/* Email Header */}
+            <div className="flex-1 min-h-0 flex flex-col">
+              {/* En-tête email */}
               <div className="bg-surface-container-low px-5 py-4 border-b border-outline-variant shrink-0">
                 <div className="text-[11px] text-secondary mb-1">DE: noreply@novasms.ci</div>
                 <div className="font-bold text-[13px] truncate">
@@ -302,8 +299,8 @@ export const MobilePreview: FC<MobilePreviewProps> = ({ type, emailContent, smsC
                   </div>
                 )}
               </div>
-              {/* Email Body */}
-              <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 text-[13px] leading-relaxed text-on-surface">
+              {/* Corps email — défilement ici uniquement */}
+              <div className="flex-1 min-h-0 overflow-y-auto p-4 flex flex-col gap-3 text-[13px] leading-relaxed text-on-surface">
                 {emailContent.blocks.length === 0 ? (
                   <p className="text-secondary text-xs">Aucun bloc ajouté</p>
                 ) : (
@@ -317,7 +314,6 @@ export const MobilePreview: FC<MobilePreviewProps> = ({ type, emailContent, smsC
         </div>
       </div>
 
-      {/* Device Label */}
       <p className="mt-4 font-label-caps text-label-caps text-secondary">
         IPHONE 16 PRO · 393×852PX
       </p>
