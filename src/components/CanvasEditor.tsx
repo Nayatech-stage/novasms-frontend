@@ -141,15 +141,22 @@ export default function CanvasEditor({
   const [draggingNodeId, setDraggingNodeId] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
+  const panRef = useRef({ x: 0, y: 0 });
+  useEffect(() => {
+    panRef.current = pan;
+  }, [pan]);
   const canvasRef = useRef<HTMLDivElement | null>(null);
   const dragPointerId = useRef<number | null>(null);
   // Seuil de drag : position initiale du pointer pour détecter un vrai glisser (≥5px)
   const dragStartPos = useRef<{ x: number; y: number } | null>(null);
   // Référence à l'élément qui a setPointerCapture (pour releasePointerCapture explicite)
   const dragCaptureEl = useRef<Element | null>(null);
-  const panRef = useRef<{ startX: number; startY: number; baseX: number; baseY: number } | null>(
-    null,
-  );
+  const panGestureRef = useRef<{
+    startX: number;
+    startY: number;
+    baseX: number;
+    baseY: number;
+  } | null>(null);
 
   // undo/redo
   const history = useRef<{ nodes: Node[]; edges: Edge[] }[]>([]);
@@ -255,8 +262,8 @@ export default function CanvasEditor({
 
   const onPointerMove = useCallback(
     (e: PointerEvent) => {
-      if (panRef.current && !dragRef.current) {
-        const { startX, startY, baseX, baseY } = panRef.current;
+      if (panGestureRef.current && !dragRef.current) {
+        const { startX, startY, baseX, baseY } = panGestureRef.current;
         setPan({ x: baseX + (e.clientX - startX), y: baseY + (e.clientY - startY) });
         return;
       }
@@ -291,8 +298,9 @@ export default function CanvasEditor({
       if (!draggingNodeId) return; // Pas encore en mode drag
       const canvasRect = canvasRef.current?.getBoundingClientRect();
       if (!canvasRect) return;
-      const rawX = (e.clientX - canvasRect.left) / zoom - dragState.offsetX;
-      const rawY = (e.clientY - canvasRect.top) / zoom - dragState.offsetY;
+      const currentPan = panRef.current;
+      const rawX = (e.clientX - canvasRect.left - currentPan.x - dragState.offsetX) / zoom;
+      const rawY = (e.clientY - canvasRect.top - currentPan.y - dragState.offsetY) / zoom;
       const snap = (v: number) => Math.round(v / 8) * 8;
       const nextX = snap(rawX);
       const nextY = snap(rawY);
@@ -316,7 +324,7 @@ export default function CanvasEditor({
     }
     dragRef.current = null;
     dragStartPos.current = null;
-    panRef.current = null;
+    panGestureRef.current = null;
     dragPointerId.current = null;
     setDraggingNodeId(null);
     document.body.style.cursor = ''; // Remettre le curseur par défaut
@@ -372,7 +380,7 @@ export default function CanvasEditor({
         setEditingNodeId(null);
         return;
       }
-      panRef.current = {
+      panGestureRef.current = {
         startX: event.clientX,
         startY: event.clientY,
         baseX: pan.x,

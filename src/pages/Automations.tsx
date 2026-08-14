@@ -38,6 +38,9 @@ type DraftAutomation = {
     segmentId: string;
     contactId: string;
     daysOffset: string;
+    inactivityDays: string;
+    hour: string;
+    minute: string;
   };
   status: 'Active' | 'Inactive' | 'Draft';
 };
@@ -63,6 +66,9 @@ const initialDraft: DraftAutomation = {
     segmentId: '',
     contactId: '',
     daysOffset: '0',
+    inactivityDays: '30',
+    hour: '9',
+    minute: '0',
   },
   status: 'Active',
 };
@@ -85,6 +91,9 @@ const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
         segmentId: '',
         contactId: '',
         daysOffset: '0',
+        inactivityDays: '30',
+        hour: '9',
+        minute: '0',
       },
       status: 'Active',
     },
@@ -140,6 +149,9 @@ const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
         segmentId: '',
         contactId: '',
         daysOffset: '0',
+        inactivityDays: '30',
+        hour: '9',
+        minute: '0',
       },
       status: 'Active',
     },
@@ -202,6 +214,9 @@ const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
         segmentId: '',
         contactId: '',
         daysOffset: '0',
+        inactivityDays: '30',
+        hour: '9',
+        minute: '0',
       },
       status: 'Draft',
     },
@@ -358,6 +373,13 @@ function buildTriggerConfigPayload(draft: DraftAutomation) {
     }
     if (draft.triggerConfig.segmentId) triggerConfig.segmentId = draft.triggerConfig.segmentId;
     if (draft.triggerConfig.contactId) triggerConfig.contactId = draft.triggerConfig.contactId;
+  } else if (draft.trigger === 'inactivity_window') {
+    triggerConfig.inactivityDays = Number(draft.triggerConfig.inactivityDays) || 30;
+    if (draft.triggerConfig.segmentId) triggerConfig.segmentId = draft.triggerConfig.segmentId;
+  } else if (draft.trigger === 'recurring_schedule') {
+    triggerConfig.hour = Number(draft.triggerConfig.hour) || 9;
+    triggerConfig.minute = Number(draft.triggerConfig.minute) || 0;
+    if (draft.triggerConfig.segmentId) triggerConfig.segmentId = draft.triggerConfig.segmentId;
   }
 
   return Object.keys(triggerConfig).length > 0 ? triggerConfig : undefined;
@@ -619,12 +641,20 @@ export default function Automations() {
     const cfg = selectedAutomation.triggerConfig as Record<string, unknown> | null | undefined;
     const savedDaysOffset =
       cfg && typeof cfg.daysOffset === 'number' ? String(cfg.daysOffset) : '0';
+    const savedInactivityDays =
+      cfg && typeof cfg.inactivityDays === 'number' ? String(cfg.inactivityDays) : '30';
+    const savedHour = cfg && typeof cfg.hour === 'number' ? String(cfg.hour) : '9';
+    const savedMinute = cfg && typeof cfg.minute === 'number' ? String(cfg.minute) : '0';
+
+    const delaySeconds = selectedAutomation.delaySeconds ?? 0;
+    const knownPresets = ['0', '300', '1800', '3600', '86400'] as const;
+    const matchedPreset = knownPresets.find((p) => Number(p) === delaySeconds);
 
     setDraft({
       name: selectedAutomation.name,
       trigger: selectedAutomation.trigger,
-      delaySeconds: String(selectedAutomation.delaySeconds ?? 0),
-      delayPreset: 'custom',
+      delaySeconds: String(delaySeconds),
+      delayPreset: matchedPreset ?? 'custom',
       channel: selectedAutomation.channel,
       campaignId: (selectedAutomation as any).campaignId ?? '',
       templateId: selectedAutomation.templateId ?? '',
@@ -635,6 +665,9 @@ export default function Automations() {
         segmentId: getTriggerConfigValue(selectedAutomation.triggerConfig, 'segmentId'),
         contactId: getTriggerConfigValue(selectedAutomation.triggerConfig, 'contactId'),
         daysOffset: savedDaysOffset,
+        inactivityDays: savedInactivityDays,
+        hour: savedHour,
+        minute: savedMinute,
       },
       status: selectedAutomation.status,
     });
@@ -909,6 +942,13 @@ export default function Automations() {
 
           <section className="automations-canvas-section relative overflow-hidden bg-[#f7f9f7] p-8">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle,rgba(12,84,96,0.12)_1px,transparent_1px)] [background-size:24px_24px]" />
+            {editingId && (
+              <div className="relative mb-3 flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-xs font-semibold text-amber-800">
+                <span className="h-2 w-2 rounded-full bg-amber-500" />
+                Modification en cours — L'aperçu ci-dessous reflète le workflow sauvegardé.
+                Enregistrez les modifications pour mettre à jour.
+              </div>
+            )}
 
             <div className="relative mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-outline-variant/30 bg-white/85 px-4 py-3 shadow-sm backdrop-blur">
               <div>
@@ -971,44 +1011,33 @@ export default function Automations() {
                     )}
                   </div>
                 ))
-              ) : (
+              ) : selectedAutomation ? (
                 <>
                   <PreviewNode
                     tone="trigger"
                     subtitle="Déclencheur"
-                    title={
-                      selectedAutomation
-                        ? triggerLabel(selectedAutomation.trigger)
-                        : 'Contact ajouté'
-                    }
+                    title={triggerLabel(selectedAutomation.trigger)}
                   />
                   <div className="mx-auto h-8 w-px bg-outline-variant/80" />
                   <PreviewNode
                     tone="wait"
                     subtitle="Attente"
-                    title={
-                      selectedAutomation ? formatDelay(selectedAutomation.delaySeconds) : '1 heure'
-                    }
+                    title={formatDelay(selectedAutomation.delaySeconds)}
                   />
                   <div className="mx-auto h-8 w-px bg-outline-variant/80" />
                   <PreviewNode
                     tone="action"
                     subtitle="Envoi message"
-                    title={
-                      selectedAutomation
-                        ? `${selectedAutomation.channel} message`
-                        : 'Email de relance'
-                    }
+                    title={`${selectedAutomation.channel} message`}
                   />
-                  <div className="mx-auto h-8 w-px bg-outline-variant/80" />
-                  <PreviewNode
-                    tone="condition"
-                    subtitle="Condition"
-                    title="Ouverture / clic / achat / tag"
-                  />
-                  <div className="mx-auto h-8 w-px bg-outline-variant/80" />
-                  <PreviewNode tone="end" subtitle="Fin" title="Workflow clôturé" />
+                  <p className="mt-3 text-center text-[11px] text-on-surface-variant">
+                    Ouvrez l'éditeur visuel pour voir le workflow complet.
+                  </p>
                 </>
+              ) : (
+                <div className="rounded-xl border border-dashed border-outline-variant/40 bg-surface/40 p-6 text-center text-sm text-on-surface-variant">
+                  Sélectionnez ou créez un workflow pour voir son aperçu ici.
+                </div>
               )}
             </div>
 
@@ -1114,6 +1143,10 @@ export default function Automations() {
                   <option value="link_clicked">{t('automations.triggerLinkClicked')}</option>
                   <option value="birthday">{t('automations.triggerBirthday')}</option>
                   <option value="date_based">{t('automations.triggerDateBased')}</option>
+                  <option value="inactivity_window">Inactivité (CRON quotidien 9h)</option>
+                  <option value="recurring_schedule">
+                    Planification récurrente (CRON horaire)
+                  </option>
                 </select>
               </div>
 
@@ -1290,6 +1323,134 @@ export default function Automations() {
                         : 'Laissez vide pour cibler le segment lié.'}
                     </p>
                   </div>
+                </div>
+              )}
+
+              {draft.trigger === 'inactivity_window' && (
+                <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
+                    Inactivité (CRON quotidien à 9h UTC)
+                  </p>
+                  <p className="text-[11px] text-slate-600">
+                    Cible les contacts qui n'ont ouvert aucun email depuis N jours. Déclenché
+                    automatiquement chaque matin à 9h UTC.
+                  </p>
+                  <div className="space-y-1">
+                    <label
+                      className="text-xs font-semibold text-secondary"
+                      htmlFor="automation-inactivity-days"
+                    >
+                      Jours d'inactivité
+                    </label>
+                    <input
+                      id="automation-inactivity-days"
+                      type="number"
+                      min={1}
+                      max={365}
+                      className="w-full rounded-lg border border-outline-variant/40 px-3 py-2 text-sm text-secondary outline-none transition focus:border-primary"
+                      value={draft.triggerConfig.inactivityDays}
+                      onChange={(event) =>
+                        setDraft((current) => ({
+                          ...current,
+                          triggerConfig: {
+                            ...current.triggerConfig,
+                            inactivityDays: event.target.value,
+                          },
+                        }))
+                      }
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label
+                      className="text-xs font-semibold text-secondary"
+                      htmlFor="automation-inactivity-segment"
+                    >
+                      Segment cible (optionnel)
+                    </label>
+                    <select
+                      id="automation-inactivity-segment"
+                      disabled={segmentsLoading}
+                      className="w-full rounded-lg border border-outline-variant/40 px-3 py-2 text-sm text-secondary outline-none transition focus:border-primary disabled:opacity-60"
+                      value={draft.triggerConfig.segmentId}
+                      onChange={(event) =>
+                        setDraft((current) => ({
+                          ...current,
+                          triggerConfig: {
+                            ...current.triggerConfig,
+                            segmentId: event.target.value,
+                          },
+                        }))
+                      }
+                    >
+                      <option value="">Tous les contacts inactifs</option>
+                      {segments.map((segment) => (
+                        <option key={segment.id} value={segment.id}>
+                          {segment.name || segment.id}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {draft.trigger === 'recurring_schedule' && (
+                <div className="space-y-3 rounded-xl border border-indigo-200 bg-indigo-50 p-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-indigo-900">
+                    Planification récurrente (CRON horaire)
+                  </p>
+                  <p className="text-[11px] text-indigo-800">
+                    Envoie chaque jour à l'heure configurée. Le CRON s'exécute toutes les heures et
+                    vérifie si l'heure correspond.
+                  </p>
+                  <div className="flex gap-2">
+                    <div className="flex-1 space-y-1">
+                      <label
+                        className="text-xs font-semibold text-secondary"
+                        htmlFor="automation-schedule-hour"
+                      >
+                        Heure (UTC, 0–23)
+                      </label>
+                      <input
+                        id="automation-schedule-hour"
+                        type="number"
+                        min={0}
+                        max={23}
+                        className="w-full rounded-lg border border-outline-variant/40 px-3 py-2 text-sm text-secondary outline-none transition focus:border-primary"
+                        value={draft.triggerConfig.hour}
+                        onChange={(event) =>
+                          setDraft((current) => ({
+                            ...current,
+                            triggerConfig: { ...current.triggerConfig, hour: event.target.value },
+                          }))
+                        }
+                      />
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      <label
+                        className="text-xs font-semibold text-secondary"
+                        htmlFor="automation-schedule-minute"
+                      >
+                        Minute (0–59)
+                      </label>
+                      <input
+                        id="automation-schedule-minute"
+                        type="number"
+                        min={0}
+                        max={59}
+                        className="w-full rounded-lg border border-outline-variant/40 px-3 py-2 text-sm text-secondary outline-none transition focus:border-primary"
+                        value={draft.triggerConfig.minute}
+                        onChange={(event) =>
+                          setDraft((current) => ({
+                            ...current,
+                            triggerConfig: { ...current.triggerConfig, minute: event.target.value },
+                          }))
+                        }
+                      />
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-indigo-700">
+                    Ex: heure=9, minute=0 → envoi quotidien à 9h00 UTC (≈ 10h Paris heure d'été).
+                  </p>
                 </div>
               )}
 
