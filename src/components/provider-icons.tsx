@@ -1,122 +1,60 @@
 type IconProps = { size?: number; className?: string };
 
-export function WaveIcon({ size = 32, className }: IconProps) {
+/**
+ * Logos officiels des opérateurs Mobile Money (fichiers dans /public/assets).
+ * Sources : marques déposées de leurs propriétaires respectifs — usage à des
+ * fins d'identification du moyen de paiement uniquement.
+ */
+function LogoImg({
+  src,
+  alt,
+  size = 32,
+  className,
+}: IconProps & { src: string; alt: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={className}>
-      <rect width="48" height="48" rx="12" fill="#1DC5C9" />
-      <text
-        x="24"
-        y="32"
-        textAnchor="middle"
-        fill="white"
-        fontSize="20"
-        fontWeight="900"
-        fontFamily="Arial, sans-serif"
-        letterSpacing="-0.5"
-      >
-        W
-      </text>
-    </svg>
+    <img
+      src={src}
+      alt={alt}
+      width={size}
+      height={size}
+      className={className}
+      loading="lazy"
+      decoding="async"
+      style={{ width: size, height: size, objectFit: 'contain', display: 'block' }}
+    />
   );
+}
+
+export function WaveIcon({ size = 32, className }: IconProps) {
+  return <LogoImg src="/assets/wave-icon.png" alt="Wave" size={size} className={className} />;
 }
 
 export function OrangeMoneyIcon({ size = 32, className }: IconProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={className}>
-      <rect width="48" height="48" rx="12" fill="#FF6600" />
-      <circle cx="24" cy="24" r="10" fill="white" opacity="0.2" />
-      <text
-        x="24"
-        y="29"
-        textAnchor="middle"
-        fill="white"
-        fontSize="13"
-        fontWeight="900"
-        fontFamily="Arial, sans-serif"
-        letterSpacing="0"
-      >
-        OM
-      </text>
-    </svg>
+    <LogoImg
+      src="/assets/orange-money-logo.svg"
+      alt="Orange Money"
+      size={size}
+      className={className}
+    />
   );
 }
 
 export function MomoIcon({ size = 32, className }: IconProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={className}>
-      <rect width="48" height="48" rx="12" fill="#FFCC00" />
-      <text
-        x="24"
-        y="20"
-        textAnchor="middle"
-        fill="#333333"
-        fontSize="10"
-        fontWeight="900"
-        fontFamily="Arial, sans-serif"
-        letterSpacing="0.5"
-      >
-        MTN
-      </text>
-      <text
-        x="24"
-        y="33"
-        textAnchor="middle"
-        fill="#333333"
-        fontSize="9"
-        fontWeight="700"
-        fontFamily="Arial, sans-serif"
-        letterSpacing="0"
-      >
-        MoMo
-      </text>
-    </svg>
+    <LogoImg src="/assets/mtn-momo-logo.svg" alt="MTN MoMo" size={size} className={className} />
   );
 }
 
 export function MoovIcon({ size = 32, className }: IconProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={className}>
-      <rect width="48" height="48" rx="12" fill="#004B9E" />
-      <text
-        x="24"
-        y="20"
-        textAnchor="middle"
-        fill="white"
-        fontSize="10"
-        fontWeight="900"
-        fontFamily="Arial, sans-serif"
-        letterSpacing="0.5"
-      >
-        MOOV
-      </text>
-      <text
-        x="24"
-        y="33"
-        textAnchor="middle"
-        fill="#FFD700"
-        fontSize="9"
-        fontWeight="700"
-        fontFamily="Arial, sans-serif"
-      >
-        Money
-      </text>
-    </svg>
+    <LogoImg src="/assets/moov-money-logo.png" alt="Moov Money" size={size} className={className} />
   );
 }
 
 export function NovaSendIcon({ size = 32, className }: IconProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={className}>
-      <rect width="48" height="48" rx="12" fill="#6366F1" />
-      <path
-        d="M14 32L20 16l10 12 4-8"
-        stroke="white"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <circle cx="34" cy="16" r="3" fill="#A5F3FC" />
-    </svg>
+    <LogoImg src="/assets/novasend-logo.png" alt="NovaSend" size={size} className={className} />
   );
 }
 
